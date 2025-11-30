@@ -8,9 +8,10 @@ import { Product } from '../data/products';
 interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
     product: Product;
+    selectedImage?: string;
 }
 
-export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
+export default function DesignEditor({ onUpdate, product, selectedImage }: DesignEditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const designZoneRef = useRef<fabric.Rect | null>(null);
@@ -258,7 +259,7 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                 <div ref={containerRef} className="relative w-full max-w-md lg:max-w-xl max-h-full aspect-square shadow-2xl rounded-2xl overflow-hidden bg-white mx-auto">
                     {/* Background Shirt Image */}
                     <img
-                        src={product.image}
+                        src={selectedImage || product.image}
                         alt="Product Base"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
                     />
