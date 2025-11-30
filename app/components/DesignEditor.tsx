@@ -20,6 +20,7 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontSize, setFontSize] = useState<number>(60);
     const [fontFamily, setFontFamily] = useState<string>('Arial');
+    const [borderRadius, setBorderRadius] = useState<number>(0);
 
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -108,15 +109,21 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
             const selected = e.selected?.[0];
             setSelectedObject(selected || null);
 
-            if (selected && selected instanceof fabric.IText) {
-                setTextColor(selected.fill as string);
-                setFontSize(selected.fontSize || 60);
-                setFontFamily(selected.fontFamily || 'Arial');
+            if (selected) {
+                if (selected instanceof fabric.IText) {
+                    setTextColor(selected.fill as string);
+                    setFontSize(selected.fontSize || 60);
+                    setFontFamily(selected.fontFamily || 'Arial');
+                }
+                // Check for custom borderRadius property
+                // @ts-ignore - Custom property
+                setBorderRadius(selected.borderRadius || 0);
             }
         };
 
         const handleSelectionCleared = () => {
             setSelectedObject(null);
+            setBorderRadius(0);
         };
 
         canvas.on('object:modified', handleUpdate);
@@ -214,8 +221,32 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
         if (key === 'fill') setTextColor(value);
         if (key === 'fontSize') setFontSize(parseInt(value));
         if (key === 'fontFamily') setFontFamily(value);
+        if (key === 'borderRadius') {
+            const radius = parseInt(value);
+            setBorderRadius(radius);
 
-        selectedObject.set(key, value);
+            if (selectedObject instanceof fabric.Image) {
+                // @ts-ignore - Custom property
+                selectedObject.set('borderRadius', radius);
+
+                if (radius > 0) {
+                    const clipRect = new fabric.Rect({
+                        width: selectedObject.width,
+                        height: selectedObject.height,
+                        rx: radius,
+                        ry: radius,
+                        originX: 'center',
+                        originY: 'center',
+                    });
+                    selectedObject.set('clipPath', clipRect);
+                } else {
+                    selectedObject.set('clipPath', undefined);
+                }
+            }
+        } else {
+            selectedObject.set(key, value);
+        }
+
         fabricCanvas.renderAll();
         fabricCanvas.fire('object:modified');
     };
@@ -294,10 +325,12 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                     </div>
 
                     {/* Selected Object Properties */}
-                    {selectedObject && selectedObject instanceof fabric.IText ? (
+                    {selectedObject ? (
                         <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Text Properties</h4>
+                                <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">
+                                    {selectedObject instanceof fabric.IText ? 'Text Properties' : 'Image Properties'}
+                                </h4>
                                 <button
                                     onClick={() => {
                                         fabricCanvas?.discardActiveObject();
@@ -310,68 +343,91 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                                 </button>
                             </div>
 
-                            {/* Color Picker */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500">Color</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {['#000000', '#ffffff', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'].map((c) => (
-                                        <button
-                                            key={c}
-                                            onClick={() => updateSelectedObject('fill', c)}
-                                            className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${textColor === c ? 'border-gray-900 scale-110 shadow-md' : 'border-transparent'}`}
-                                            style={{ backgroundColor: c }}
-                                        />
-                                    ))}
-                                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                            {/* Text Properties */}
+                            {selectedObject instanceof fabric.IText && (
+                                <>
+                                    {/* Color Picker */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-gray-500">Color</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['#000000', '#ffffff', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'].map((c) => (
+                                                <button
+                                                    key={c}
+                                                    onClick={() => updateSelectedObject('fill', c)}
+                                                    className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${textColor === c ? 'border-gray-900 scale-110 shadow-md' : 'border-transparent'}`}
+                                                    style={{ backgroundColor: c }}
+                                                />
+                                            ))}
+                                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-200">
+                                                <input
+                                                    type="color"
+                                                    value={textColor}
+                                                    onChange={(e) => updateSelectedObject('fill', e.target.value)}
+                                                    className="absolute inset-0 w-[150%] h-[150%] -top-1/4 -left-1/4 cursor-pointer p-0 border-0"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Font Size */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <label className="text-xs font-medium text-gray-500">Size</label>
+                                            <span className="text-xs font-medium text-gray-900">{fontSize}px</span>
+                                        </div>
                                         <input
-                                            type="color"
-                                            value={textColor}
-                                            onChange={(e) => updateSelectedObject('fill', e.target.value)}
-                                            className="absolute inset-0 w-[150%] h-[150%] -top-1/4 -left-1/4 cursor-pointer p-0 border-0"
+                                            type="range"
+                                            min="10"
+                                            max="200"
+                                            value={fontSize}
+                                            onChange={(e) => updateSelectedObject('fontSize', parseInt(e.target.value))}
+                                            className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                                         />
                                     </div>
-                                </div>
-                            </div>
 
-                            {/* Font Size */}
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <label className="text-xs font-medium text-gray-500">Size</label>
-                                    <span className="text-xs font-medium text-gray-900">{fontSize}px</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    min="10"
-                                    max="200"
-                                    value={fontSize}
-                                    onChange={(e) => updateSelectedObject('fontSize', parseInt(e.target.value))}
-                                    className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                                />
-                            </div>
-
-                            {/* Font Family */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-gray-500">Font</label>
-                                <div className="relative">
-                                    <select
-                                        value={fontFamily}
-                                        onChange={(e) => updateSelectedObject('fontFamily', e.target.value)}
-                                        className="w-full pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none cursor-pointer"
-                                    >
-                                        <option value="Arial">Arial</option>
-                                        <option value="Helvetica">Helvetica</option>
-                                        <option value="Times New Roman">Times New Roman</option>
-                                        <option value="Courier New">Courier New</option>
-                                        <option value="Verdana">Verdana</option>
-                                        <option value="Georgia">Georgia</option>
-                                        <option value="Impact">Impact</option>
-                                        <option value="Comic Sans MS">Comic Sans</option>
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    {/* Font Family */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-gray-500">Font</label>
+                                        <div className="relative">
+                                            <select
+                                                value={fontFamily}
+                                                onChange={(e) => updateSelectedObject('fontFamily', e.target.value)}
+                                                className="w-full pl-3 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none cursor-pointer"
+                                            >
+                                                <option value="Arial">Arial</option>
+                                                <option value="Helvetica">Helvetica</option>
+                                                <option value="Times New Roman">Times New Roman</option>
+                                                <option value="Courier New">Courier New</option>
+                                                <option value="Verdana">Verdana</option>
+                                                <option value="Georgia">Georgia</option>
+                                                <option value="Impact">Impact</option>
+                                                <option value="Comic Sans MS">Comic Sans</option>
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            </div>
+                                        </div>
                                     </div>
+                                </>
+                            )}
+
+                            {/* Image Properties */}
+                            {selectedObject instanceof fabric.Image && (
+                                <div className="space-y-2">
+                                    <div className="flex justify-between">
+                                        <label className="text-xs font-medium text-gray-500">Border Radius</label>
+                                        <span className="text-xs font-medium text-gray-900">{borderRadius}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={borderRadius}
+                                        onChange={(e) => updateSelectedObject('borderRadius', parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                    />
                                 </div>
-                            </div>
+                            )}
                         </div>
                     ) : (
                         <div className="hidden lg:flex flex-col items-center justify-center h-40 text-gray-400 text-center p-4 border-2 border-dashed border-gray-100 rounded-xl">
