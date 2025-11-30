@@ -1,8 +1,15 @@
+export interface ProductColor {
+    name: string;
+    hex: string;
+    image: string; // Path to the realistic preview image for this color
+}
+
 export interface Product {
     id: string;
     name: string;
-    image: string; // Path to the base product image (SVG or PNG)
-    canvasSize: number; // The size of the editor canvas (e.g., 1024)
+    image: string; // Path to the base editor cutout (usually transparent PNG of outline/folds)
+    canvasSize: number;
+    colors: ProductColor[]; // New: Available colors
     designZone: {
         left: number;
         top: number;
@@ -10,9 +17,10 @@ export interface Product {
         height: number;
     };
     previewConfig: {
-        image: string; // The base image for the preview
+        // We keep a default image here, but the Color object will override it
+        image: string;
         designZone: {
-            left: number; // Percentage (0-100) or pixel value relative to preview image
+            left: number;
             top: number;
             width: number;
             height: number;
@@ -26,11 +34,35 @@ export const products: Product[] = [
     {
         id: 't-shirt-standard',
         name: 'Standard T-Shirt',
-        image: '/shirt_cutout.svg',
+        image: '/shirt_cutout.svg', // Ensure this is a transparent PNG/SVG so background color shows through
         canvasSize: 1024,
-        // Coordinates calculated from shirt_cutout.svg (3104x3104) scaled to 1024x1024
-        // Original: x=976.76, y=544.25, w=1151.71, h=1535.62
-        // Scale: 1024 / 3103.96 ≈ 0.3299
+        colors: [
+            {
+                name: 'Heather Grey',
+                hex: '#888888',
+                image: '/products/shirt/colors/shirt_grey.png'
+            },
+            {
+                name: 'Midnight Black',
+                hex: '#1a1a1a',
+                image: '/products/shirt/colors/shirt_black.png'
+            },
+            {
+                name: 'Navy Blue',
+                hex: '#1e3a8a',
+                image: '/products/shirt/colors/shirt_navy.png'
+            },
+            {
+                name: 'Cardinal Red',
+                hex: '#991b1b',
+                image: '/products/shirt/colors/shirt_red.png'
+            },
+            {
+                name: 'Classic White',
+                hex: '#ffffff',
+                image: '/products/shirt/colors/shirt_white.png'
+            },
+        ],
         designZone: {
             left: 335,
             top: 270,
@@ -38,15 +70,16 @@ export const products: Product[] = [
             height: 447,
         },
         previewConfig: {
-            image: '/shirt_base.png',
+            image: '/products/shirt/colors/shirt_grey.png', // Default
             designZone: {
                 left: 357,
                 top: 350,
                 width: 320,
                 height: 407,
             },
-            displacementMap: '/shirt_base_displacement.png',
-            shadowMap: '/shirt_base_ambient_occ.png',
+            // Updated paths as requested
+            displacementMap: '/products/shirt/maps/displacement.png',
+            shadowMap: '/products/shirt/maps/shadow.png',
         },
     },
-]; 
+];

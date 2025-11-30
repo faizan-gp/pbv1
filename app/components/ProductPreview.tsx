@@ -82,9 +82,9 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
                         className="absolute z-20 pointer-events-none transition-all duration-200"
                         style={{
                             ...zoneStyle, // Position it exactly in the preview zone
-                            mixBlendMode: 'multiply',
-                            opacity: 0.95,
-                            filter: 'url(#fabric-warp) contrast(1.03)',
+                            mixBlendMode: 'normal',
+                            opacity: 1,
+                            filter: 'url(#fabric-warp) contrast(1)',
                             imageRendering: 'auto',
                         }}
                     />
