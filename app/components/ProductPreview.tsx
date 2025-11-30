@@ -1,16 +1,22 @@
 import React, { useEffect } from 'react';
-import { Product } from '../data/products';
+import { Product, ProductColor } from '../data/products';
 
 interface ProductPreviewProps {
     designTextureUrl: string | null;
     product: Product;
+    selectedColor: ProductColor;
+    activeViewId: string;
+    onViewChange: (id: string) => void;
 }
 
-export default function ProductPreview({ designTextureUrl, product }: ProductPreviewProps) {
-    // Standard maps (defaults if not specified in product)
-    const DISTORTION_MAP_URL = product.previewConfig.displacementMap || '/shirt_base_normal_map.png';
-    const SHADOW_MAP_URL = product.previewConfig.shadowMap || '/shirt_base_ambient_occ.png';
-    const HIGHLIGHT_MAP_URL = product.previewConfig.displacementMap || '/shirt_base_displacement.png';
+export default function ProductPreview({ designTextureUrl, product, selectedColor, activeViewId, onViewChange }: ProductPreviewProps) {
+    // Get current preview config
+    const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
+
+    // Standard maps
+    const DISTORTION_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_normal_map.png';
+    const SHADOW_MAP_URL = activePreview.shadowMap || '/products/shirt/maps/shirt_base_ambient_occ.png';
+    const HIGHLIGHT_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_displacement.png';
 
     // State to toggle print area visibility
     const [showPrintArea, setShowPrintArea] = React.useState(true);
@@ -25,13 +31,12 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
     }, []);
 
     // Calculate percentages for CSS positioning
-    // We convert raw pixels (e.g., 280) into percentages relative to canvasSize (e.g., 1000)
-    // NOTE: We use previewConfig.designZone here, not the editor's designZone
+    const currentZone = activePreview.previewZone || product.designZone; // Fallback for safety
     const zoneStyle = {
-        left: `${(product.previewConfig.designZone.left / product.canvasSize) * 100}%`,
-        top: `${(product.previewConfig.designZone.top / product.canvasSize) * 100}%`,
-        width: `${(product.previewConfig.designZone.width / product.canvasSize) * 100}%`,
-        height: `${(product.previewConfig.designZone.height / product.canvasSize) * 100}%`,
+        left: `${(currentZone.left / product.canvasSize) * 100}%`,
+        top: `${(currentZone.top / product.canvasSize) * 100}%`,
+        width: `${(currentZone.width / product.canvasSize) * 100}%`,
+        height: `${(currentZone.height / product.canvasSize) * 100}%`,
     };
 
     return (
@@ -52,31 +57,43 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
                 </div>
             </div>
 
+            {/* View Switcher Tabs */}
+            {product.previews.length > 1 && (
+                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+                    {product.previews.map((preview) => (
+                        <button
+                            key={preview.id}
+                            onClick={() => onViewChange(preview.id)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeViewId === preview.id
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                                }`}
+                        >
+                            {preview.name}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <div className="relative w-full aspect-square bg-gray-50 rounded-xl overflow-hidden shadow-inner group select-none">
 
                 {/* LAYER 1: Base Product Image */}
                 <img
-                    src={product.previewConfig.image}
-                    alt={product.name}
+                    src={selectedColor.images[activeViewId] || selectedColor.images[product.previews[0].id]}
+                    alt={`${product.name} - ${activePreview.name}`}
                     className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
                 />
 
-                {/* --- NEW LAYER: The Print Area Guide --- 
-                    We place this UNDER the design (z-15) or blended with it.
-                    We apply the 'fabric-warp' filter so the border curves with the shirt.
-                */}
+                {/* --- NEW LAYER: The Print Area Guide --- */}
                 {showPrintArea && (
                     <div
                         className="absolute z-15 border-2 border-dashed border-blue-400/60 pointer-events-none"
                         style={{
                             ...zoneStyle,
-                            // This makes the straight border wiggle with the shirt folds!
-                            filter: 'url(#fabric-warp)',
-                            // Optional: blend mode to make it look like it's printed on
+                            filter: enableDistortion ? 'url(#fabric-warp)' : 'none',
                             mixBlendMode: 'multiply'
                         }}
                     >
-                        {/* Optional: Add a label inside the box */}
                         <span className="absolute -top-6 left-0 text-[10px] text-blue-400 font-mono uppercase tracking-widest opacity-70">
                             Print Area
                         </span>
@@ -90,7 +107,7 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
                         alt="Design"
                         className="absolute z-20 pointer-events-none transition-all duration-200"
                         style={{
-                            ...zoneStyle, // Position it exactly in the preview zone
+                            ...zoneStyle,
                             mixBlendMode: 'normal',
                             opacity: 1,
                             filter: enableDistortion ? 'url(#fabric-warp) contrast(1)' : 'contrast(1)',
@@ -145,7 +162,6 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
             </div>
 
             <div className="flex justify-center gap-4 text-xs text-gray-400 mt-2">
-                {/* ... legend items ... */}
                 <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full border border-blue-400 border-dashed"></div>
                     <span>Print Zone</span>

@@ -8,6 +8,8 @@ import { products } from '../data/products';
 export default function ShirtConfigurator() {
     const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState(products[0]);
+    const [selectedColor, setSelectedColor] = useState(products[0].colors[0]);
+    const [activeViewId, setActiveViewId] = useState(products[0].previews[0].id);
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -23,7 +25,13 @@ export default function ShirtConfigurator() {
 
                 <div className="flex flex-col gap-12">
                     <div className="w-full">
-                        <DesignEditor onUpdate={setDesignTextureUrl} product={selectedProduct} />
+                        <DesignEditor
+                            onUpdate={setDesignTextureUrl}
+                            product={selectedProduct}
+                            selectedColor={selectedColor}
+                            onColorChange={setSelectedColor}
+                            activeViewId={activeViewId}
+                        />
                     </div>
 
                     <div className="w-full max-w-4xl mx-auto">
@@ -32,7 +40,13 @@ export default function ShirtConfigurator() {
                                 <h3 className="text-lg font-bold text-gray-900">3D Preview</h3>
                             </div>
                             <div className="p-8 bg-gray-50">
-                                <ProductPreview designTextureUrl={designTextureUrl} product={selectedProduct} />
+                                <ProductPreview
+                                    designTextureUrl={designTextureUrl}
+                                    product={selectedProduct}
+                                    selectedColor={selectedColor}
+                                    activeViewId={activeViewId}
+                                    onViewChange={setActiveViewId}
+                                />
                             </div>
                         </div>
                     </div>

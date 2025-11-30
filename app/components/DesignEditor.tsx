@@ -3,17 +3,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 
-import { Product } from '../data/products';
+import { Product, ProductColor } from '../data/products';
 
 interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
     product: Product;
+    selectedColor: ProductColor;
+    onColorChange: (color: ProductColor) => void;
+    activeViewId: string;
 }
 
-export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
+export default function DesignEditor({ onUpdate, product, selectedColor, onColorChange, activeViewId }: DesignEditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const designZoneRef = useRef<fabric.Rect | null>(null);
+
+    // Get current preview config for editor settings
+    const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
+
+    // Use the preview's editor zone if available, otherwise fallback to product's global zone
+    const currentDesignZone = activePreview.editorZone || product.designZone;
 
     // State for selected object properties
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
@@ -23,6 +32,31 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
     const [borderRadius, setBorderRadius] = useState<number>(0);
 
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Update design zone when view changes
+    useEffect(() => {
+        if (!fabricCanvas || !designZoneRef.current) return;
+
+        // Update guide
+        designZoneRef.current.set({
+            left: currentDesignZone.left,
+            top: currentDesignZone.top,
+            width: currentDesignZone.width,
+            height: currentDesignZone.height,
+        });
+        designZoneRef.current.setCoords();
+
+        // Update clip path
+        const clipPath = new fabric.Rect({
+            left: currentDesignZone.left,
+            top: currentDesignZone.top,
+            width: currentDesignZone.width,
+            height: currentDesignZone.height,
+        });
+        fabricCanvas.clipPath = clipPath;
+
+        fabricCanvas.requestRenderAll();
+    }, [activeViewId, currentDesignZone, fabricCanvas]);
 
     useEffect(() => {
         if (!canvasRef.current || !containerRef.current) return;
@@ -38,10 +72,10 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
 
         // 2. Add the "Print Area" Guide
         const designZone = new fabric.Rect({
-            left: product.designZone.left,
-            top: product.designZone.top,
-            width: product.designZone.width,
-            height: product.designZone.height,
+            left: currentDesignZone.left,
+            top: currentDesignZone.top,
+            width: currentDesignZone.width,
+            height: currentDesignZone.height,
             fill: 'transparent',
             stroke: '#3b82f6', // Blue for better visibility
             strokeWidth: 2,
@@ -56,10 +90,10 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
         // 3. Set Global Clip Path
         // This ensures EVERYTHING is clipped to the design zone
         const clipPath = new fabric.Rect({
-            left: product.designZone.left,
-            top: product.designZone.top,
-            width: product.designZone.width,
-            height: product.designZone.height,
+            left: currentDesignZone.left,
+            top: currentDesignZone.top,
+            width: currentDesignZone.width,
+            height: currentDesignZone.height,
         });
         canvas.clipPath = clipPath;
 
@@ -87,10 +121,10 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                 multiplier: 1, // We are already at full size
                 quality: 1,
                 // CROP TO DESIGN ZONE
-                left: product.designZone.left,
-                top: product.designZone.top,
-                width: product.designZone.width,
-                height: product.designZone.height,
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
             });
 
             // Restore zoom/dimensions
@@ -159,13 +193,13 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
             resizeObserver.disconnect();
             canvas.dispose();
         };
-    }, [onUpdate, product]);
+    }, [onUpdate, product]); // Re-init if product changes, but NOT if view changes (we handle that separately to preserve canvas)
 
     const addText = () => {
         if (!fabricCanvas) return;
         // Center in design zone
-        const centerX = product.designZone.left + product.designZone.width / 2;
-        const centerY = product.designZone.top + product.designZone.height / 2;
+        const centerX = currentDesignZone.left + currentDesignZone.width / 2;
+        const centerY = currentDesignZone.top + currentDesignZone.height / 2;
 
         const text = new fabric.IText('Design Here', {
             left: centerX,
@@ -197,8 +231,8 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                 imgInstance.scaleToWidth(200);
 
                 // Center in design zone
-                const centerX = product.designZone.left + product.designZone.width / 2;
-                const centerY = product.designZone.top + product.designZone.height / 2;
+                const centerX = currentDesignZone.left + currentDesignZone.width / 2;
+                const centerY = currentDesignZone.top + currentDesignZone.height / 2;
 
                 imgInstance.set({
                     left: centerX,
@@ -258,7 +292,7 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
                 <div ref={containerRef} className="relative w-full max-w-md lg:max-w-xl max-h-full aspect-square shadow-2xl rounded-2xl overflow-hidden bg-white mx-auto">
                     {/* Background Shirt Image */}
                     <img
-                        src={product.image}
+                        src={activePreview.editorCutout || product.image}
                         alt="Product Base"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
                     />
@@ -302,6 +336,30 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
 
                 {/* Scrollable Content Area */}
                 <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+
+                    {/* Product Colors */}
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Product Color</label>
+                        <div className="flex flex-wrap gap-3">
+                            {product.colors.map((color) => (
+                                <button
+                                    key={color.name}
+                                    onClick={() => onColorChange(color)}
+                                    className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 relative ${selectedColor.name === color.name ? 'border-blue-600 scale-110 ring-2 ring-blue-100' : 'border-gray-200'}`}
+                                    style={{ backgroundColor: color.hex }}
+                                    title={color.name}
+                                >
+                                    {selectedColor.name === color.name && (
+                                        <span className="absolute inset-0 flex items-center justify-center text-white drop-shadow-md">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <hr className="border-gray-100" />
 
                     {/* Primary Actions */}
                     <div className="grid grid-cols-2 gap-3">
