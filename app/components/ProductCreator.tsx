@@ -3,27 +3,44 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 
+interface Zone {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+interface ViewConfig {
+    id: string;
+    name: string;
+    image: string;
+    editorZone: Zone;
+    previewZone: Zone;
+    displacementMap?: string;
+    shadowMap?: string;
+    cssTransform?: string;
+    editorCutout?: string;
+}
+
 export default function ProductCreator() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const [productName, setProductName] = useState('New Product');
-    const [jsonOutput, setJsonOutput] = useState('');
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [imageSrc, setImageSrc] = useState<string | null>(null);
-    const productNameRef = useRef(productName);
-
-    // Update ref when state changes
-    useEffect(() => {
-        productNameRef.current = productName;
-        // Trigger update if canvas exists
-        if (fabricCanvas) {
-            fabricCanvas.fire('object:modified');
+    const [views, setViews] = useState<ViewConfig[]>([
+        {
+            id: 'front',
+            name: 'Front View',
+            image: '',
+            editorZone: { left: 300, top: 300, width: 400, height: 500 },
+            previewZone: { left: 300, top: 300, width: 400, height: 500 },
         }
-    }, [productName, fabricCanvas]);
+    ]);
+    const [activeViewId, setActiveViewId] = useState('front');
+    const [jsonOutput, setJsonOutput] = useState('');
 
-    // Default canvas size
     const CANVAS_SIZE = 1024;
 
+    // Initialize Canvas
     useEffect(() => {
         if (!canvasRef.current) return;
 
@@ -36,84 +53,163 @@ export default function ProductCreator() {
 
         setFabricCanvas(canvas);
 
-        // Update JSON on object modification
-        const updateJson = () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const zone = canvas.getObjects().find(o => (o as any).data?.id === 'design-zone');
-            if (zone) {
-                const rect = zone as fabric.Rect;
-                const currentName = productNameRef.current;
-                const config = {
-                    id: currentName.toLowerCase().replace(/\s+/g, '-'),
-                    name: currentName,
-                    image: '/path/to/your/image.svg', // Placeholder will be updated by user manually usually
-                    canvasSize: CANVAS_SIZE,
-                    designZone: {
-                        left: Math.round(rect.left || 0),
-                        top: Math.round(rect.top || 0),
-                        width: Math.round((rect.width || 0) * (rect.scaleX || 1)),
-                        height: Math.round((rect.height || 0) * (rect.scaleY || 1)),
-                    }
-                };
-                setJsonOutput(JSON.stringify(config, null, 4));
-            }
-        };
-
-        canvas.on('object:modified', updateJson);
-        canvas.on('object:moving', updateJson);
-        canvas.on('object:scaling', updateJson);
-
         return () => {
             canvas.dispose();
         };
-    }, []); // Empty dependency array to run only once!
+    }, []);
 
+    // Handle Active View Change & Canvas Updates
+    useEffect(() => {
+        if (!fabricCanvas) return;
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!fabricCanvas || !e.target.files?.[0]) return;
+        const activeView = views.find(v => v.id === activeViewId);
+        if (!activeView) return;
 
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            const result = f.target?.result as string;
-            setImageSrc(result);
-            setImageLoaded(true);
+        fabricCanvas.clear();
+        fabricCanvas.backgroundColor = 'transparent';
 
-            // Clear existing
-            fabricCanvas.clear();
-            fabricCanvas.backgroundColor = 'transparent';
-            fabricCanvas.requestRenderAll();
-
-            // Add Default Design Zone Rect
-            const zone = new fabric.Rect({
-                left: 300,
-                top: 300,
-                width: 400,
-                height: 500,
-                fill: 'rgba(0, 100, 255, 0.2)',
-                stroke: '#0064ff',
+        // Helper to create zone rects
+        const createZoneRect = (zone: Zone, color: string, id: string, label: string) => {
+            const rect = new fabric.Rect({
+                left: zone.left,
+                top: zone.top,
+                width: zone.width,
+                height: zone.height,
+                fill: color,
+                stroke: color.replace('0.1)', '1)'),
                 strokeWidth: 2,
-                cornerColor: '#0064ff',
+                cornerColor: color.replace('0.1)', '1)'),
                 cornerSize: 12,
                 transparentCorners: false,
                 selectable: true,
                 hasControls: true,
                 hasBorders: true,
-                data: { id: 'design-zone' }
+                data: { id },
+                strokeDashArray: [5, 5]
             });
 
-            fabricCanvas.add(zone);
-            fabricCanvas.setActiveObject(zone);
+            const text = new fabric.Text(label, {
+                left: zone.left,
+                top: zone.top - 20,
+                fontSize: 16,
+                fill: color.replace('0.1)', '1)'),
+                selectable: false,
+                evented: false,
+                data: { id: `${id}-label` }
+            });
 
-            // Recalculate offset to ensure pointer events map correctly
-            fabricCanvas.calcOffset();
-            fabricCanvas.requestRenderAll();
+            return { rect, text };
+        };
 
-            // Trigger JSON update
-            fabricCanvas.fire('object:modified');
+        // Editor Zone (Blue)
+        const editor = createZoneRect(activeView.editorZone, 'rgba(0, 100, 255, 0.1)', 'editor-zone', 'Editor Zone');
+        fabricCanvas.add(editor.rect, editor.text);
+
+        // Preview Zone (Green)
+        const preview = createZoneRect(activeView.previewZone, 'rgba(0, 255, 100, 0.1)', 'preview-zone', 'Preview Zone');
+        fabricCanvas.add(preview.rect, preview.text);
+
+        // Event Listeners for updating state
+        const updateState = () => {
+            const editorObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone') as fabric.Rect;
+            const previewObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone') as fabric.Rect;
+
+            // Update labels
+            const editorLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone-label') as fabric.Text;
+            const previewLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone-label') as fabric.Text;
+
+            if (editorObj && editorLabel) {
+                editorLabel.set({ left: editorObj.left, top: (editorObj.top || 0) - 20 });
+            }
+            if (previewObj && previewLabel) {
+                previewLabel.set({ left: previewObj.left, top: (previewObj.top || 0) - 20 });
+            }
+
+            if (editorObj && previewObj) {
+                setViews(prev => prev.map(v => {
+                    if (v.id === activeViewId) {
+                        return {
+                            ...v,
+                            editorZone: {
+                                left: Math.round(editorObj.left || 0),
+                                top: Math.round(editorObj.top || 0),
+                                width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)),
+                                height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
+                            },
+                            previewZone: {
+                                left: Math.round(previewObj.left || 0),
+                                top: Math.round(previewObj.top || 0),
+                                width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)),
+                                height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
+                            }
+                        };
+                    }
+                    return v;
+                }));
+            }
+        };
+
+        fabricCanvas.on('object:modified', updateState);
+        fabricCanvas.on('object:moving', updateState);
+        fabricCanvas.on('object:scaling', updateState);
+
+        fabricCanvas.requestRenderAll();
+
+        return () => {
+            fabricCanvas.off('object:modified', updateState);
+            fabricCanvas.off('object:moving', updateState);
+            fabricCanvas.off('object:scaling', updateState);
+        };
+    }, [fabricCanvas, activeViewId]);
+
+    // Update JSON Output
+    useEffect(() => {
+        const config = {
+            id: productName.toLowerCase().replace(/\s+/g, '-'),
+            name: productName,
+            image: views[0]?.image || '',
+            canvasSize: CANVAS_SIZE,
+            colors: [], // Placeholder
+            designZone: views[0]?.editorZone, // Fallback
+            previews: views.map(v => ({
+                id: v.id,
+                name: v.name,
+                editorZone: v.editorZone,
+                previewZone: v.previewZone,
+                displacementMap: v.displacementMap,
+                shadowMap: v.shadowMap,
+                editorCutout: v.editorCutout,
+                cssTransform: v.cssTransform
+            }))
+        };
+        setJsonOutput(JSON.stringify(config, null, 4));
+    }, [views, productName]);
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const result = f.target?.result as string;
+            setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, image: result } : v));
         };
         reader.readAsDataURL(file);
     };
+
+    const addView = () => {
+        const newId = `view-${views.length + 1}`;
+        setViews(prev => [...prev, {
+            id: newId,
+            name: `View ${views.length + 1}`,
+            image: '',
+            editorZone: { left: 300, top: 300, width: 400, height: 500 },
+            previewZone: { left: 300, top: 300, width: 400, height: 500 },
+        }]);
+        setActiveViewId(newId);
+    };
+
+    const activeView = views.find(v => v.id === activeViewId);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -128,39 +224,73 @@ export default function ProductCreator() {
                                 type="text"
                                 value={productName}
                                 onChange={(e) => setProductName(e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                             />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Base Image</label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleImageUpload}
-                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Upload the shirt/product image.</p>
                         </div>
                     </div>
                 </div>
 
-                {imageLoaded && (
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <h3 className="text-lg font-semibold mb-4">3. Configuration JSON</h3>
-                        <p className="text-sm text-gray-600 mb-2">Copy this into <code>app/data/products.ts</code></p>
-                        <textarea
-                            readOnly
-                            value={jsonOutput}
-                            className="w-full h-64 font-mono text-xs p-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                        <button
-                            onClick={() => navigator.clipboard.writeText(jsonOutput)}
-                            className="mt-2 w-full py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
-                        >
-                            Copy to Clipboard
-                        </button>
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-semibold">2. Views</h3>
+                        <button onClick={addView} className="text-sm text-blue-600 hover:text-blue-700 font-medium">+ Add View</button>
                     </div>
-                )}
+
+                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                        {views.map(view => (
+                            <button
+                                key={view.id}
+                                onClick={() => setActiveViewId(view.id)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap ${activeViewId === view.id ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                    }`}
+                            >
+                                {view.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    {activeView && (
+                        <div className="space-y-4 border-t pt-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">View Name</label>
+                                <input
+                                    type="text"
+                                    value={activeView.name}
+                                    onChange={(e) => setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, name: e.target.value } : v))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Base Image</label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="w-full text-xs"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">CSS Transform</label>
+                                <input
+                                    type="text"
+                                    value={activeView.cssTransform || ''}
+                                    placeholder="e.g. rotate(-2deg)"
+                                    onChange={(e) => setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, cssTransform: e.target.value } : v))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold mb-4">3. Output</h3>
+                    <textarea
+                        readOnly
+                        value={jsonOutput}
+                        className="w-full h-64 font-mono text-xs p-3 bg-gray-50 border border-gray-300 rounded-lg"
+                    />
+                </div>
             </div>
 
             {/* Right Column: Canvas */}
@@ -168,35 +298,30 @@ export default function ProductCreator() {
                 <div className="bg-white p-1 rounded-xl shadow-lg border border-gray-200">
                     <div className="relative w-full aspect-square bg-gray-100 rounded-lg overflow-hidden">
                         <style jsx global>{`
-                            .canvas-container {
-                                width: 100% !important;
-                                height: 100% !important;
-                            }
-                            .canvas-container canvas {
-                                width: 100% !important;
-                                height: 100% !important;
-                            }
+                            .canvas-container { width: 100% !important; height: 100% !important; }
+                            .canvas-container canvas { width: 100% !important; height: 100% !important; }
                         `}</style>
-                        {/* Background Shirt Image */}
-                        {imageSrc && (
+                        {activeView?.image && (
                             <img
-                                src={imageSrc}
-                                alt="Product Base"
+                                src={activeView.image}
+                                alt="View Base"
                                 className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
                             />
                         )}
                         <div className="absolute inset-0 z-10 w-full h-full">
                             <canvas ref={canvasRef} className="w-full h-full" />
                         </div>
-                        {!imageLoaded && (
-                            <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
-                                <p>Upload an image to start</p>
-                            </div>
-                        )}
                     </div>
                 </div>
-                <div className="mt-4 text-center text-sm text-gray-500">
-                    <p>Drag and resize the blue box to define the printable area.</p>
+                <div className="mt-4 flex gap-6 justify-center text-sm">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-blue-500/20 border border-blue-500"></div>
+                        <span>Editor Zone (Where user places design)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 bg-green-500/20 border border-green-500"></div>
+                        <span>Preview Zone (Where design appears on shirt)</span>
+                    </div>
                 </div>
             </div>
         </div>
