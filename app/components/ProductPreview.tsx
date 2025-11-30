@@ -1,23 +1,31 @@
 'use client';
 
 import React from 'react';
+// 1. Import the product data to get dimensions
+import { products } from '../data/products';
 
 interface ProductPreviewProps {
     designTextureUrl: string | null;
 }
 
 export default function ProductPreview({ designTextureUrl }: ProductPreviewProps) {
-    // 1. DISTORTION SOURCE (Use Normal Map if available, otherwise Displacement)
-    // Normal maps are better for warping because they separate X and Y movement.
+    // Standard maps
     const DISTORTION_MAP_URL = '/shirt_base_normal_map.png';
-
-    // 2. SHADOW SOURCE (Ambient Occlusion)
-    // Darkens the deep creases.
     const SHADOW_MAP_URL = '/shirt_base_ambient_occ.png';
-
-    // 3. HIGHLIGHT SOURCE (Displacement / Height Map)
-    // Lighter areas = higher fabric. We use this to add "shine" to the wrinkles.
     const HIGHLIGHT_MAP_URL = '/shirt_base_displacement.png';
+
+    // 2. Get Geometry Data
+    // In a real app, pass 'productId' as a prop. Using index 0 for demo.
+    const product = products[0];
+
+    // Calculate percentages for CSS positioning
+    // We convert raw pixels (e.g., 280) into percentages relative to canvasSize (e.g., 1000)
+    const zoneStyle = {
+        left: `${(product.designZone.left / product.canvasSize) * 100}%`,
+        top: `${(product.designZone.top / product.canvasSize) * 100}%`,
+        width: `${(product.designZone.width / product.canvasSize) * 100}%`,
+        height: `${(product.designZone.height / product.canvasSize) * 100}%`,
+    };
 
     return (
         <div className="flex flex-col gap-6 p-6 bg-white rounded-2xl shadow-xl border border-gray-100 h-full">
@@ -39,6 +47,26 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
                     className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
                 />
 
+                {/* --- NEW LAYER: The Print Area Guide --- 
+                    We place this UNDER the design (z-15) or blended with it.
+                    We apply the 'fabric-warp' filter so the border curves with the shirt.
+                */}
+                <div
+                    className="absolute z-15 border-2 border-dashed border-blue-400/60 pointer-events-none"
+                    style={{
+                        ...zoneStyle,
+                        // This makes the straight border wiggle with the shirt folds!
+                        filter: 'url(#fabric-warp)',
+                        // Optional: blend mode to make it look like it's printed on
+                        mixBlendMode: 'multiply'
+                    }}
+                >
+                    {/* Optional: Add a label inside the box */}
+                    <span className="absolute -top-6 left-0 text-[10px] text-blue-400 font-mono uppercase tracking-widest opacity-70">
+                        Print Area
+                    </span>
+                </div>
+
                 {/* LAYER 2: The Design (Distorted & Blended) */}
                 {designTextureUrl && (
                     <img
@@ -48,30 +76,24 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
                         style={{
                             mixBlendMode: 'multiply',
                             opacity: 0.95,
-                            // Add contrast(1.2) to pop the colors and sharpen edges visually
                             filter: 'url(#fabric-warp) contrast(1.03)',
                             imageRendering: 'auto',
                         }}
                     />
                 )}
 
-                {/* LAYER 3: Highlights (Displacement Map) 
-                    Uses 'soft-light' or 'screen' to make the raised fabric folds catch light.
-                    This prevents the design from looking "flat".
-                */}
+                {/* LAYER 3: Highlights */}
                 <img
                     src={HIGHLIGHT_MAP_URL}
                     alt="Fabric Highlights"
                     className="absolute inset-0 w-full h-full object-contain z-30 pointer-events-none"
                     style={{
-                        mixBlendMode: 'soft-light', // blends white peaks into the design
-                        opacity: 0.5, // Subtle sheen
+                        mixBlendMode: 'soft-light',
+                        opacity: 0.5,
                     }}
                 />
 
-                {/* LAYER 4: Deep Shadows (AO Map)
-                    Uses 'multiply' to deepen the darkest cracks on top of everything.
-                */}
+                {/* LAYER 4: Deep Shadows */}
                 <img
                     src={SHADOW_MAP_URL}
                     alt="Fabric Shadows"
@@ -82,7 +104,7 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
                     }}
                 />
 
-                {/* SVG FILTER DEFINITION (Hidden) */}
+                {/* SVG FILTER DEFINITION */}
                 <svg className="absolute w-0 h-0">
                     <defs>
                         <filter id="fabric-warp">
@@ -92,16 +114,10 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
                                 x="0" y="0" width="100%" height="100%"
                                 preserveAspectRatio="none"
                             />
-                            {/* scale: Intensity of the wiggle (20-30 is usually good)
-                                xChannelSelector="R": Red channel drives Horizontal shift
-                                yChannelSelector="G": Green channel drives Vertical shift
-                            */}
                             <feDisplacementMap
                                 in="SourceGraphic"
                                 in2="map"
-                                scale="5"  // <--- Try reducing this. 
-                                // If it was 30 or 20, try 10 or 15.
-                                // Lower scale = Less distortion but sharper image.
+                                scale="5"
                                 xChannelSelector="R"
                                 yChannelSelector="G"
                             />
@@ -112,17 +128,10 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
             </div>
 
             <div className="flex justify-center gap-4 text-xs text-gray-400 mt-2">
+                {/* ... legend items ... */}
                 <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span>Warp</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-gray-800"></div>
-                    <span>Shadow</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-white border border-gray-300"></div>
-                    <span>Highlight</span>
+                    <div className="w-2 h-2 rounded-full border border-blue-400 border-dashed"></div>
+                    <span>Print Zone</span>
                 </div>
             </div>
         </div>
