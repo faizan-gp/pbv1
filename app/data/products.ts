@@ -1,8 +1,8 @@
 export interface Product {
     id: string;
     name: string;
-    image: string;
-    canvasSize: number;
+    image: string; // Path to the base product image (SVG or PNG)
+    canvasSize: number; // The size of the editor canvas (e.g., 1024)
     designZone: {
         left: number;
         top: number;
@@ -10,9 +10,9 @@ export interface Product {
         height: number;
     };
     previewConfig: {
-        image: string;
+        image: string; // The base image for the preview
         designZone: {
-            left: number;
+            left: number; // Percentage (0-100) or pixel value relative to preview image
             top: number;
             width: number;
             height: number;
@@ -20,11 +20,6 @@ export interface Product {
         displacementMap?: string;
         shadowMap?: string;
     };
-    colors: {
-        name: string;
-        value: string;
-        image: string;
-    }[];
 }
 
 export const products: Product[] = [
@@ -53,12 +48,5 @@ export const products: Product[] = [
             displacementMap: '/shirt_base_displacement.png',
             shadowMap: '/shirt_base_ambient_occ.png',
         },
-        colors: [
-            { name: 'White', value: '#ffffff', image: '/shirt_base.png' },
-            { name: 'Black', value: '#111827', image: '/shirt_black.png' },
-            { name: 'Navy', value: '#1e3a8a', image: '/shirt_navy.png' },
-            { name: 'Heather Grey', value: '#9ca3af', image: '/shirt_grey.png' },
-            { name: 'Red', value: '#ef4444', image: '/shirt_red.png' },
-        ],
     },
 ]; 

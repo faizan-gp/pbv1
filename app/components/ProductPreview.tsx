@@ -4,10 +4,9 @@ import { Product } from '../data/products';
 interface ProductPreviewProps {
     designTextureUrl: string | null;
     product: Product;
-    selectedImage?: string;
 }
 
-export default function ProductPreview({ designTextureUrl, product, selectedImage }: ProductPreviewProps) {
+export default function ProductPreview({ designTextureUrl, product }: ProductPreviewProps) {
     // Standard maps (defaults if not specified in product)
     const DISTORTION_MAP_URL = product.previewConfig.displacementMap || '/shirt_base_normal_map.png';
     const SHADOW_MAP_URL = product.previewConfig.shadowMap || '/shirt_base_ambient_occ.png';
@@ -48,7 +47,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedImag
 
                 {/* LAYER 1: Base Product Image */}
                 <img
-                    src={selectedImage || product.previewConfig.image}
+                    src={product.previewConfig.image}
                     alt={product.name}
                     className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
                 />
