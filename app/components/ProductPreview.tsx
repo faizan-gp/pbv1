@@ -67,8 +67,9 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
                     <img
                         src={designTextureUrl}
                         alt="Design"
-                        className="absolute inset-0 w-full h-full object-contain z-20 pointer-events-none transition-all duration-200"
+                        className="absolute z-20 pointer-events-none transition-all duration-200"
                         style={{
+                            ...zoneStyle, // Position it exactly in the preview zone
                             mixBlendMode: 'multiply',
                             opacity: 0.95,
                             filter: 'url(#fabric-warp) contrast(1.03)',

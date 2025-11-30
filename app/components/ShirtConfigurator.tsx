@@ -21,12 +21,20 @@ export default function ShirtConfigurator() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-                    <div className="order-2 lg:order-1 sticky top-8">
+                <div className="flex flex-col gap-12">
+                    <div className="w-full">
                         <DesignEditor onUpdate={setDesignTextureUrl} product={selectedProduct} />
                     </div>
-                    <div className="order-1 lg:order-2 sticky top-8">
-                        <ProductPreview designTextureUrl={designTextureUrl} product={selectedProduct} />
+
+                    <div className="w-full max-w-4xl mx-auto">
+                        <div className="bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden">
+                            <div className="p-6 border-b border-gray-100">
+                                <h3 className="text-lg font-bold text-gray-900">3D Preview</h3>
+                            </div>
+                            <div className="p-8 bg-gray-50">
+                                <ProductPreview designTextureUrl={designTextureUrl} product={selectedProduct} />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

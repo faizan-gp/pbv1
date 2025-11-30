@@ -32,15 +32,15 @@ export const products: Product[] = [
         // Original: x=976.76, y=544.25, w=1151.71, h=1535.62
         // Scale: 1024 / 3103.96 ≈ 0.3299
         designZone: {
-            left: 352,
-            top: 350,
-            width: 320,
-            height: 407,
+            left: 335,
+            top: 270,
+            width: 350,
+            height: 447,
         },
         previewConfig: {
             image: '/shirt_base.png',
             designZone: {
-                left: 362, // Initial values matching editor, can be tweaked
+                left: 357,
                 top: 350,
                 width: 320,
                 height: 407,
