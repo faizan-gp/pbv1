@@ -90,7 +90,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                         className="absolute z-15 border-2 border-dashed border-blue-400/60 pointer-events-none"
                         style={{
                             ...zoneStyle,
-                            filter: enableDistortion ? 'url(#fabric-warp)' : 'none',
+                            filter: enableDistortion ? `url(#fabric-warp-${activeViewId})` : 'none',
                             mixBlendMode: 'multiply'
                         }}
                     >
@@ -110,8 +110,9 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                             ...zoneStyle,
                             mixBlendMode: 'normal',
                             opacity: 1,
-                            filter: enableDistortion ? 'url(#fabric-warp) contrast(1)' : 'contrast(1)',
+                            filter: enableDistortion ? `url(#fabric-warp-${activeViewId}) contrast(1)` : 'contrast(1)',
                             imageRendering: 'auto',
+                            transform: activePreview.cssTransform || 'none',
                         }}
                     />
                 )}
@@ -141,7 +142,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                 {/* SVG FILTER DEFINITION */}
                 <svg className="absolute w-0 h-0">
                     <defs>
-                        <filter id="fabric-warp">
+                        <filter id={`fabric-warp-${activeViewId}`}>
                             <feImage
                                 href={DISTORTION_MAP_URL}
                                 result="map"
@@ -151,7 +152,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                             <feDisplacementMap
                                 in="SourceGraphic"
                                 in2="map"
-                                scale="5"
+                                scale="20"
                                 xChannelSelector="R"
                                 yChannelSelector="G"
                             />

@@ -18,6 +18,7 @@ export interface PreviewConfig {
     displacementMap?: string;
     shadowMap?: string;
     editorCutout?: string; // Optional: Specific cutout for this view in the editor
+    cssTransform?: string; // Optional: CSS transform for the design layer (e.g. 'rotate(-2deg)')
 }
 
 export interface ProductColor {
@@ -126,7 +127,7 @@ export const products: Product[] = [
                     height: 447,
                 },
                 previewZone: {
-                    left: 417,
+                    left: 437,
                     top: 410,
                     width: 320,
                     height: 407,
@@ -134,6 +135,7 @@ export const products: Product[] = [
                 displacementMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_displacement.png',
                 shadowMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_ambient.png',
                 editorCutout: '/products/shirt/shirt_cutout.svg', // Placeholder
+                cssTransform: 'rotate(-2deg) skewX(-1deg)',
             }
         ],
     },
