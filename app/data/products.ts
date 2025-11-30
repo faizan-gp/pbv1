@@ -21,10 +21,10 @@ export const products: Product[] = [
         // Original: x=976.76, y=544.25, w=1151.71, h=1535.62
         // Scale: 1024 / 3103.96 ≈ 0.3299
         designZone: {
-            left: 322,
-            top: 180,
-            width: 380,
-            height: 507,
+            left: 352,
+            top: 350,
+            width: 320,
+            height: 407,
         },
     },
 ];

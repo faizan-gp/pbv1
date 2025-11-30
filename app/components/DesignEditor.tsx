@@ -36,12 +36,16 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
             width: product.designZone.width,
             height: product.designZone.height,
             fill: 'transparent',
-            stroke: 'rgba(0,0,0,0.2)',
+            stroke: '#3b82f6', // Blue for better visibility
             strokeWidth: 2,
-            strokeDashArray: [5, 5],
+            strokeDashArray: [10, 5],
             selectable: false,
             evented: false,
         });
+
+        // Create a clip path that matches the design zone
+        // We don't set it on the canvas globally anymore to avoid hiding the guide
+        // Instead we apply it to individual objects
 
         canvas.add(designZone);
         designZoneRef.current = designZone;
@@ -76,6 +80,16 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
         };
     }, [onUpdate, product]);
 
+    const createClipPath = () => {
+        return new fabric.Rect({
+            left: product.designZone.left,
+            top: product.designZone.top,
+            width: product.designZone.width,
+            height: product.designZone.height,
+            absolutePositioned: true,
+        });
+    };
+
     const addText = () => {
         if (!fabricCanvas) return;
         // Center in design zone
@@ -91,6 +105,7 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
             fill: '#333',
             fontSize: 60,
             fontWeight: 'bold',
+            clipPath: createClipPath(),
         });
         fabricCanvas.add(text);
         fabricCanvas.setActiveObject(text);
@@ -118,7 +133,8 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
                     left: centerX,
                     top: centerY,
                     originX: 'center',
-                    originY: 'center'
+                    originY: 'center',
+                    clipPath: createClipPath(),
                 });
                 fabricCanvas.add(imgInstance);
                 fabricCanvas.setActiveObject(imgInstance);
@@ -154,6 +170,16 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
 
             {/* Editor Container */}
             <div className="relative w-full aspect-square border border-gray-200 rounded-xl overflow-hidden shadow-inner bg-gray-50 flex justify-center items-center bg-[url('/grid.png')]">
+                <style jsx global>{`
+                    .canvas-container {
+                        width: 100% !important;
+                        height: 100% !important;
+                    }
+                    .canvas-container canvas {
+                        width: 100% !important;
+                        height: 100% !important;
+                    }
+                `}</style>
                 {/* Background Shirt Image */}
                 <img
                     src={product.image}
