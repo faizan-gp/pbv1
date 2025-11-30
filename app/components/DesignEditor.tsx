@@ -7,36 +7,40 @@ interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
 }
 
+import { products } from '../data/products';
+
+// ... inside component ...
 export default function DesignEditor({ onUpdate }: DesignEditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
-    // We store the guide box in a ref to toggle visibility easily
     const designZoneRef = useRef<fabric.Rect | null>(null);
+
+    // Use the first product for now
+    const product = products[0];
 
     useEffect(() => {
         if (!canvasRef.current) return;
 
         // 1. Initialize Canvas
         const canvas = new fabric.Canvas(canvasRef.current, {
-            width: 1024,
-            height: 1024,
+            width: product.canvasSize,
+            height: product.canvasSize,
             backgroundColor: 'transparent',
-            preserveObjectStacking: true, // Ensures new objects don't go behind the background if we had one
+            preserveObjectStacking: true,
         });
 
         // 2. Add the "Print Area" Guide
-        // This visualizes exactly where the print lands on the shirt
         const designZone = new fabric.Rect({
-            left: 300,
-            top: 200,
-            width: 424,
-            height: 600,
+            left: product.designZone.left,
+            top: product.designZone.top,
+            width: product.designZone.width,
+            height: product.designZone.height,
             fill: 'transparent',
-            stroke: 'rgba(0,0,0,0.2)', // Light grey guide border
+            stroke: 'rgba(0,0,0,0.2)',
             strokeWidth: 2,
             strokeDashArray: [5, 5],
-            selectable: false, // User cannot move the guide
-            evented: false,    // User cannot click the guide
+            selectable: false,
+            evented: false,
         });
 
         canvas.add(designZone);
@@ -51,11 +55,9 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
             designZoneRef.current.set('visible', false);
 
             // 2. Export at High Resolution (Multiplier is key!)
-            // A multiplier of 3 turns a 1024px canvas into a 3072px image.
-            // This counteracts the blur caused by the displacement filter later.
             const dataUrl = canvas.toDataURL({
                 format: 'png',
-                multiplier: 3, // <--- CHANGE THIS from 1 to 3 or 4
+                multiplier: 3,
                 quality: 1
             });
 
@@ -72,13 +74,19 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
         return () => {
             canvas.dispose();
         };
-    }, [onUpdate]);
+    }, [onUpdate, product]);
 
     const addText = () => {
         if (!fabricCanvas) return;
+        // Center in design zone
+        const centerX = product.designZone.left + product.designZone.width / 2;
+        const centerY = product.designZone.top + product.designZone.height / 2;
+
         const text = new fabric.IText('Design Here', {
-            left: 450,
-            top: 400,
+            left: centerX,
+            top: centerY,
+            originX: 'center',
+            originY: 'center',
             fontFamily: 'Arial',
             fill: '#333',
             fontSize: 60,
@@ -100,10 +108,17 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
             imgObj.onload = () => {
                 const imgInstance = new fabric.Image(imgObj);
                 // Scale image to reasonable size
-                imgInstance.scaleToWidth(300);
+                imgInstance.scaleToWidth(200);
+
+                // Center in design zone
+                const centerX = product.designZone.left + product.designZone.width / 2;
+                const centerY = product.designZone.top + product.designZone.height / 2;
+
                 imgInstance.set({
-                    left: 350,
-                    top: 300
+                    left: centerX,
+                    top: centerY,
+                    originX: 'center',
+                    originY: 'center'
                 });
                 fabricCanvas.add(imgInstance);
                 fabricCanvas.setActiveObject(imgInstance);
@@ -139,7 +154,13 @@ export default function DesignEditor({ onUpdate }: DesignEditorProps) {
 
             {/* Editor Container */}
             <div className="relative w-full aspect-square border border-gray-200 rounded-xl overflow-hidden shadow-inner bg-gray-50 flex justify-center items-center bg-[url('/grid.png')]">
-                <canvas ref={canvasRef} className="w-full h-full" />
+                {/* Background Shirt Image */}
+                <img
+                    src={product.image}
+                    alt="Product Base"
+                    className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none"
+                />
+                <canvas ref={canvasRef} className="w-full h-full relative z-10" />
             </div>
 
             {/* Controls */}
