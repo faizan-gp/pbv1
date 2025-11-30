@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Product } from '../data/products';
 
 interface ProductPreviewProps {
@@ -14,6 +14,15 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
 
     // State to toggle print area visibility
     const [showPrintArea, setShowPrintArea] = React.useState(true);
+    const [enableDistortion, setEnableDistortion] = React.useState(true);
+
+    useEffect(() => {
+        // Check if device is iOS (iPhone, iPad, iPod)
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        if (isIOS) {
+            setEnableDistortion(false);
+        }
+    }, []);
 
     // Calculate percentages for CSS positioning
     // We convert raw pixels (e.g., 280) into percentages relative to canvasSize (e.g., 1000)
@@ -84,7 +93,7 @@ export default function ProductPreview({ designTextureUrl, product }: ProductPre
                             ...zoneStyle, // Position it exactly in the preview zone
                             mixBlendMode: 'normal',
                             opacity: 1,
-                            filter: 'url(#fabric-warp) contrast(1)',
+                            filter: enableDistortion ? 'url(#fabric-warp) contrast(1)' : 'contrast(1)',
                             imageRendering: 'auto',
                         }}
                     />

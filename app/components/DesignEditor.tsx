@@ -252,7 +252,7 @@ export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] lg:h-[600px] bg-gray-50 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
+        <div className="flex flex-col lg:flex-row min-h-[calc(100vh-120px)] lg:h-[600px] bg-gray-50 rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
             {/* Canvas Area - Takes available space */}
             <div className="relative flex-1 bg-[url('/grid.png')] overflow-hidden flex items-center justify-center p-4 lg:p-8 order-1 lg:order-2">
                 <div ref={containerRef} className="relative w-full max-w-md lg:max-w-xl max-h-full aspect-square shadow-2xl rounded-2xl overflow-hidden bg-white mx-auto">
