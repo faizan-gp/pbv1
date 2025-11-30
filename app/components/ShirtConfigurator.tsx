@@ -3,9 +3,11 @@
 import React, { useState } from 'react';
 import DesignEditor from './DesignEditor';
 import ProductPreview from './ProductPreview';
+import { products } from '../data/products';
 
 export default function ShirtConfigurator() {
     const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
+    const [selectedProduct, setSelectedProduct] = useState(products[0]);
 
     return (
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -21,10 +23,10 @@ export default function ShirtConfigurator() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
                     <div className="order-2 lg:order-1 sticky top-8">
-                        <DesignEditor onUpdate={setDesignTextureUrl} />
+                        <DesignEditor onUpdate={setDesignTextureUrl} product={selectedProduct} />
                     </div>
                     <div className="order-1 lg:order-2 sticky top-8">
-                        <ProductPreview designTextureUrl={designTextureUrl} />
+                        <ProductPreview designTextureUrl={designTextureUrl} product={selectedProduct} />
                     </div>
                 </div>
             </div>

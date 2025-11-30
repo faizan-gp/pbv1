@@ -9,6 +9,17 @@ export interface Product {
         width: number;
         height: number;
     };
+    previewConfig: {
+        image: string; // The base image for the preview
+        designZone: {
+            left: number; // Percentage (0-100) or pixel value relative to preview image
+            top: number;
+            width: number;
+            height: number;
+        };
+        displacementMap?: string;
+        shadowMap?: string;
+    };
 }
 
 export const products: Product[] = [
@@ -26,5 +37,16 @@ export const products: Product[] = [
             width: 320,
             height: 407,
         },
+        previewConfig: {
+            image: '/shirt_base.png',
+            designZone: {
+                left: 362, // Initial values matching editor, can be tweaked
+                top: 350,
+                width: 320,
+                height: 407,
+            },
+            displacementMap: '/shirt_base_displacement.png',
+            shadowMap: '/shirt_base_ambient_occ.png',
+        },
     },
-];
+]; 

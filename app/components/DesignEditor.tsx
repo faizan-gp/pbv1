@@ -3,20 +3,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 
+import { Product } from '../data/products';
+
 interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
+    product: Product;
 }
 
-import { products } from '../data/products';
-
-// ... inside component ...
-export default function DesignEditor({ onUpdate }: DesignEditorProps) {
+export default function DesignEditor({ onUpdate, product }: DesignEditorProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const designZoneRef = useRef<fabric.Rect | null>(null);
-
-    // Use the first product for now
-    const product = products[0];
 
     useEffect(() => {
         if (!canvasRef.current) return;

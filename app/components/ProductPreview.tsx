@@ -1,30 +1,25 @@
-'use client';
-
 import React from 'react';
-// 1. Import the product data to get dimensions
-import { products } from '../data/products';
+import { Product } from '../data/products';
 
 interface ProductPreviewProps {
     designTextureUrl: string | null;
+    product: Product;
 }
 
-export default function ProductPreview({ designTextureUrl }: ProductPreviewProps) {
-    // Standard maps
-    const DISTORTION_MAP_URL = '/shirt_base_normal_map.png';
-    const SHADOW_MAP_URL = '/shirt_base_ambient_occ.png';
-    const HIGHLIGHT_MAP_URL = '/shirt_base_displacement.png';
-
-    // 2. Get Geometry Data
-    // In a real app, pass 'productId' as a prop. Using index 0 for demo.
-    const product = products[0];
+export default function ProductPreview({ designTextureUrl, product }: ProductPreviewProps) {
+    // Standard maps (defaults if not specified in product)
+    const DISTORTION_MAP_URL = product.previewConfig.displacementMap || '/shirt_base_normal_map.png';
+    const SHADOW_MAP_URL = product.previewConfig.shadowMap || '/shirt_base_ambient_occ.png';
+    const HIGHLIGHT_MAP_URL = product.previewConfig.displacementMap || '/shirt_base_displacement.png';
 
     // Calculate percentages for CSS positioning
     // We convert raw pixels (e.g., 280) into percentages relative to canvasSize (e.g., 1000)
+    // NOTE: We use previewConfig.designZone here, not the editor's designZone
     const zoneStyle = {
-        left: `${(product.designZone.left / product.canvasSize) * 100}%`,
-        top: `${(product.designZone.top / product.canvasSize) * 100}%`,
-        width: `${(product.designZone.width / product.canvasSize) * 100}%`,
-        height: `${(product.designZone.height / product.canvasSize) * 100}%`,
+        left: `${(product.previewConfig.designZone.left / product.canvasSize) * 100}%`,
+        top: `${(product.previewConfig.designZone.top / product.canvasSize) * 100}%`,
+        width: `${(product.previewConfig.designZone.width / product.canvasSize) * 100}%`,
+        height: `${(product.previewConfig.designZone.height / product.canvasSize) * 100}%`,
     };
 
     return (
@@ -42,8 +37,8 @@ export default function ProductPreview({ designTextureUrl }: ProductPreviewProps
 
                 {/* LAYER 1: Base Product Image */}
                 <img
-                    src="/shirt_base.png"
-                    alt="T-Shirt Base"
+                    src={product.previewConfig.image}
+                    alt={product.name}
                     className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
                 />
 
