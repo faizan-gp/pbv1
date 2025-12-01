@@ -109,8 +109,8 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                         style={{
                             ...zoneStyle,
                             mixBlendMode: 'normal',
-                            opacity: 1,
-                            filter: enableDistortion ? `url(#fabric-warp-${activeViewId}) contrast(1)` : 'contrast(1)',
+                            opacity: 0.95,
+                            filter: enableDistortion ? `url(#fabric-warp-${activeViewId}) contrast(0.98)` : 'contrast(0.98)',
                             imageRendering: 'auto',
                             transform: activePreview.cssTransform || 'none',
                         }}

@@ -50,45 +50,46 @@ export const products: Product[] = [
         image: '/products/shirt/shirt_cutout.svg',
         canvasSize: 1024,
         colors: [
-            {
-                name: 'Grey',
-                hex: '#808080',
-                images: {
-                    front: '/products/shirt/colors/shirt_grey.png',
-                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
-                }
-            },
-            {
-                name: 'Cyan',
-                hex: '#00FFFF',
-                images: {
-                    front: '/products/shirt/colors/shirt_cyan.png',
-                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
-                }
-            },
-            {
-                name: 'Black',
-                hex: '#000000',
-                images: {
-                    front: '/products/shirt/colors/shirt_black.png',
-                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
-                }
-            },
-            {
-                name: 'White',
-                hex: '#FFFFFF',
-                images: {
-                    front: '/products/shirt/colors/shirt_white.png',
-                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
-                }
-            },
+            // {
+            //     name: 'Grey',
+            //     hex: '#808080',
+            //     images: {
+            //         front: '/products/shirt/colors/shirt_grey.png',
+            //         hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
+            //     }
+            // },
+            // {
+            //     name: 'Cyan',
+            //     hex: '#00FFFF',
+            //     images: {
+            //         front: '/products/shirt/colors/shirt_cyan.png',
+            //         hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
+            //     }
+            // },
+            // {
+            //     name: 'Black',
+            //     hex: '#000000',
+            //     images: {
+            //         front: '/products/shirt/colors/shirt_black.png',
+            //         hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
+            //     }
+            // },
+            // {
+            //     name: 'White',
+            //     hex: '#FFFFFF',
+            //     images: {
+            //         front: '/products/shirt/colors/shirt_white.png',
+            //         hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
+            //     }
+            // },
             {
                 name: 'Sand Dune',
                 hex: '#fbdebf',
                 images: {
                     front: '/products/shirt/colors/shirt_sand_dune.png',
-                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png'
-                }
+                    hanging: '/products/shirt/colors/sand_dune/shirt_sand_dune_hanging.png',
+                    hanging2: '/products/shirt/colors/sand_dune/hanging2/shirt_sand_dune_hanging_2.png'
+                },
             },
         ],
         designZone: {
@@ -117,26 +118,46 @@ export const products: Product[] = [
                 shadowMap: '/products/shirt/maps/shirt_sand_dune_ambient.png',
                 editorCutout: '/products/shirt/shirt_cutout.svg',
             },
-            {
-                id: 'hanging',
-                name: 'Hanging View',
-                editorZone: {
-                    left: 335,
-                    top: 270,
-                    width: 350,
-                    height: 447,
-                },
-                previewZone: {
-                    left: 437,
-                    top: 410,
-                    width: 320,
-                    height: 407,
-                },
-                displacementMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_displacement.png',
-                shadowMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_ambient.png',
-                editorCutout: '/products/shirt/shirt_cutout.svg', // Placeholder
-                cssTransform: 'rotate(-2deg) skewX(-1deg)',
-            }
+            // {
+            //     id: 'hanging',
+            //     name: 'Hanging View',
+            //     editorZone: {
+            //         left: 335,
+            //         top: 270,
+            //         width: 350,
+            //         height: 447,
+            //     },
+            //     previewZone: {
+            //         left: 437,
+            //         top: 410,
+            //         width: 320,
+            //         height: 407,
+            //     },
+            //     displacementMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_displacement.png',
+            //     shadowMap: '/products/shirt/maps/sand_dune/sand_dune_hanging/shirt_sand_dune_hanging_ambient.png',
+            //     editorCutout: '/products/shirt/shirt_cutout.svg', // Placeholder
+            //     cssTransform: 'rotate(-2deg) skewX(-1deg)',
+            // },
+            // {
+            //     id: 'hanging2',
+            //     name: 'Hanging View 2',
+            //     editorZone: {
+            //         left: 335,
+            //         top: 270,
+            //         width: 350,
+            //         height: 447,
+            //     },
+            //     previewZone: {
+            //         "left": 380,
+            //         "top": 384,
+            //         "width": 294,
+            //         "height": 368
+            //     },
+            // displacementMap: '/products/shirt/maps/sand_dune/sand_dune_hanging_2/shirt_sand_dune_hanging_2_displacement.png',
+            // shadowMap: '/products/shirt/maps/sand_dune/sand_dune_hanging_2/shirt_sand_dune_hanging_2_ambient.png',
+            // editorCutout: '/products/shirt/shirt_cutout.svg', // Placeholder
+            //     // cssTransform: 'rotate(-2deg) skewX(-1deg)',
+            // }
         ],
     },
 ];
