@@ -14,9 +14,9 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
 
     // Standard maps
-    const DISTORTION_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_normal_map.png';
-    const SHADOW_MAP_URL = activePreview.shadowMap || '/products/shirt/maps/shirt_base_ambient_occ.png';
-    const HIGHLIGHT_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_displacement.png';
+    const DISTORTION_MAP_URL = activePreview.displacementMap;
+    const SHADOW_MAP_URL = activePreview.shadowMap;
+    const HIGHLIGHT_MAP_URL = activePreview.displacementMap;
 
     // State to toggle print area visibility
     const [showPrintArea, setShowPrintArea] = React.useState(true);
@@ -159,7 +159,6 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                         </filter>
                     </defs>
                 </svg>
-
             </div>
 
             <div className="flex justify-center gap-4 text-xs text-gray-400 mt-2">
