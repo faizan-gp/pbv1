@@ -30,6 +30,7 @@ export interface IProductColor {
 export interface IProduct extends Document {
     id: string; // We use a string ID in our app logic (e.g. 't-shirt-standard')
     name: string;
+    category: string;
     image: string;
     canvasSize: number;
     colors: IProductColor[];
@@ -45,6 +46,7 @@ export interface IProduct extends Document {
 const ProductSchema: Schema = new Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    category: { type: String, required: true },
     image: { type: String, required: true },
     canvasSize: { type: Number, required: true },
     colors: [

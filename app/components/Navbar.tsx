@@ -25,6 +25,36 @@ export default function Navbar() {
                     >
                         Products
                     </Link>
+
+                    {/* Categories Dropdown */}
+                    <div className="relative group">
+                        <button className="flex items-center gap-1 text-sm font-medium text-gray-300 transition-colors hover:text-white py-2">
+                            Categories
+                            <svg className="w-4 h-4 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div className="absolute top-full left-0 pt-2 w-48 opacity-0 translate-y-2 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible transition-all duration-200">
+                            <div className="bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden py-1">
+                                {[
+                                    "Men's Clothing",
+                                    "Women's Clothing",
+                                    "Kids' Clothing",
+                                    "Accessories",
+                                    "Home & Living"
+                                ].map((cat) => (
+                                    <Link
+                                        key={cat}
+                                        href={`/products?category=${encodeURIComponent(cat)}`}
+                                        className="block px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-zinc-800"
+                                    >
+                                        {cat}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
                     <Link
                         href="/about"
                         className="text-sm font-medium text-gray-300 transition-colors hover:text-white"

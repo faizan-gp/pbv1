@@ -39,10 +39,20 @@ export default function ProductCreator() {
             previewZone: { left: 312, top: 262, width: 400, height: 500 },
         }
     ]);
-    const [activeViewId, setActiveViewId] = useState('front');
-    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor'); // Toggle state
+    const [activeViewId, setActiveViewId] = useState<string>('front');
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
+    const [category, setCategory] = useState("Men's Clothing");
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Categories based on Printify
+    const CATEGORIES = [
+        "Men's Clothing",
+        "Women's Clothing",
+        "Kids' Clothing",
+        "Accessories",
+        "Home & Living",
+    ];
 
     const CANVAS_SIZE = 1024;
 
@@ -315,16 +325,30 @@ export default function ProductCreator() {
                             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
                             <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Global Settings</h3>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-medium text-zinc-500">PRODUCT NAME</label>
-                            <input
-                                type="text"
-                                value={productName}
-                                onChange={(e) => setProductName(e.target.value)}
-                                placeholder="e.g. Heavyweight Tee"
-                                className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-sm text-zinc-200 placeholder-zinc-700 
-                                         focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
-                            />
+                        {/* Product Details */}
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Product Name</label>
+                                <input
+                                    type="text"
+                                    value={productName}
+                                    onChange={(e) => setProductName(e.target.value)}
+                                    placeholder="e.g. Premium Cotton Tee"
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-600"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Category</label>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-zinc-100"
+                                >
+                                    {CATEGORIES.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
 

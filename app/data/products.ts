@@ -30,6 +30,7 @@ export interface ProductColor {
 export interface Product {
     id: string;
     name: string;
+    category: string;
     image: string; // Path to the base product image (SVG or PNG) for editor (fallback)
     canvasSize: number; // The size of the editor canvas (e.g., 1024)
     colors: ProductColor[];
@@ -47,6 +48,7 @@ export const products: Product[] = [
     {
         id: 't-shirt-standard',
         name: 'Unisex Jersey Tee | Bella+Canvas 3001',
+        category: "Men's Clothing",
         image: '/products/tshirt-black.png',
         canvasSize: 1024,
         colors: [
@@ -76,6 +78,7 @@ export const products: Product[] = [
     {
         id: 'canvas-prod',
         name: 'Stretched Canvas | 12x16',
+        category: "Home & Living",
         image: '/products/canvas-12x16.png',
         canvasSize: 1024,
         colors: [
