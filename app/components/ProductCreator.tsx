@@ -21,6 +21,7 @@ interface ViewConfig {
     shadowMap?: string;
     cssTransform?: string;
     editorCutout?: string;
+    editorImage?: string;
 }
 
 export default function ProductCreator() {
@@ -485,8 +486,8 @@ export default function ProductCreator() {
                     <button
                         onClick={() => setViewMode('editor')}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-medium ${viewMode === 'editor'
-                                ? 'bg-zinc-800 text-blue-400 shadow-sm border border-zinc-700/50'
-                                : 'text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-zinc-800 text-blue-400 shadow-sm border border-zinc-700/50'
+                            : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                     >
                         <div className={`w-2 h-2 rounded-full ${viewMode === 'editor' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'bg-current opacity-20'}`}></div>
@@ -496,8 +497,8 @@ export default function ProductCreator() {
                     <button
                         onClick={() => setViewMode('preview')}
                         className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-medium ${viewMode === 'preview'
-                                ? 'bg-zinc-800 text-emerald-400 shadow-sm border border-zinc-700/50'
-                                : 'text-zinc-500 hover:text-zinc-300'
+                            ? 'bg-zinc-800 text-emerald-400 shadow-sm border border-zinc-700/50'
+                            : 'text-zinc-500 hover:text-zinc-300'
                             }`}
                     >
                         <div className={`w-2 h-2 rounded-full ${viewMode === 'preview' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-current opacity-20'}`}></div>

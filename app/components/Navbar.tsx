@@ -26,6 +26,24 @@ export default function Navbar() {
                         Products
                     </Link>
                     <Link
+                        href="/about"
+                        className="text-sm font-medium text-gray-300 transition-colors hover:text-white"
+                    >
+                        About
+                    </Link>
+                    <Link
+                        href="/faq"
+                        className="text-sm font-medium text-gray-300 transition-colors hover:text-white"
+                    >
+                        FAQ
+                    </Link>
+                    <Link
+                        href="/contact"
+                        className="text-sm font-medium text-gray-300 transition-colors hover:text-white"
+                    >
+                        Contact
+                    </Link>
+                    <Link
                         href="/cart"
                         className="group relative flex items-center justify-center rounded-full p-2 text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
                     >
