@@ -307,14 +307,14 @@ export default function ProductCreator() {
     const activeView = views.find(v => v.id === activeViewId);
 
     return (
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden bg-zinc-950 text-zinc-100 font-sans">
+        <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden bg-white text-gray-900 font-sans">
             {/* Left Sidebar: Controls */}
-            <div className="w-full lg:w-80 bg-zinc-900 border-r border-zinc-800 flex flex-col z-20 shadow-xl">
+            <div className="w-full lg:w-80 bg-gray-50 border-r border-gray-200 flex flex-col z-20 shadow-xl">
                 {/* Sidebar Header */}
-                <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
+                <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-white">
                     <div>
-                        <h2 className="text-sm font-semibold tracking-wider text-zinc-100 uppercase">Configurator</h2>
-                        <div className="text-[10px] text-zinc-500 font-mono mt-1">v2.1.0</div>
+                        <h2 className="text-sm font-semibold tracking-wider text-gray-900 uppercase">Configurator</h2>
+                        <div className="text-[10px] text-gray-500 font-mono mt-1">v2.1.0</div>
                     </div>
                 </div>
 
@@ -322,27 +322,27 @@ export default function ProductCreator() {
                     {/* SECTION 1: Details */}
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Global Settings</h3>
+                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+                            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Global Settings</h3>
                         </div>
                         {/* Product Details */}
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Product Name</label>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Product Name</label>
                                 <input
                                     type="text"
                                     value={productName}
                                     onChange={(e) => setProductName(e.target.value)}
                                     placeholder="e.g. Premium Cotton Tee"
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-zinc-600"
+                                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all placeholder:text-gray-400 text-gray-900"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">Category</label>
+                                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Category</label>
                                 <select
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
-                                    className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-zinc-100"
+                                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all text-gray-900"
                                 >
                                     {CATEGORIES.map(cat => (
                                         <option key={cat} value={cat}>{cat}</option>
@@ -352,20 +352,20 @@ export default function ProductCreator() {
                         </div>
                     </div>
 
-                    <div className="h-px bg-zinc-800/50" />
+                    <div className="h-px bg-gray-200/50" />
 
                     {/* SECTION 2: Views */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Views</h3>
+                                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest">Views</h3>
                             </div>
                             <button
                                 onClick={addView}
-                                className="text-[10px] px-2 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded border border-zinc-700 transition-colors flex items-center gap-1"
+                                className="text-[10px] px-2 py-1 bg-white hover:bg-gray-100 text-gray-600 rounded border border-gray-200 transition-colors flex items-center gap-1"
                             >
-                                <span className="text-emerald-500 text-lg leading-none">+</span> New
+                                <span className="text-emerald-600 text-lg leading-none">+</span> New
                             </button>
                         </div>
 
@@ -376,47 +376,47 @@ export default function ProductCreator() {
                                     key={view.id}
                                     onClick={() => setActiveViewId(view.id)}
                                     className={`relative px-3 py-2 text-xs font-medium rounded-md text-left transition-all border ${activeViewId === view.id
-                                        ? 'bg-zinc-800 border-indigo-500/50 text-indigo-400 ring-1 ring-indigo-500/20'
-                                        : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300'
+                                        ? 'bg-white border-indigo-500/50 text-indigo-600 ring-1 ring-indigo-500/20 shadow-sm'
+                                        : 'bg-gray-100 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700'
                                         }`}
                                 >
                                     <span className="truncate block">{view.name}</span>
-                                    {activeViewId === view.id && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-500 rounded-full box-shadow" />}
+                                    {activeViewId === view.id && <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-600 rounded-full box-shadow" />}
                                 </button>
                             ))}
                         </div>
 
                         {/* Active View Details */}
                         {activeView && (
-                            <div className="p-4 bg-zinc-950/50 border border-zinc-800 rounded-lg space-y-4 shadow-inner">
+                            <div className="p-4 bg-white border border-gray-200 rounded-lg space-y-4 shadow-sm">
                                 <div className="space-y-1">
-                                    <label className="text-[11px] font-medium text-zinc-500">VIEW LABEL</label>
+                                    <label className="text-[11px] font-medium text-gray-500">VIEW LABEL</label>
                                     <input
                                         type="text"
                                         value={activeView.name}
                                         onChange={(e) => setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, name: e.target.value } : v))}
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs text-gray-900 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
 
                                 {/* EDITOR IMAGE INPUT (CUTOUT) */}
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[11px] font-medium text-blue-500">EDITOR IMAGE (CUTOUT)</label>
-                                        <span className="text-[10px] text-zinc-600">For 2D Editor</span>
+                                        <label className="text-[11px] font-medium text-blue-600">EDITOR IMAGE (CUTOUT)</label>
+                                        <span className="text-[10px] text-gray-500">For 2D Editor</span>
                                     </div>
-                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-zinc-800 border-dashed rounded cursor-pointer hover:bg-zinc-900 hover:border-zinc-600 transition-all overflow-hidden bg-zinc-950">
+                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-gray-300 border-dashed rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all overflow-hidden bg-gray-50/50">
                                         {activeView.editorImage ? (
                                             <>
-                                                <img src={activeView.editorImage} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" alt="editor-v" />
-                                                <div className="relative z-10 flex items-center gap-1.5 text-blue-500 text-xs font-medium bg-zinc-950/80 px-2 py-1 rounded">
+                                                <img src={activeView.editorImage} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" alt="editor-v" />
+                                                <div className="relative z-10 flex items-center gap-1.5 text-blue-600 text-xs font-medium bg-white/90 px-2 py-1 rounded shadow-sm">
                                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><polyline points="20 6 9 17 4 12" /></svg>
                                                     Set
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="text-center">
-                                                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Upload SVG/PNG</span>
+                                                <span className="text-[10px] text-gray-400 group-hover:text-gray-600">Upload SVG/PNG</span>
                                             </div>
                                         )}
                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'editor')} />
@@ -426,21 +426,21 @@ export default function ProductCreator() {
                                 {/* PREVIEW IMAGE INPUT (REAL) */}
                                 <div className="space-y-1">
                                     <div className="flex justify-between items-center">
-                                        <label className="text-[11px] font-medium text-emerald-500">PREVIEW IMAGE (REAL)</label>
-                                        <span className="text-[10px] text-zinc-600">For 3D Preview</span>
+                                        <label className="text-[11px] font-medium text-emerald-600">PREVIEW IMAGE (REAL)</label>
+                                        <span className="text-[10px] text-gray-500">For 3D Preview</span>
                                     </div>
-                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-zinc-800 border-dashed rounded cursor-pointer hover:bg-zinc-900 hover:border-zinc-600 transition-all overflow-hidden bg-zinc-950">
+                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-gray-300 border-dashed rounded cursor-pointer hover:bg-gray-50 hover:border-gray-400 transition-all overflow-hidden bg-gray-50/50">
                                         {activeView.image ? (
                                             <>
-                                                <img src={activeView.image} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" alt="preview-v" />
-                                                <div className="relative z-10 flex items-center gap-1.5 text-emerald-500 text-xs font-medium bg-zinc-950/80 px-2 py-1 rounded">
+                                                <img src={activeView.image} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-60 transition-opacity" alt="preview-v" />
+                                                <div className="relative z-10 flex items-center gap-1.5 text-emerald-600 text-xs font-medium bg-white/90 px-2 py-1 rounded shadow-sm">
                                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><polyline points="20 6 9 17 4 12" /></svg>
                                                     Set
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="text-center">
-                                                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Upload Photo</span>
+                                                <span className="text-[10px] text-gray-400 group-hover:text-gray-600">Upload Photo</span>
                                             </div>
                                         )}
                                         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'preview')} />
@@ -448,13 +448,13 @@ export default function ProductCreator() {
                                 </div>
 
                                 <div className="space-y-1">
-                                    <label className="text-[11px] font-medium text-zinc-500">CSS TRANSFORM</label>
+                                    <label className="text-[11px] font-medium text-gray-500">CSS TRANSFORM</label>
                                     <input
                                         type="text"
                                         value={activeView.cssTransform || ''}
                                         placeholder="rotate(-2deg)"
                                         onChange={(e) => setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, cssTransform: e.target.value } : v))}
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs font-mono text-zinc-400 placeholder-zinc-700 focus:border-indigo-500 outline-none"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded px-2 py-1.5 text-xs font-mono text-gray-600 placeholder-gray-400 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
                             </div>
@@ -463,11 +463,11 @@ export default function ProductCreator() {
                 </div>
 
                 {/* Footer Actions */}
-                <div className="p-5 border-t border-zinc-800 bg-zinc-900 space-y-4">
+                <div className="p-5 border-t border-gray-200 bg-white space-y-4">
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 px-4 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_2px_10px_-2px_rgba(99,102,241,0.5)] active:translate-y-px"
+                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md active:translate-y-px"
                     >
                         {isSaving ? (
                             <>
@@ -483,7 +483,7 @@ export default function ProductCreator() {
                     </button>
 
                     <details className="group">
-                        <summary className="text-[10px] uppercase text-zinc-600 cursor-pointer hover:text-zinc-400 list-none flex justify-center items-center gap-1">
+                        <summary className="text-[10px] uppercase text-gray-500 cursor-pointer hover:text-gray-700 list-none flex justify-center items-center gap-1">
                             <span>Raw Data</span>
                         </summary>
                         <div className="absolute left-[340px] bottom-5 w-80 p-4 bg-zinc-900 border border-zinc-700 rounded-lg shadow-2xl z-50">

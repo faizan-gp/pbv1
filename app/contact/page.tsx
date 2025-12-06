@@ -27,18 +27,18 @@ export default function ContactPage() {
     };
 
     return (
-        <div className="bg-white dark:bg-black min-h-screen py-24 sm:py-32">
+        <div className="bg-white min-h-screen py-24 sm:py-32">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl space-y-16 md:flex md:gap-x-12 md:space-y-0 lg:max-w-none lg:gap-x-24">
 
                     {/* Contact Info */}
                     <div className="md:w-1/3">
-                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Get in touch</h2>
-                        <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
+                        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Get in touch</h2>
+                        <p className="mt-4 text-lg leading-8 text-gray-600">
                             Have questions about your order? For damaged or defective items, please include your Order ID and attach photos of the issue.
                         </p>
 
-                        <dl className="mt-10 space-y-4 text-base leading-7 text-gray-600 dark:text-gray-300">
+                        <dl className="mt-10 space-y-4 text-base leading-7 text-gray-600">
                             <div className="flex gap-x-4">
                                 <dt className="flex-none">
                                     <span className="sr-only">Address</span>
@@ -51,68 +51,68 @@ export default function ContactPage() {
                                     <span className="sr-only">Telephone</span>
                                     <Phone className="h-7 w-6 text-gray-400" aria-hidden="true" />
                                 </dt>
-                                <dd><a className="hover:text-gray-900 dark:hover:text-white" href="tel:+1 (555) 234-5678">+1 (555) 234-5678</a></dd>
+                                <dd><a className="hover:text-gray-900" href="tel:+1 (555) 234-5678">+1 (555) 234-5678</a></dd>
                             </div>
                             <div className="flex gap-x-4">
                                 <dt className="flex-none">
                                     <span className="sr-only">Email</span>
                                     <Mail className="h-7 w-6 text-gray-400" aria-hidden="true" />
                                 </dt>
-                                <dd><a className="hover:text-gray-900 dark:hover:text-white" href="mailto:hello@printbrawl.com">hello@printbrawl.com</a></dd>
+                                <dd><a className="hover:text-gray-900" href="mailto:hello@printbrawl.com">hello@printbrawl.com</a></dd>
                             </div>
                         </dl>
                     </div>
 
                     {/* Contact Form */}
-                    <div className="md:w-2/3 bg-gray-50 dark:bg-zinc-900 p-8 rounded-2xl border border-gray-100 dark:border-zinc-800">
+                    <div className="md:w-2/3 bg-gray-50 p-8 rounded-2xl border border-gray-100">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
                                 <div>
-                                    <label htmlFor="first-name" className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white">Name</label>
+                                    <label htmlFor="first-name" className="block text-sm font-semibold leading-6 text-gray-900">Name</label>
                                     <div className="mt-2.5">
                                         <input
                                             type="text"
                                             required
                                             value={formData.name}
                                             onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:ring-zinc-700 dark:text-white"
+                                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                         />
                                     </div>
                                 </div>
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white">Email</label>
+                                    <label htmlFor="email" className="block text-sm font-semibold leading-6 text-gray-900">Email</label>
                                     <div className="mt-2.5">
                                         <input
                                             type="email"
                                             required
                                             value={formData.email}
                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:ring-zinc-700 dark:text-white"
+                                            className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                         />
                                     </div>
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="subject" className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white">Subject</label>
+                                <label htmlFor="subject" className="block text-sm font-semibold leading-6 text-gray-900">Subject</label>
                                 <div className="mt-2.5">
                                     <input
                                         type="text"
                                         required
                                         value={formData.subject}
                                         onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                                        className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:ring-zinc-700 dark:text-white"
+                                        className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label htmlFor="message" className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white">Message</label>
+                                <label htmlFor="message" className="block text-sm font-semibold leading-6 text-gray-900">Message</label>
                                 <div className="mt-2.5">
                                     <textarea
                                         rows={4}
                                         required
                                         value={formData.message}
                                         onChange={e => setFormData({ ...formData, message: e.target.value })}
-                                        className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-zinc-800 dark:ring-zinc-700 dark:text-white"
+                                        className="block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
                             </div>

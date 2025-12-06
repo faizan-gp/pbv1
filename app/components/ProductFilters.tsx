@@ -39,7 +39,7 @@ export default function ProductFilters() {
                                 checked={currentCategory === category}
                                 onChange={() => toggleCategory(category)}
                             />
-                            <span className={`text-sm transition-colors ${currentCategory === category ? 'text-indigo-600 font-medium' : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white'}`}>
+                            <span className={`text-sm transition-colors ${currentCategory === category ? 'text-indigo-600 font-medium' : 'text-gray-500 group-hover:text-gray-900'}`}>
                                 {category}
                             </span>
                         </label>

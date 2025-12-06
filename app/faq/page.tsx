@@ -29,22 +29,22 @@ export default function FAQPage() {
     ];
 
     return (
-        <div className="bg-white dark:bg-black min-h-screen py-24 sm:py-32">
+        <div className="bg-white min-h-screen py-24 sm:py-32">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl lg:text-center">
                     <h2 className="text-base font-semibold leading-7 text-indigo-600">Frequently Asked Questions</h2>
-                    <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+                    <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                         Everything you need to know
                     </p>
-                    <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+                    <p className="mt-6 text-lg leading-8 text-gray-600">
                         Can't find the answer you're looking for? Reach out to our customer support team.
                     </p>
                 </div>
-                <div className="mx-auto mt-16 max-w-2xl divide-y divide-gray-900/10 dark:divide-zinc-800">
-                    <dl className="mt-10 space-y-6 divide-y divide-gray-900/10 dark:divide-zinc-800">
+                <div className="mx-auto mt-16 max-w-2xl divide-y divide-gray-900/10">
+                    <dl className="mt-10 space-y-6 divide-y divide-gray-900/10">
                         {faqs.map((faq, index) => (
                             <details key={index} className="group pt-6">
-                                <summary className="flex w-full items-start justify-between text-left text-gray-900 dark:text-gray-200 cursor-pointer list-none">
+                                <summary className="flex w-full items-start justify-between text-left text-gray-900 cursor-pointer list-none">
                                     <span className="text-base font-semibold leading-7">{faq.question}</span>
                                     <span className="ml-6 flex h-7 items-center">
                                         <svg className="h-6 w-6 rotate-0 transform text-gray-400 group-open:rotate-180 transition-transform duration-200" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
@@ -52,7 +52,7 @@ export default function FAQPage() {
                                         </svg>
                                     </span>
                                 </summary>
-                                <p className="mt-2 text-base leading-7 text-gray-600 dark:text-gray-400 pb-4 pr-12">
+                                <p className="mt-2 text-base leading-7 text-gray-600 pb-4 pr-12">
                                     {faq.answer}
                                 </p>
                             </details>

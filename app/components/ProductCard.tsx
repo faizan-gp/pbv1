@@ -9,10 +9,10 @@ export default function ProductCard({ product }: ProductCardProps) {
     const { id, name, image } = product;
     const price = 29.99; // Default price until added to DB
     return (
-        <div className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-lg dark:bg-black">
+        <div className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-lg">
             <div className="aspect-square w-full overflow-hidden bg-muted">
                 {/* In a real app, use next/image. For now, using a placeholder if needed or assuming valid URL */}
-                <div className="relative h-full w-full bg-gray-100 dark:bg-gray-800">
+                <div className="relative h-full w-full bg-gray-100">
                     <Image
                         src={image}
                         alt={name}
