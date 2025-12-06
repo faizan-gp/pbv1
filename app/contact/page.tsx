@@ -35,7 +35,7 @@ export default function ContactPage() {
                     <div className="md:w-1/3">
                         <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">Get in touch</h2>
                         <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
-                            Have questions about our products, shipping, or custom orders? We're here to help.
+                            Have questions about your order? For damaged or defective items, please include your Order ID and attach photos of the issue.
                         </p>
 
                         <dl className="mt-10 space-y-4 text-base leading-7 text-gray-600 dark:text-gray-300">

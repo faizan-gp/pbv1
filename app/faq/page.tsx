@@ -4,27 +4,27 @@ export default function FAQPage() {
     const faqs = [
         {
             question: "How long does shipping take?",
-            answer: "Standard shipping typically takes 5-7 business days within the US. International shipping can take 10-15 business days depending on the destination."
+            answer: "Since every product is custom-made to order, production typically takes 2-7 business days. Once shipped, standard domestic delivery takes 2-5 business days, while international shipping can take 10-30 business days depending on the destination."
         },
         {
             question: "What is your return policy?",
-            answer: "Since all our products are custom-made to order, we only accept returns for defective or damaged items. If you have an issue with your order, please contact us within 14 days of delivery."
+            answer: "Each item is uniquely printed just for you. As such, we cannot accept returns for buyer's remorse (e.g., wrong size or color). However, if your product arrives damaged or with a manufacturing defect, please contact us within 30 days for a free replacement or refund."
         },
         {
             question: "Can I cancel or change my order?",
-            answer: "We process orders quickly to get them to you as soon as possible. You can request a cancellation or change within 2 hours of placing your order. After that, production may have already begun."
+            answer: "We send orders to production almost immediately to ensure fast delivery. You have a very short window (usually 1 hour) to request changes. Once production begins, we cannot cancel or modify the order."
         },
         {
             question: "How do I care for my custom printed apparel?",
-            answer: "To ensure longevity, machine wash cold inside out with like colors. Tumble dry low or hang dry. Do not iron directly on the print."
+            answer: "For Direct-to-Garment (DTG) prints, machine wash cold, inside-out, on a gentle cycle with mild detergent and like colors. Tumble dry low or hang-dry for longest life. Do not iron directly on the print, and avoid dry cleaning."
         },
         {
             question: "Do you offer bulk discounts?",
-            answer: "Yes! We offer tiered pricing for bulk orders. Please contact our sales team for a custom quote for orders over 50 items."
+            answer: "Yes! If you're looking to order 50+ items for a team or event, please reach out to our support team for a custom quote."
         },
         {
             question: "What file formats do you accept for custom designs?",
-            answer: "We recommend high-resolution PNG or SVG files with transparent backgrounds for the best results. JPEG is also accepted but may have a white background if not properly formatted."
+            answer: "High-resolution transparent PNGs (300 DPI) are recommended for the best print quality. SVGs are also supported for vector graphics."
         }
     ];
 
