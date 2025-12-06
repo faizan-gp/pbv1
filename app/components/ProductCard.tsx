@@ -12,13 +12,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-lg dark:bg-black">
             <div className="aspect-square w-full overflow-hidden bg-muted">
                 {/* In a real app, use next/image. For now, using a placeholder if needed or assuming valid URL */}
-                <div className="h-full w-full bg-gray-200 dark:bg-gray-800 object-cover transition-transform duration-300 group-hover:scale-105" />
-                {/* <Image 
-            src={image} 
-            alt={name} 
-            fill 
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-        /> */}
+                <div className="relative h-full w-full bg-gray-100 dark:bg-gray-800">
+                    <Image
+                        src={image}
+                        alt={name}
+                        fill
+                        className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                    />
+                </div>
             </div>
             <div className="p-4">
                 <h3 className="text-lg font-semibold text-foreground">{name}</h3>
