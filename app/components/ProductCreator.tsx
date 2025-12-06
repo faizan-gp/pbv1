@@ -32,12 +32,14 @@ export default function ProductCreator() {
         {
             id: 'front',
             name: 'Front View',
-            image: '',
+            image: '', // Preview Image (Realistic)
+            editorImage: '', // Editor Image (Flat/Cutout)
             editorZone: { left: 312, top: 262, width: 400, height: 500 },
             previewZone: { left: 312, top: 262, width: 400, height: 500 },
         }
     ]);
     const [activeViewId, setActiveViewId] = useState('front');
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor'); // Toggle state
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -62,7 +64,7 @@ export default function ProductCreator() {
         };
     }, []);
 
-    // Handle Active View Change & Canvas Updates
+    // Handle Active View Change, View Mode & Canvas Updates
     useEffect(() => {
         if (!fabricCanvas) return;
 
@@ -73,7 +75,7 @@ export default function ProductCreator() {
         fabricCanvas.backgroundColor = 'transparent';
 
         // Helper to create zone rects
-        const createZoneRect = (zone: Zone, strokeColor: string, fillColor: string, id: string, label: string) => {
+        const createZoneRect = (zone: Zone, strokeColor: string, fillColor: string, id: string, label: string, visible: boolean) => {
             const rect = new fabric.Rect({
                 left: zone.left,
                 top: zone.top,
@@ -87,9 +89,11 @@ export default function ProductCreator() {
                 borderColor: strokeColor,
                 cornerSize: 10,
                 transparentCorners: false,
-                selectable: true,
-                hasControls: true,
-                hasBorders: true,
+                selectable: visible, // Only selectable if visible
+                evented: visible,
+                hasControls: visible,
+                hasBorders: visible,
+                visible: visible, // Visibility toggle
                 data: { id },
                 strokeDashArray: [6, 6],
                 borderOpacityWhenMoving: 0.8,
@@ -103,6 +107,7 @@ export default function ProductCreator() {
                 fill: strokeColor,
                 selectable: false,
                 evented: false,
+                visible: visible,
                 data: { id: `${id}-label` },
                 fontWeight: 600,
                 backgroundColor: 'rgba(255,255,255,0.9)',
@@ -112,23 +117,25 @@ export default function ProductCreator() {
             return { rect, text };
         };
 
-        // Editor Zone (Blue)
+        // Editor Zone (Blue) - Visible ONLY in Editor Mode
         const editor = createZoneRect(
             activeView.editorZone,
             '#3b82f6', // blue-500
             'rgba(59, 130, 246, 0.1)',
             'editor-zone',
-            'EDITOR ZONE'
+            'EDITOR ZONE',
+            viewMode === 'editor'
         );
         fabricCanvas.add(editor.rect, editor.text);
 
-        // Preview Zone (Green)
+        // Preview Zone (Green) - Visible ONLY in Preview Mode
         const preview = createZoneRect(
             activeView.previewZone,
             '#22c55e', // green-500
             'rgba(34, 197, 94, 0.1)',
             'preview-zone',
-            'PREVIEW ZONE'
+            'PREVIEW ZONE',
+            viewMode === 'preview'
         );
         fabricCanvas.add(preview.rect, preview.text);
 
@@ -136,38 +143,44 @@ export default function ProductCreator() {
         const updateState = () => {
             const editorObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone') as fabric.Rect;
             const previewObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone') as fabric.Rect;
+
+            // Update labels pos
             const editorLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone-label') as fabric.Text;
             const previewLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone-label') as fabric.Text;
 
-            if (editorObj && editorLabel) {
+            if (editorObj && editorLabel && editorObj.visible) {
                 editorLabel.set({ left: editorObj.left, top: (editorObj.top || 0) - 24 });
             }
-            if (previewObj && previewLabel) {
+            if (previewObj && previewLabel && previewObj.visible) {
                 previewLabel.set({ left: previewObj.left, top: (previewObj.top || 0) - 24 });
             }
 
-            if (editorObj && previewObj) {
-                setViews(prev => prev.map(v => {
-                    if (v.id === activeViewId) {
-                        return {
-                            ...v,
-                            editorZone: {
-                                left: Math.round(editorObj.left || 0),
-                                top: Math.round(editorObj.top || 0),
-                                width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)),
-                                height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
-                            },
-                            previewZone: {
-                                left: Math.round(previewObj.left || 0),
-                                top: Math.round(previewObj.top || 0),
-                                width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)),
-                                height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
-                            }
+            // Sync state
+            setViews(prev => prev.map(v => {
+                if (v.id === activeViewId) {
+                    const updatedView = { ...v };
+
+                    if (editorObj && viewMode === 'editor') {
+                        updatedView.editorZone = {
+                            left: Math.round(editorObj.left || 0),
+                            top: Math.round(editorObj.top || 0),
+                            width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)),
+                            height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
                         };
                     }
-                    return v;
-                }));
-            }
+
+                    if (previewObj && viewMode === 'preview') {
+                        updatedView.previewZone = {
+                            left: Math.round(previewObj.left || 0),
+                            top: Math.round(previewObj.top || 0),
+                            width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)),
+                            height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
+                        };
+                    }
+                    return updatedView;
+                }
+                return v;
+            }));
         };
 
         fabricCanvas.on('object:modified', updateState);
@@ -181,16 +194,23 @@ export default function ProductCreator() {
             fabricCanvas.off('object:moving', updateState);
             fabricCanvas.off('object:scaling', updateState);
         };
-    }, [fabricCanvas, activeViewId]);
+    }, [fabricCanvas, activeViewId, viewMode]); // Re-run when viewMode changes
 
     // Update JSON Output
     useEffect(() => {
+        // Fallback: If no explicit editor image, use generic image or nothing
+        // Structure needs to match Mongoose schema
         const config = {
             id: productName.toLowerCase().replace(/\s+/g, '-'),
             name: productName,
-            image: views[0]?.image || '',
+            image: views[0]?.editorImage || views[0]?.image || '', // Prefer Editor Image (Cutout) for main 'image' field
             canvasSize: CANVAS_SIZE,
-            colors: [],
+            // Create a default color entry that contains the preview images
+            colors: [{
+                name: 'Default',
+                hex: '#ffffff',
+                images: views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {})
+            }],
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
                 id: v.id,
@@ -199,20 +219,25 @@ export default function ProductCreator() {
                 previewZone: v.previewZone,
                 displacementMap: v.displacementMap,
                 shadowMap: v.shadowMap,
-                editorCutout: v.editorCutout,
+                editorCutout: v.editorImage, // Explicitly save editor cutout
                 cssTransform: v.cssTransform
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
     }, [views, productName]);
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'editor' | 'preview') => {
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
         reader.onload = (f) => {
             const result = f.target?.result as string;
-            setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, image: result } : v));
+            setViews(prev => prev.map(v =>
+                v.id === activeViewId
+                    ? { ...v, [type === 'editor' ? 'editorImage' : 'image']: result }
+                    : v
+            ));
         };
         reader.readAsDataURL(file);
     };
@@ -223,6 +248,7 @@ export default function ProductCreator() {
             id: newId,
             name: `View ${views.length + 1}`,
             image: '',
+            editorImage: '',
             editorZone: { left: 312, top: 262, width: 400, height: 500 },
             previewZone: { left: 312, top: 262, width: 400, height: 500 },
         }]);
@@ -251,10 +277,12 @@ export default function ProductCreator() {
                     id: 'front',
                     name: 'Front View',
                     image: '',
+                    editorImage: '',
                     editorZone: { left: 312, top: 262, width: 400, height: 500 },
                     previewZone: { left: 312, top: 262, width: 400, height: 500 },
                 }]);
                 setActiveViewId('front');
+                setJsonOutput('');
             } else {
                 showToast(data.error || 'Failed to save product', 'error');
             }
@@ -275,7 +303,7 @@ export default function ProductCreator() {
                 <div className="p-5 border-b border-zinc-800 flex items-center justify-between bg-zinc-900">
                     <div>
                         <h2 className="text-sm font-semibold tracking-wider text-zinc-100 uppercase">Configurator</h2>
-                        <div className="text-[10px] text-zinc-500 font-mono mt-1">v2.0.0</div>
+                        <div className="text-[10px] text-zinc-500 font-mono mt-1">v2.1.0</div>
                     </div>
                 </div>
 
@@ -345,25 +373,55 @@ export default function ProductCreator() {
                                         className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 text-xs text-zinc-300 focus:border-indigo-500 outline-none"
                                     />
                                 </div>
+
+                                {/* EDITOR IMAGE INPUT (CUTOUT) */}
                                 <div className="space-y-1">
-                                    <label className="text-[11px] font-medium text-zinc-500">BASE IMAGE</label>
-                                    <label className="relative group flex flex-col items-center justify-center w-full h-20 border border-zinc-800 border-dashed rounded cursor-pointer hover:bg-zinc-900 hover:border-zinc-600 transition-all overflow-hidden">
-                                        {activeView.image ? (
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-[11px] font-medium text-blue-500">EDITOR IMAGE (CUTOUT)</label>
+                                        <span className="text-[10px] text-zinc-600">For 2D Editor</span>
+                                    </div>
+                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-zinc-800 border-dashed rounded cursor-pointer hover:bg-zinc-900 hover:border-zinc-600 transition-all overflow-hidden bg-zinc-950">
+                                        {activeView.editorImage ? (
                                             <>
-                                                <img src={activeView.image} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" alt="preview" />
-                                                <div className="relative z-10 flex items-center gap-1.5 text-emerald-500 text-xs font-medium bg-zinc-950/80 px-2 py-1 rounded">
-                                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><polyline points="20 6 9 17 4 12" /></svg>
-                                                    Loaded
+                                                <img src={activeView.editorImage} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" alt="editor-v" />
+                                                <div className="relative z-10 flex items-center gap-1.5 text-blue-500 text-xs font-medium bg-zinc-950/80 px-2 py-1 rounded">
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    Set
                                                 </div>
                                             </>
                                         ) : (
                                             <div className="text-center">
-                                                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Upload PNG/SVG</span>
+                                                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Upload SVG/PNG</span>
                                             </div>
                                         )}
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'editor')} />
                                     </label>
                                 </div>
+
+                                {/* PREVIEW IMAGE INPUT (REAL) */}
+                                <div className="space-y-1">
+                                    <div className="flex justify-between items-center">
+                                        <label className="text-[11px] font-medium text-emerald-500">PREVIEW IMAGE (REAL)</label>
+                                        <span className="text-[10px] text-zinc-600">For 3D Preview</span>
+                                    </div>
+                                    <label className="relative group flex flex-col items-center justify-center w-full h-16 border border-zinc-800 border-dashed rounded cursor-pointer hover:bg-zinc-900 hover:border-zinc-600 transition-all overflow-hidden bg-zinc-950">
+                                        {activeView.image ? (
+                                            <>
+                                                <img src={activeView.image} className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-20 transition-opacity" alt="preview-v" />
+                                                <div className="relative z-10 flex items-center gap-1.5 text-emerald-500 text-xs font-medium bg-zinc-950/80 px-2 py-1 rounded">
+                                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><polyline points="20 6 9 17 4 12" /></svg>
+                                                    Set
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center">
+                                                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300">Upload Photo</span>
+                                            </div>
+                                        )}
+                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'preview')} />
+                                    </label>
+                                </div>
+
                                 <div className="space-y-1">
                                     <label className="text-[11px] font-medium text-zinc-500">CSS TRANSFORM</label>
                                     <input
@@ -422,17 +480,29 @@ export default function ProductCreator() {
                     }}
                 />
 
-                {/* Toolbar */}
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-zinc-900/90 backdrop-blur border border-zinc-800 px-4 py-2 rounded-full shadow-2xl z-30">
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full border-2 border-blue-500"></div>
-                        <span className="text-xs font-medium text-zinc-400">Editor Zone</span>
-                    </div>
-                    <div className="w-px h-4 bg-zinc-700"></div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full border-2 border-green-500"></div>
-                        <span className="text-xs font-medium text-zinc-400">Preview Zone</span>
-                    </div>
+                {/* Toolbar / Mode Switcher */}
+                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-zinc-900/95 backdrop-blur border border-zinc-800 p-1 rounded-full shadow-2xl z-30">
+                    <button
+                        onClick={() => setViewMode('editor')}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-medium ${viewMode === 'editor'
+                                ? 'bg-zinc-800 text-blue-400 shadow-sm border border-zinc-700/50'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        <div className={`w-2 h-2 rounded-full ${viewMode === 'editor' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'bg-current opacity-20'}`}></div>
+                        Editor Zone
+                    </button>
+                    <div className="w-px h-4 bg-zinc-800 mx-1"></div>
+                    <button
+                        onClick={() => setViewMode('preview')}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-medium ${viewMode === 'preview'
+                                ? 'bg-zinc-800 text-emerald-400 shadow-sm border border-zinc-700/50'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        <div className={`w-2 h-2 rounded-full ${viewMode === 'preview' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-current opacity-20'}`}></div>
+                        Preview Zone
+                    </button>
                 </div>
 
                 {/* Workspace */}
@@ -440,23 +510,34 @@ export default function ProductCreator() {
                     <div className="transform scale-[0.45] md:scale-[0.55] lg:scale-[0.65] xl:scale-[0.75] transition-transform origin-center">
                         <div className="bg-white rounded-lg shadow-2xl ring-1 ring-zinc-800 overflow-hidden relative" style={{ width: '1024px', height: '1024px' }}>
 
-                            {/* Image Layer */}
-                            {activeView?.image ? (
-                                <img
-                                    src={activeView.image}
-                                    alt="Context"
-                                    className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-90"
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-zinc-50 text-zinc-300">
-                                    <div className="text-center space-y-2">
-                                        <div className="w-16 h-16 border-2 border-zinc-200 border-dashed rounded-xl mx-auto flex items-center justify-center">
-                                            <svg className="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            {/* Image Layer - Dynamic based on Mode */}
+                            {/* Editor Mode Image */}
+                            <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'editor' ? 'opacity-100' : 'opacity-0'}`}>
+                                {activeView?.editorImage ? (
+                                    <img src={activeView.editorImage} className="w-full h-full object-contain pointer-events-none select-none opacity-90" alt="editor-bg" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-zinc-50 text-zinc-300">
+                                        <div className="text-center">
+                                            <p className="text-xs font-medium mb-1">No Editor Image</p>
+                                            <p className="text-[10px]">Upload "Editor Image" to see guide</p>
                                         </div>
-                                        <p className="text-xs font-medium">No Base Image</p>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                            </div>
+
+                            {/* Preview Mode Image */}
+                            <div className={`absolute inset-0 transition-opacity duration-300 ${viewMode === 'preview' ? 'opacity-100' : 'opacity-0'}`}>
+                                {activeView?.image ? (
+                                    <img src={activeView.image} className="w-full h-full object-contain pointer-events-none select-none" alt="preview-bg" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-zinc-50 text-zinc-300">
+                                        <div className="text-center">
+                                            <p className="text-xs font-medium mb-1">No Preview Image</p>
+                                            <p className="text-[10px]">Upload "Preview Image" to see context</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Interactive Canvas */}
                             <div className="absolute inset-0 w-full h-full">
