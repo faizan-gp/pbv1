@@ -338,26 +338,28 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                 <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
 
                     {/* Product Colors */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Product Color</label>
-                        <div className="flex flex-wrap gap-3">
-                            {product.colors.map((color) => (
-                                <button
-                                    key={color.name}
-                                    onClick={() => onColorChange(color)}
-                                    className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 relative ${selectedColor.name === color.name ? 'border-blue-600 scale-110 ring-2 ring-blue-100' : 'border-gray-200'}`}
-                                    style={{ backgroundColor: color.hex }}
-                                    title={color.name}
-                                >
-                                    {selectedColor.name === color.name && (
-                                        <span className="absolute inset-0 flex items-center justify-center text-white drop-shadow-md">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </span>
-                                    )}
-                                </button>
-                            ))}
+                    {product.colors && product.colors.length > 0 && (
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Product Color</label>
+                            <div className="flex flex-wrap gap-3">
+                                {product.colors.map((color) => (
+                                    <button
+                                        key={color.name}
+                                        onClick={() => onColorChange(color)}
+                                        className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 relative ${selectedColor.name === color.name ? 'border-blue-600 scale-110 ring-2 ring-blue-100' : 'border-gray-200'}`}
+                                        style={{ backgroundColor: color.hex }}
+                                        title={color.name}
+                                    >
+                                        {selectedColor.name === color.name && (
+                                            <span className="absolute inset-0 flex items-center justify-center text-white drop-shadow-md">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                            </span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <hr className="border-gray-100" />
 

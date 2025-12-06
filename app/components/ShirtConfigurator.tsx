@@ -16,7 +16,12 @@ export default function ShirtConfigurator({ product }: ShirtConfiguratorProps) {
     const { addToCart } = useCart();
     const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState(product);
-    const [selectedColor, setSelectedColor] = useState(product.colors[0]);
+
+    // Initial color fallback if product has no colors
+    const defaultColor = { name: 'Default', hex: '#ffffff', images: {} };
+    const initialColor = product.colors && product.colors.length > 0 ? product.colors[0] : defaultColor;
+
+    const [selectedColor, setSelectedColor] = useState(initialColor);
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
 
     const handleAddToCart = () => {
@@ -25,10 +30,10 @@ export default function ShirtConfigurator({ product }: ShirtConfiguratorProps) {
             name: selectedProduct.name,
             price: 29.99,
             quantity: 1,
-            image: designTextureUrl || selectedColor.images['front'], // Use designed texture if available, else base image
+            image: designTextureUrl || selectedColor.images['front'] || selectedProduct.image,
             options: {
                 color: selectedColor.name,
-                customText: 'Custom Design', // Placeholder or extract if we had text input separately
+                customText: 'Custom Design',
             },
         });
         router.push("/cart");
