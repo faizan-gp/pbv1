@@ -1,3 +1,5 @@
+import Product from "@/models/Product";
+import AdminOrderItems from "@/app/components/AdminOrderItems";
 import Link from "next/link";
 import { ArrowLeft, Package, MapPin, Calendar, Mail, User } from "lucide-react";
 import dbConnect from "@/lib/db";
@@ -16,6 +18,23 @@ async function getOrder(id: string) {
     }
 }
 
+async function getProductsForOrder(items: any[]) {
+    try {
+        await dbConnect();
+        const productIds = Array.from(new Set(items.map(item => item.productId)));
+        const products = await Product.find({ id: { $in: productIds } }).lean();
+
+        const productMap: Record<string, any> = {};
+        products.forEach((p: any) => {
+            productMap[p.id] = JSON.parse(JSON.stringify(p));
+        });
+        return productMap;
+    } catch (e) {
+        console.error(e);
+        return {};
+    }
+}
+
 export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
     const { id } = await params;
     const order = await getOrder(id);
@@ -23,6 +42,8 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
     if (!order) {
         return notFound();
     }
+
+    const products = await getProductsForOrder(order.items);
 
     return (
         <div className="space-y-6">
@@ -41,47 +62,14 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
                 {/* Main Content: Items */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-xl overflow-hidden p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
-                            <Package className="w-5 h-5 text-indigo-500" /> Items
-                        </h2>
-                        <div className="space-y-6">
-                            {order.items.map((item: any, idx: number) => (
-                                <div key={idx} className="flex gap-4 sm:gap-6">
-                                    <div className="h-24 w-24 flex-none rounded-xl border border-slate-100 bg-slate-50 p-2 relative group overflow-hidden">
-                                        <img
-                                            src={item.previewSnapshot || '/placeholder.png'}
-                                            alt="Product"
-                                            className="h-full w-full object-contain mix-blend-multiply"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-slate-900">{item.productId}</h3>
-                                        <div className="mt-1 flex flex-wrap gap-2">
-                                            {item.configSnapshot && (
-                                                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                                    Color: {item.configSnapshot.color}
-                                                </span>
-                                            )}
-                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                                Qty: {item.quantity}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-slate-900">${(item.price * item.quantity).toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                <div className="space-y-6">
+                    <AdminOrderItems items={order.items} products={products} orderId={order._id} />
                 </div>
 
-                {/* Sidebar: Customer & Summary */}
-                <div className="space-y-6">
+                {/* Customer & Summary */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Customer Info */}
                     <div className="bg-white shadow-sm ring-1 ring-slate-200 rounded-xl overflow-hidden p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-6 flex items-center gap-2">
