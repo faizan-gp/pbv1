@@ -7,9 +7,11 @@ import Order from "@/models/Order";
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-        }
+
+        // Removed strict session check to allow Guest Checkout
+        // if (!session || !session.user) {
+        //     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+        // }
 
         const { items, shippingDetails, paymentMethod, total } = await req.json();
 
@@ -23,9 +25,12 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
+        // Determine user ID (if logged in) or keep undefined for guest
+        const userId = session?.user ? (session.user as any).id : undefined;
+
         // Create the order
         const newOrder = await Order.create({
-            userId: (session.user as any).id,
+            userId: userId,
             items: items.map((item: any) => ({
                 productId: item.productId || item.id, // Handle both id formats
                 quantity: item.quantity,
@@ -43,7 +48,7 @@ export async function POST(req: Request) {
                 city: shippingDetails.city,
                 state: shippingDetails.state,
                 postalCode: shippingDetails.postalCode,
-                country: 'US', // Defaulting for now as form usually implied US
+                country: 'US', // Defaulting for now
             }
         });
 

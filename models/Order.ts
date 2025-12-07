@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IOrder extends Document {
-    userId: mongoose.Types.ObjectId;
+    userId?: mongoose.Types.ObjectId;
     items: Array<{
         productId: string;
         designId?: mongoose.Types.ObjectId; // If it was a saved design
@@ -26,7 +26,7 @@ export interface IOrder extends Document {
 }
 
 const OrderSchema: Schema = new Schema({
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: Schema.Types.ObjectId, ref: 'User' },
     items: [
         {
             productId: { type: String, required: true },
@@ -54,6 +54,11 @@ const OrderSchema: Schema = new Schema({
     }
 }, { timestamps: true });
 
-const Order = (mongoose.models.Order as Model<IOrder>) || mongoose.model<IOrder>('Order', OrderSchema);
+// Force recompilation of model if it exists to ensure schema updates are applied in dev
+if (mongoose.models.Order) {
+    delete mongoose.models.Order;
+}
+
+const Order = mongoose.model<IOrder>('Order', OrderSchema);
 
 export default Order;

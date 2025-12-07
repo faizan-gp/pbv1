@@ -33,6 +33,15 @@ export default function CheckoutPage() {
         setMounted(true);
     }, []);
 
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    // Redirect if cart is empty, but NOT if we just successfully completed an order
+    useEffect(() => {
+        if (mounted && items.length === 0 && !isSuccess) {
+            router.push('/cart');
+        }
+    }, [mounted, items.length, isSuccess, router]);
+
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -104,6 +113,7 @@ export default function CheckoutPage() {
             if (!res.ok) throw new Error('Order failed');
 
             const { orderId } = await res.json();
+            setIsSuccess(true); // Prevent redirect to cart
             clearCart();
             router.push(`/order-success/${orderId}`);
         } catch (error) {
@@ -116,10 +126,9 @@ export default function CheckoutPage() {
 
     if (!mounted) return null;
 
-    if (items.length === 0) {
-        if (typeof window !== 'undefined') router.push('/cart');
-        return null;
-    }
+
+
+    if (!mounted || items.length === 0) return null;
 
     return (
         <div className="min-h-screen bg-slate-50 selection:bg-indigo-500 selection:text-white pt-24 pb-24 relative overflow-hidden">
@@ -307,6 +316,7 @@ export default function CheckoutPage() {
                                                             const details = await actions.order.capture();
                                                             try {
                                                                 const orderId = await createOrderRecord(details);
+                                                                setIsSuccess(true); // Prevent redirect to cart
                                                                 clearCart();
                                                                 router.push(`/order-success/${orderId}`);
                                                             } catch (err) {

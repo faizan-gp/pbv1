@@ -51,8 +51,8 @@ export default async function AdminOrdersPage() {
                                         #{order._id.toString().slice(-8).toUpperCase()}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                                        {order.userId?.name || 'Unknown'}
-                                        <div className="text-xs text-slate-400">{order.userId?.email}</div>
+                                        <div className="font-medium text-slate-900">{order.shippingDetails?.name || 'Guest'}</div>
+                                        <div className="text-xs text-slate-500">{order.shippingDetails?.email}</div>
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                                         {new Date(order.createdAt).toLocaleDateString()}
@@ -62,9 +62,9 @@ export default async function AdminOrdersPage() {
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm">
                                         <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${order.status === 'delivered' ? 'bg-green-50 text-green-700 ring-green-600/20' :
-                                                order.status === 'shipped' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
-                                                    order.status === 'cancelled' ? 'bg-red-50 text-red-700 ring-red-600/20' :
-                                                        'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
+                                            order.status === 'shipped' ? 'bg-blue-50 text-blue-700 ring-blue-600/20' :
+                                                order.status === 'cancelled' ? 'bg-red-50 text-red-700 ring-red-600/20' :
+                                                    'bg-yellow-50 text-yellow-800 ring-yellow-600/20'
                                             }`}>
                                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                                         </span>
