@@ -13,10 +13,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
     // Get current preview config
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
 
-    // Standard maps
-    const DISTORTION_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_normal_map.png';
-    const SHADOW_MAP_URL = activePreview.shadowMap || '/products/shirt/maps/shirt_base_ambient_occ.png';
-    const HIGHLIGHT_MAP_URL = activePreview.displacementMap || '/products/shirt/maps/shirt_base_displacement.png';
+    // Standard maps removed as per user request
 
     // State to toggle print area visibility
     const [showPrintArea, setShowPrintArea] = React.useState(true);
@@ -118,48 +115,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                     />
                 )}
 
-                {/* LAYER 3: Highlights */}
-                <img
-                    src={HIGHLIGHT_MAP_URL}
-                    alt="Fabric Highlights"
-                    className="absolute inset-0 w-full h-full object-contain z-30 pointer-events-none"
-                    style={{
-                        mixBlendMode: 'soft-light',
-                        opacity: 0.5,
-                    }}
-                />
-
-                {/* LAYER 4: Deep Shadows */}
-                <img
-                    src={SHADOW_MAP_URL}
-                    alt="Fabric Shadows"
-                    className="absolute inset-0 w-full h-full object-contain z-40 pointer-events-none"
-                    style={{
-                        mixBlendMode: 'multiply',
-                        opacity: 0.6
-                    }}
-                />
-
-                {/* SVG FILTER DEFINITION */}
-                <svg className="absolute w-0 h-0">
-                    <defs>
-                        <filter id={`fabric-warp-${activeViewId}`}>
-                            <feImage
-                                href={DISTORTION_MAP_URL}
-                                result="map"
-                                x="0" y="0" width="100%" height="100%"
-                                preserveAspectRatio="none"
-                            />
-                            <feDisplacementMap
-                                in="SourceGraphic"
-                                in2="map"
-                                scale="20"
-                                xChannelSelector="R"
-                                yChannelSelector="G"
-                            />
-                        </filter>
-                    </defs>
-                </svg>
+                {/* Maps removed as per user request */}
 
             </div>
 
