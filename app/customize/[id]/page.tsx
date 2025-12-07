@@ -1,9 +1,8 @@
-import ProductCustomizer from '../../components/ProductCustomizer';
-import ShirtConfigurator from '../../components/ShirtConfigurator';
 import Product from '@/models/Product';
 import dbConnect from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { Metadata } from "next";
+import ShirtConfigurator from '../../components/ShirtConfigurator';
 
 async function getProduct(id: string) {
     await dbConnect();
@@ -18,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     if (!product) return { title: 'Product Not Found' };
 
     return {
-        title: `Customize ${product.name} | PrintBrawl`,
+        title: `Studio: Customize ${product.name} | PrintBrawl`,
         description: `Create your custom ${product.name} design.`,
     };
 }
@@ -31,5 +30,14 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
         notFound();
     }
 
-    return <ShirtConfigurator product={product} />;
+    return (
+        <div className="min-h-screen bg-slate-50 selection:bg-indigo-500 selection:text-white">
+            {/* Global Noise Overlay */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+            </div>
+
+            <ShirtConfigurator product={product} />
+        </div>
+    );
 }

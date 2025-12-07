@@ -1,4 +1,7 @@
-import React, { useEffect } from 'react';
+'use client';
+
+import React from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Product, ProductColor } from '../data/products';
 
 interface ProductPreviewProps {
@@ -10,25 +13,11 @@ interface ProductPreviewProps {
 }
 
 export default function ProductPreview({ designTextureUrl, product, selectedColor, activeViewId, onViewChange }: ProductPreviewProps) {
-    // Get current preview config
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
+    const [showGrid, setShowGrid] = React.useState(false);
 
-    // Standard maps removed as per user request
-
-    // State to toggle print area visibility
-    const [showPrintArea, setShowPrintArea] = React.useState(true);
-    const [enableDistortion, setEnableDistortion] = React.useState(true);
-
-    useEffect(() => {
-        // Check if device is iOS (iPhone, iPad, iPod)
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-        if (isIOS) {
-            setEnableDistortion(false);
-        }
-    }, []);
-
-    // Calculate percentages for CSS positioning
-    const currentZone = activePreview.previewZone || product.designZone; // Fallback for safety
+    // Calculate percentage positioning for the overlay
+    const currentZone = activePreview.previewZone || product.designZone;
     const zoneStyle = {
         left: `${(currentZone.left / product.canvasSize) * 100}%`,
         top: `${(currentZone.top / product.canvasSize) * 100}%`,
@@ -37,33 +26,65 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
     };
 
     return (
-        <div className="flex flex-col gap-6 p-6 bg-white rounded-2xl shadow-xl border border-gray-100 h-full">
-            <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-gray-900 tracking-tight">Product Preview</h3>
-                <div className="flex gap-2 items-center">
-                    <button
-                        onClick={() => setShowPrintArea(!showPrintArea)}
-                        className={`p-1.5 rounded-lg transition-colors ${showPrintArea ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-400 hover:text-gray-600'}`}
-                        title={showPrintArea ? "Hide Print Area" : "Show Print Area"}
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                    </button>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
-                        High Fidelity
-                    </span>
+        <div className="flex flex-col h-full bg-slate-50">
+            {/* Header / Controls */}
+            <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Preview</span>
+                <button
+                    onClick={() => setShowGrid(!showGrid)}
+                    className="text-xs font-medium text-indigo-600 flex items-center gap-1 hover:text-indigo-800"
+                >
+                    {showGrid ? <EyeOff size={14} /> : <Eye size={14} />}
+                    {showGrid ? 'Hide Grid' : 'Show Grid'}
+                </button>
+            </div>
+
+            {/* The Image Container */}
+            <div className="flex-1 relative flex items-center justify-center p-6 overflow-hidden">
+                <div className="relative w-full aspect-square max-w-[300px]">
+
+                    {/* 1. Base Image (The Shirt) */}
+                    <img
+                        src={selectedColor.images[activeViewId] || selectedColor.images['front']}
+                        alt="Preview"
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10"
+                    />
+
+                    {/* 2. Grid Overlay (Optional) */}
+                    {showGrid && (
+                        <div
+                            className="absolute z-30 border-2 border-dashed border-indigo-400/50 bg-indigo-500/5 pointer-events-none"
+                            style={zoneStyle}
+                        />
+                    )}
+
+                    {/* 3. The Generated Design */}
+                    {designTextureUrl && (
+                        <img
+                            src={designTextureUrl}
+                            alt="Design Overlay"
+                            className="absolute z-20 pointer-events-none"
+                            style={{
+                                ...zoneStyle,
+                                mixBlendMode: 'multiply', // This blends the ink into the fabric texture
+                                opacity: 0.9,
+                                transform: activePreview.cssTransform || 'none',
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
-            {/* View Switcher Tabs */}
+            {/* Footer / View Selector */}
             {product.previews.length > 1 && (
-                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+                <div className="p-4 bg-white border-t border-slate-100 flex justify-center gap-2">
                     {product.previews.map((preview) => (
                         <button
                             key={preview.id}
                             onClick={() => onViewChange(preview.id)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeViewId === preview.id
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700'
+                            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${activeViewId === preview.id
+                                    ? 'bg-slate-900 text-white shadow-md'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                 }`}
                         >
                             {preview.name}
@@ -71,60 +92,6 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                     ))}
                 </div>
             )}
-
-            <div className="relative w-full aspect-square bg-gray-50 rounded-xl overflow-hidden shadow-inner group select-none">
-
-                {/* LAYER 1: Base Product Image */}
-                <img
-                    src={selectedColor.images[activeViewId] || selectedColor.images[product.previews[0].id]}
-                    alt={`${product.name} - ${activePreview.name}`}
-                    className="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none"
-                />
-
-                {/* --- NEW LAYER: The Print Area Guide --- */}
-                {showPrintArea && (
-                    <div
-                        className="absolute z-15 border-2 border-dashed border-blue-400/60 pointer-events-none"
-                        style={{
-                            ...zoneStyle,
-                            // filter: enableDistortion ? `url(#fabric-warp-${activeViewId})` : 'none',
-                            mixBlendMode: 'multiply'
-                        }}
-                    >
-                        <span className="absolute -top-6 left-0 text-[10px] text-blue-400 font-mono uppercase tracking-widest opacity-70">
-                            Print Area
-                        </span>
-                    </div>
-                )}
-
-                {/* LAYER 2: The Design (Distorted & Blended) */}
-                {designTextureUrl && (
-                    <img
-                        src={designTextureUrl}
-                        alt="Design"
-                        className="absolute z-20 pointer-events-none transition-all duration-200"
-                        style={{
-                            ...zoneStyle,
-                            mixBlendMode: 'normal',
-                            opacity: 0.95,
-                            // filter: enableDistortion ? `url(#fabric-warp-${activeViewId}) contrast(0.98)` : 'contrast(0.98)',
-                            filter: 'contrast(0.98)', // Removed distortion as per user request
-                            imageRendering: 'auto',
-                            transform: activePreview.cssTransform || 'none',
-                        }}
-                    />
-                )}
-
-                {/* Maps removed as per user request */}
-
-            </div>
-
-            <div className="flex justify-center gap-4 text-xs text-gray-400 mt-2">
-                <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full border border-blue-400 border-dashed"></div>
-                    <span>Print Zone</span>
-                </div>
-            </div>
         </div>
     );
 }
