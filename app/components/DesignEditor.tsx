@@ -2,8 +2,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
-import { Type, Image as ImageIcon, RotateCcw, MousePointer2, ChevronDown } from 'lucide-react';
+import { Type, Image as ImageIcon, RotateCcw, MousePointer2, ChevronDown, Save, Loader2 } from 'lucide-react';
 import { Product, ProductColor } from '../data/products';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
@@ -14,6 +16,8 @@ interface DesignEditorProps {
 }
 
 export default function DesignEditor({ onUpdate, product, selectedColor, onColorChange, activeViewId }: DesignEditorProps) {
+    const { data: session } = useSession();
+    const router = useRouter();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
@@ -24,13 +28,13 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontSize, setFontSize] = useState<number>(60);
     const [fontFamily, setFontFamily] = useState<string>('Arial');
+    const [saving, setSaving] = useState(false);
 
     // Derived Logic
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
     const currentDesignZone = activePreview.editorZone || product.designZone;
 
-    // --- CANVAS INITIALIZATION LOGIC (Same as before, just wrapped in new UI) ---
-    // Note: Kept your existing robust logic, just ensuring it fits the new container
+    // --- CANVAS INITIALIZATION LOGIC (Same as before) ---
     useEffect(() => {
         if (!canvasRef.current || !containerRef.current) return;
 
@@ -132,12 +136,9 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
             const height = containerRef.current.clientHeight;
             if (width === 0 || height === 0) return;
 
-            // Logic to fit the canvas nicely inside the container
-            // The canvas logic size is fixed (product.canvasSize), visual size changes
-            const scale = Math.min(width / product.canvasSize, height / product.canvasSize) * 0.9; // 0.9 for padding
+            const scale = Math.min(width / product.canvasSize, height / product.canvasSize) * 0.9;
 
             canvas.setDimensions({ width: width, height: height });
-            // Center the "shirt" in the viewport
             const vpt: [number, number, number, number, number, number] = [scale, 0, 0, scale, (width - product.canvasSize * scale) / 2, (height - product.canvasSize * scale) / 2];
             canvas.setViewportTransform(vpt);
             canvas.renderAll();
@@ -206,6 +207,49 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
         fabricCanvas.fire('object:modified');
     };
 
+    const saveDesign = async () => {
+        if (!session) {
+            router.push('/login');
+            return;
+        }
+
+        if (!fabricCanvas) return;
+
+        setSaving(true);
+        try {
+            // Get Preview Image
+            const dataUrl = fabricCanvas.toDataURL({
+                format: 'png',
+                multiplier: 0.5, // Save smaller preview
+                quality: 0.8,
+            });
+
+            // Get Config
+            const config = fabricCanvas.toJSON();
+
+            const res = await fetch('/api/user/designs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    productId: product.id,
+                    name: `Design ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+                    previewImage: dataUrl,
+                    config: config
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to save');
+
+            alert('Design saved successfully!');
+            router.refresh();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to save design');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     // --- UI RENDER ---
     return (
         <div className="flex h-full relative">
@@ -244,10 +288,24 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                         />
                     ))}
                 </div>
+
+                <div className="mt-auto">
+                    <button
+                        onClick={saveDesign}
+                        disabled={saving}
+                        className="group flex flex-col items-center gap-1 w-full"
+                    >
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center transition-all group-hover:bg-indigo-600 group-hover:text-white group-active:scale-95 shadow-sm">
+                            {saving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                        </div>
+                        <span className="text-[10px] font-bold text-indigo-600 group-hover:text-indigo-600">Save</span>
+                    </button>
+                </div>
             </div>
 
             {/* 2. CANVAS VIEWPORT */}
             <div className="flex-1 bg-slate-100 relative overflow-hidden flex items-center justify-center">
+                {/* ... existing canvas rendering ... */}
                 {/* Checkered Background for "Transparency" feel */}
                 <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
@@ -281,7 +339,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                 </button>
             </div>
 
-            {/* 3. FLOATING PROPERTIES PANEL (Context Aware) */}
+            {/* 3. FLOATING PROPERTIES PANEL */}
             {selectedObject && (
                 <div className="absolute right-6 top-6 w-64 bg-white/95 backdrop-blur-md border border-slate-200 shadow-2xl rounded-2xl p-4 z-40 animate-in slide-in-from-right-4 fade-in duration-200">
                     <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">

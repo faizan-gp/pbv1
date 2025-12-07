@@ -15,6 +15,7 @@ import {
     Zap
 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import UserMenu from "./UserMenu";
 
 export default function Navbar() {
     const { cartCount } = useCart();
@@ -131,6 +132,9 @@ export default function Navbar() {
                                 </span>
                             )}
                         </Link>
+
+                        {/* User Profile */}
+                        <UserMenu />
 
                         {/* Mobile Menu Button */}
                         <button
