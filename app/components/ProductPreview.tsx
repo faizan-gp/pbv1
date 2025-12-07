@@ -90,7 +90,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                         className="absolute z-15 border-2 border-dashed border-blue-400/60 pointer-events-none"
                         style={{
                             ...zoneStyle,
-                            filter: enableDistortion ? `url(#fabric-warp-${activeViewId})` : 'none',
+                            // filter: enableDistortion ? `url(#fabric-warp-${activeViewId})` : 'none',
                             mixBlendMode: 'multiply'
                         }}
                     >
