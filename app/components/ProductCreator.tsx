@@ -3,6 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { useToast } from './Toast';
+import { IProduct } from '@/models/Product';
+import { useRouter } from 'next/navigation';
 
 interface Zone {
     left: number;
@@ -24,24 +26,60 @@ interface ViewConfig {
     editorImage?: string;
 }
 
-export default function ProductCreator() {
+interface ProductCreatorProps {
+    initialData?: any; // Using any for flexibility with Mongoose document vs raw JSON
+    isEditing?: boolean;
+}
+
+export default function ProductCreator({ initialData, isEditing = false }: ProductCreatorProps) {
+    const router = useRouter();
     const { showToast } = useToast();
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
-    const [productName, setProductName] = useState('New Product');
-    const [views, setViews] = useState<ViewConfig[]>([
-        {
-            id: 'front',
-            name: 'Front View',
-            image: '', // Preview Image (Realistic)
-            editorImage: '', // Editor Image (Flat/Cutout)
-            editorZone: { left: 312, top: 262, width: 400, height: 500 },
-            previewZone: { left: 312, top: 262, width: 400, height: 500 },
+
+    // Initialize state with initialData if provided
+    const [productName, setProductName] = useState(initialData?.name || 'New Product');
+
+    // Map initial views or default to front view
+    const defaultView = {
+        id: 'front',
+        name: 'Front View',
+        image: '',
+        editorImage: '',
+        editorZone: { left: 312, top: 262, width: 400, height: 500 },
+        previewZone: { left: 312, top: 262, width: 400, height: 500 },
+    };
+
+    const initializeViews = (): ViewConfig[] => {
+        if (!initialData || !initialData.previews || initialData.previews.length === 0) {
+            return [defaultView];
         }
-    ]);
-    const [activeViewId, setActiveViewId] = useState<string>('front');
+
+        return initialData.previews.map((preview: any) => {
+            // Find corresponding images if they exist in the colors array for the default color
+            // This is a simplification; a robust app might need complex mapping
+            const defaultColor = initialData.colors?.[0];
+            const previewImage = defaultColor?.images?.[preview.id] || '';
+
+            return {
+                id: preview.id,
+                name: preview.name,
+                image: previewImage,
+                editorImage: preview.editorCutout || '',
+                editorZone: preview.editorZone,
+                previewZone: preview.previewZone,
+                displacementMap: preview.displacementMap,
+                shadowMap: preview.shadowMap,
+                cssTransform: preview.cssTransform,
+            };
+        });
+    };
+
+    const [views, setViews] = useState<ViewConfig[]>(initializeViews);
+    const [activeViewId, setActiveViewId] = useState<string>(views[0]?.id || 'front');
     const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
-    const [category, setCategory] = useState("Men's Clothing");
+    const [category, setCategory] = useState(initialData?.category || "Men's Clothing");
+    const [trending, setTrending] = useState(initialData?.trending || false);
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
@@ -212,8 +250,10 @@ export default function ProductCreator() {
         // Fallback: If no explicit editor image, use generic image or nothing
         // Structure needs to match Mongoose schema
         const config = {
-            id: productName.toLowerCase().replace(/\s+/g, '-'),
+            id: isEditing && initialData?.id ? initialData.id : productName.toLowerCase().replace(/\s+/g, '-'), // Keep ID if editing
             name: productName,
+            category,
+            trending,
             image: views[0]?.editorImage || views[0]?.image || '', // Prefer Editor Image (Cutout) for main 'image' field
             canvasSize: CANVAS_SIZE,
             // Create a default color entry that contains the preview images
@@ -235,7 +275,7 @@ export default function ProductCreator() {
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName]);
+    }, [views, productName, category, trending, isEditing, initialData]);
 
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'editor' | 'preview') => {
@@ -275,25 +315,29 @@ export default function ProductCreator() {
         setIsSaving(true);
         try {
             const payload = JSON.parse(jsonOutput);
-            const res = await fetch('/api/products', {
-                method: 'POST',
+
+            const url = isEditing ? `/api/products/${initialData.id}` : '/api/products';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
             const data = await res.json();
-            if (data.success) {
-                showToast('Product saved successfully!', 'success');
-                setProductName('');
-                setViews([{
-                    id: 'front',
-                    name: 'Front View',
-                    image: '',
-                    editorImage: '',
-                    editorZone: { left: 312, top: 262, width: 400, height: 500 },
-                    previewZone: { left: 312, top: 262, width: 400, height: 500 },
-                }]);
-                setActiveViewId('front');
-                setJsonOutput('');
+
+            if (res.ok && data.success) {
+                showToast(isEditing ? 'Product updated successfully!' : 'Product created successfully!', 'success');
+                if (!isEditing) {
+                    // Reset form only if creating
+                    setProductName('');
+                    setViews([defaultView]);
+                    setActiveViewId('front');
+                    setJsonOutput('');
+                    setTrending(false);
+                } else {
+                    router.refresh(); // Refresh if editing to update server data
+                }
             } else {
                 showToast(data.error || 'Failed to save product', 'error');
             }
@@ -313,7 +357,7 @@ export default function ProductCreator() {
                 {/* Sidebar Header */}
                 <div className="p-5 border-b border-gray-200 flex items-center justify-between bg-white">
                     <div>
-                        <h2 className="text-sm font-semibold tracking-wider text-gray-900 uppercase">Configurator</h2>
+                        <h2 className="text-sm font-semibold tracking-wider text-gray-900 uppercase">{isEditing ? 'Edit Product' : 'Configurator'}</h2>
                         <div className="text-[10px] text-gray-500 font-mono mt-1">v2.1.0</div>
                     </div>
                 </div>
@@ -348,6 +392,16 @@ export default function ProductCreator() {
                                         <option key={cat} value={cat}>{cat}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="trending"
+                                    checked={trending}
+                                    onChange={(e) => setTrending(e.target.checked)}
+                                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                                />
+                                <label htmlFor="trending" className="text-xs font-medium text-gray-900 cursor-pointer select-none">Trending Product</label>
                             </div>
                         </div>
                     </div>
@@ -477,7 +531,7 @@ export default function ProductCreator() {
                         ) : (
                             <>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="stroke-2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                                <span>Save Product</span>
+                                <span>{isEditing ? 'Update Product' : 'Save Product'}</span>
                             </>
                         )}
                     </button>

@@ -12,12 +12,15 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  const featuredProducts = products.slice(0, 3).map(p => ({
-    id: p.id,
-    name: p.name,
-    price: 29.99, // Fallback/Mock
-    image: p.image
-  }));
+  const featuredProducts = products
+    .filter(p => p.trending)
+    .slice(0, 3)
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      price: 29.99, // Fallback/Mock
+      image: p.image
+    }));
 
   return (
     <div className="flex flex-col gap-0 bg-white min-h-screen selection:bg-indigo-500/30">
