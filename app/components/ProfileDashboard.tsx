@@ -113,30 +113,32 @@ export default function ProfileDashboard({ user, designs, orders }: ProfileDashb
                             ) : (
                                 <div className="space-y-4">
                                     {orders.map((order) => (
-                                        <div key={order._id} className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center justify-between hover:shadow-md transition-shadow">
-                                            <div>
-                                                <div className="flex items-center gap-3 mb-1">
-                                                    <span className="font-bold text-slate-900">#{order._id.toString().slice(-8).toUpperCase()}</span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                                        <Link href={`/order-success/${order._id}`} key={order._id} className="block group">
+                                            <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center justify-between hover:shadow-md transition-shadow group-hover:border-indigo-100">
+                                                <div>
+                                                    <div className="flex items-center gap-3 mb-1">
+                                                        <span className="font-bold text-slate-900">#{order._id.toString().slice(-8).toUpperCase()}</span>
+                                                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
                                                             order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
                                                                 'bg-amber-100 text-amber-700'
-                                                        }`}>
-                                                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                                                    </span>
+                                                            }`}>
+                                                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                                                        <Clock size={14} />
+                                                        {new Date(order.createdAt).toLocaleDateString()}
+                                                    </p>
                                                 </div>
-                                                <p className="text-sm text-slate-500 flex items-center gap-2">
-                                                    <Clock size={14} />
-                                                    {new Date(order.createdAt).toLocaleDateString()}
-                                                </p>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-slate-900 text-lg">${order.total.toFixed(2)}</p>
+                                                    <p className="text-xs text-slate-500">{order.items.length} items</p>
+                                                </div>
+                                                <div className="p-2 text-slate-400 group-hover:text-indigo-600 transition-colors">
+                                                    <ChevronRight size={20} />
+                                                </div>
                                             </div>
-                                            <div className="text-right">
-                                                <p className="font-bold text-slate-900 text-lg">${order.total.toFixed(2)}</p>
-                                                <p className="text-xs text-slate-500">{order.items.length} items</p>
-                                            </div>
-                                            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                                                <ChevronRight size={20} />
-                                            </button>
-                                        </div>
+                                        </Link>
                                     ))}
                                 </div>
                             )}

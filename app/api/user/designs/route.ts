@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/db";
 import Design from "@/models/Design";
+import mongoose from "mongoose";
 
 export async function GET(req: Request) {
     try {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
         await dbConnect();
 
         const design = await Design.create({
-            userId: (session.user as any).id,
+            userId: new mongoose.Types.ObjectId((session.user as any).id),
             productId,
             name,
             previewImage,

@@ -6,6 +6,7 @@ import Design from "@/models/Design";
 import Order from "@/models/Order";
 import ProfileDashboard from "../components/ProfileDashboard";
 import Navbar from "../components/Navbar";
+import { Types } from "mongoose";
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
@@ -17,7 +18,7 @@ export default async function ProfilePage() {
     await dbConnect();
 
     // Fetch Designs
-    const designs = await Design.find({ userId: (session.user as any).id })
+    const designs = await Design.find({ userId: new Types.ObjectId((session.user as any).id) })
         .sort({ createdAt: -1 })
         .lean();
 
