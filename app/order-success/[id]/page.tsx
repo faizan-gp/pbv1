@@ -16,7 +16,7 @@ async function getOrder(id: string) {
     }
 }
 
-export default async function OrderSuccessPage({ params }: { params: { id: string } }) {
+export default async function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const order = await getOrder(id);
 

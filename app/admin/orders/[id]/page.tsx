@@ -35,7 +35,7 @@ async function getProductsForOrder(items: any[]) {
     }
 }
 
-export default async function AdminOrderDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const order = await getOrder(id);
 
