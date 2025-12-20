@@ -4,7 +4,6 @@ import dbConnect from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
 import ProductDetailView from '@/app/components/ProductDetailView';
 
-// Force dynamic rendering since we are fetching data
 export const dynamic = 'force-dynamic';
 
 async function getProduct(id: string) {
@@ -18,20 +17,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     const { id } = await params;
     const product = await getProduct(id);
 
-    if (!product) {
-        notFound();
-    }
+    if (!product) notFound();
 
     return (
-        <div className="min-h-screen bg-slate-50 text-gray-900 font-sans pb-24 selection:bg-indigo-500 selection:text-white">
-            {/* Global Background Noise */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-            </div>
-
-
-
-            <main className="max-w-7xl mx-auto px-6 py-10 relative z-10">
+        <div className="min-h-screen bg-[#FDFDFD] text-slate-900 selection:bg-black selection:text-white">
+            <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-20">
                 <ProductDetailView product={product} />
             </main>
         </div>
