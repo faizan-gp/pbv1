@@ -1,7 +1,7 @@
 import Link from "next/link";
 import ProductCard from "../components/ProductCard";
-import ProductFilters from "../components/ProductFilters";
-import { Filter, ChevronDown, SlidersHorizontal, Sparkles, LayoutGrid } from "lucide-react";
+import ProductSidebar from "../components/ProductSidebar";
+import { Filter, ChevronDown, LayoutGrid, Sparkles } from "lucide-react";
 import Product from '@/models/Product';
 import dbConnect from '@/lib/db';
 import { Metadata } from "next";
@@ -9,12 +9,15 @@ import { Metadata } from "next";
 // Force dynamic rendering so search params work
 export const dynamic = 'force-dynamic';
 
-async function getProducts(category?: string) {
+async function getProducts(category?: string, subcategory?: string) {
     await dbConnect();
     const query: any = {};
     if (category) {
         // Case insensitive regex for better UX
         query.category = { $regex: new RegExp(category, 'i') };
+    }
+    if (subcategory) {
+        query.subcategory = { $regex: new RegExp(subcategory, 'i') };
     }
     const products = await Product.find(query).lean();
     return JSON.parse(JSON.stringify(products));
@@ -28,11 +31,13 @@ export const metadata: Metadata = {
 export default async function ProductsPage({
     searchParams,
 }: {
-    searchParams: Promise<{ category?: string }>;
+    searchParams: Promise<{ category?: string; subcategory?: string }>;
 }) {
     const params = await searchParams;
-    const products = await getProducts(params.category);
-    const categoryLabel = params.category ? params.category : "All Canvases";
+    const products = await getProducts(params.category, params.subcategory);
+    const categoryLabel = params.subcategory
+        ? `${params.category} / ${params.subcategory}`
+        : (params.category ? params.category : "All Canvases");
 
     return (
         <div className="min-h-screen bg-slate-50 selection:bg-indigo-500 selection:text-white pb-24 relative overflow-hidden">
@@ -66,38 +71,7 @@ export default async function ProductsPage({
                 <div className="flex flex-col lg:flex-row gap-12">
 
                     {/* --- SIDEBAR (Sticky) --- */}
-                    <aside className="w-full lg:w-72 flex-none">
-                        <div className="sticky top-28 space-y-8">
-
-                            {/* Mobile Filter Toggle (Visible only on small screens) */}
-                            <div className="lg:hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-                                <span className="font-bold text-slate-900 flex items-center gap-2">
-                                    <Filter className="h-5 w-5 text-indigo-600" /> Filters
-                                </span>
-                                <ChevronDown className="h-5 w-5 text-slate-400" />
-                            </div>
-
-                            {/* Desktop Filters */}
-                            <div className="hidden lg:block bg-white/50 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                <div className="flex items-center gap-2 mb-6 pb-4 border-b border-slate-200">
-                                    <SlidersHorizontal className="w-5 h-5 text-indigo-600" />
-                                    <h2 className="font-bold text-slate-900">Refine Selection</h2>
-                                </div>
-
-                                <ProductFilters />
-
-                                {/* Promo Box in Sidebar */}
-                                <div className="mt-8 p-4 bg-indigo-900 rounded-xl text-white relative overflow-hidden group cursor-pointer">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    <div className="relative z-10">
-                                        <div className="text-xs font-bold opacity-70 mb-1 uppercase tracking-wider">Need Help?</div>
-                                        <div className="font-bold text-lg leading-tight mb-2">Not sure which fabric to pick?</div>
-                                        <div className="text-xs underline underline-offset-4">Read our Fabric Guide</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
+                    <ProductSidebar />
 
                     {/* --- PRODUCT GRID --- */}
                     <div className="flex-1">

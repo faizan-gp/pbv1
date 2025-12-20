@@ -33,13 +33,13 @@ export default function Navbar() {
     }, []);
 
     // Categories Data for Mega Menu
+    // Categories Data for Mega Menu
     const categories = [
-        { name: "Men's Clothing", href: "/products?cat=men", icon: Shirt, desc: "T-Shirts, Hoodies & Tanks" },
-        { name: "Women's Clothing", href: "/products?cat=women", icon: Scissors, desc: "Dresses, Tops & Activewear" },
-        { name: "Kids & Baby", href: "/products?cat=kids", icon: Baby, desc: "Onesies & Youth Tees" },
-        { name: "Home & Living", href: "/products?cat=home", icon: Home, desc: "Posters, Mugs & Pillows" },
-        { name: "Accessories", href: "/products?cat=accessories", icon: Watch, desc: "Hats, Phone Cases & Bags" },
-        { name: "Best Sellers", href: "/products?sort=best", icon: Zap, desc: "Trending right now" },
+        { name: "Men's Clothing", href: "/products?category=Men's+Clothing", icon: Shirt, desc: "T-Shirts, Hoodies & Tanks" },
+        { name: "Women's Clothing", href: "/products?category=Women's+Clothing", icon: Scissors, desc: "Dresses, Tops & Activewear" },
+        { name: "Kids' Clothing", href: "/products?category=Kids'+Clothing", icon: Baby, desc: "Onesies & Youth Tees" },
+        { name: "Home & Living", href: "/products?category=Home+&+Living", icon: Home, desc: "Posters, Mugs & Pillows" },
+        { name: "Accessories", href: "/products?category=Accessories", icon: Watch, desc: "Hats, Phone Cases & Bags" },
     ];
 
     return (
