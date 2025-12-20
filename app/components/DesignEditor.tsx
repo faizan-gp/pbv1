@@ -159,6 +159,9 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
         const centerX = currentDesignZone.left + currentDesignZone.width / 2;
         const centerY = currentDesignZone.top + currentDesignZone.height / 2;
 
+        // Calculate font size proportional to print area (15% of width)
+        const responsiveFontSize = Math.round(currentDesignZone.width * 0.15);
+
         const text = new fabric.IText('YOUR TEXT', {
             left: centerX,
             top: centerY,
@@ -166,7 +169,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
             originY: 'center',
             fontFamily: 'Arial',
             fill: '#1e293b',
-            fontSize: 80,
+            fontSize: responsiveFontSize,
             fontWeight: 'bold',
         });
         fabricCanvas.add(text);
