@@ -296,7 +296,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
 
     // --- RENDER ---
     return (
-        <div className="flex flex-col md:flex-row h-[100dvh] md:h-full relative bg-slate-50 overflow-hidden">
+        <div className="flex flex-col md:flex-row md:h-full relative bg-slate-50 overflow-hidden">
 
             {/* 1. DESKTOP SIDEBAR (Hidden on Mobile) */}
             <div className="hidden md:flex w-20 bg-white border-r border-slate-200 flex-col items-center py-6 gap-6 z-20 shadow-sm">
@@ -345,7 +345,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                 </div>
 
                 {/* Canvas Container */}
-                <div className="flex-1 relative overflow-hidden flex items-center justify-center p-4">
+                <div className="w-full aspect-square md:aspect-auto md:flex-1 relative overflow-hidden flex items-center justify-center p-4">
                     <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:16px_16px]"></div>
 
                     <div ref={containerRef} className="w-full h-full relative z-0">
@@ -358,7 +358,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                             />
                         </div>
                         {/* Fabric Canvas */}
-                        <canvas ref={canvasRef} className="absolute inset-0" />
+                        <canvas ref={canvasRef} className="absolute inset-0 z-10" />
                     </div>
 
                     {/* Reset Button (Floating) */}
