@@ -39,7 +39,11 @@ export interface IProduct extends Document {
     category: string;
     trending: boolean;
     image: string;
-    listingImages: string[];
+    listingImages: {
+        url: string;
+        color: string; // 'All' or specific color name (e.g. 'Red')
+        isThumbnail: boolean;
+    }[];
     shortDescription?: string;
     fullDescription?: string;
     features?: IProductFeature[];
@@ -64,8 +68,13 @@ const ProductSchema: Schema = new Schema({
     name: { type: String, required: true },
     category: { type: String, required: true },
     trending: { type: Boolean, default: false },
-    image: { type: String, required: true },
-    listingImages: [{ type: String }],
+    image: { type: String, required: true }, // Main legacy image, overridden by thumbnail
+    listingImages: [{
+        _id: false, // No ID for subdocs to keep it clean
+        url: { type: String, required: true },
+        color: { type: String, default: 'All' },
+        isThumbnail: { type: Boolean, default: false }
+    }],
     shortDescription: { type: String },
     fullDescription: { type: String },
     features: [{
@@ -81,6 +90,7 @@ const ProductSchema: Schema = new Schema({
     canvasSize: { type: Number, required: true },
     colors: [
         {
+            _id: false,
             name: { type: String, required: true },
             hex: { type: String, required: true },
             images: { type: Map, of: String, required: true },
@@ -117,6 +127,10 @@ const ProductSchema: Schema = new Schema({
 });
 
 // Check if the model is already defined to verify hot reload issues
-const Product = (mongoose.models.Product as Model<IProduct>) || mongoose.model<IProduct>('Product', ProductSchema);
+// Check if the model is already defined to verify hot reload issues
+if (mongoose.models.Product) {
+    delete mongoose.models.Product;
+}
+const Product = mongoose.model<IProduct>('Product', ProductSchema);
 
 export default Product;

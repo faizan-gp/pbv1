@@ -38,6 +38,8 @@ export async function PUT(
     try {
         await dbConnect();
         const body = await request.json();
+        console.log('Received UPDATE body:', JSON.stringify(body, null, 2));
+        console.log('Schema paths:', Object.keys(Product.schema.paths));
 
         // Prevent ID modification if it affects the primary key logic provided by client
         // But commonly we might want to update other fields
