@@ -7,14 +7,17 @@ import Footer from './Footer';
 export default function ClientShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isAdmin = pathname?.startsWith('/admin');
+    const isCustomizer = pathname?.startsWith('/customize');
+
+    const showNav = !isAdmin && !isCustomizer;
 
     return (
         <>
-            {!isAdmin && <Navbar />}
-            <main className={`flex-1 ${!isAdmin ? 'pt-16' : ''}`}>
+            {showNav && <Navbar />}
+            <main className={`flex-1 ${showNav ? 'pt-16' : ''}`}>
                 {children}
             </main>
-            {!isAdmin && <Footer />}
+            {showNav && <Footer />}
         </>
     );
 }
