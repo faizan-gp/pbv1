@@ -44,6 +44,7 @@ export interface IProduct extends Document {
         color: string; // 'All' or specific color name (e.g. 'Red')
         isThumbnail: boolean;
     }[];
+    subcategory?: string;
     shortDescription?: string;
     fullDescription?: string;
     features?: IProductFeature[];
@@ -75,6 +76,7 @@ const ProductSchema: Schema = new Schema({
         color: { type: String, default: 'All' },
         isThumbnail: { type: Boolean, default: false }
     }],
+    subcategory: { type: String },
     shortDescription: { type: String },
     fullDescription: { type: String },
     features: [{

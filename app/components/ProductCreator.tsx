@@ -63,8 +63,32 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
     // DATA STATE
     const [productName, setProductName] = useState(initialData?.name || '');
-    const [category, setCategory] = useState(initialData?.category || "Men's Clothing");
+    const [category, setCategory] = useState(initialData?.category || "");
+    const [subcategory, setSubcategory] = useState(initialData?.subcategory || "");
+    const [categories, setCategories] = useState<any[]>([]);
     const [trending, setTrending] = useState(initialData?.trending || false);
+
+    // Fetch Categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await fetch('/api/categories');
+                const data = await res.json();
+                if (data.success) {
+                    setCategories(data.data);
+                    // Default to first category if none selected
+                    if (!initialData?.category && data.data.length > 0) {
+                        setCategory(data.data[0].name);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch categories", e);
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    const selectedCategoryData = categories.find(c => c.name === category);
 
     // BACKWARD COMPATIBILITY: Handle old string[] or new ListingImage[]
     const [listingImages, setListingImages] = useState<ListingImage[]>(() => {
@@ -142,13 +166,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
-    const CATEGORIES = [
-        "Men's Clothing",
-        "Women's Clothing",
-        "Kids' Clothing",
-        "Accessories",
-        "Home & Living",
-    ];
+
 
     const CANVAS_SIZE = 1024;
 
@@ -270,6 +288,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             id: isEditing && initialData?.id ? initialData.id : productName.toLowerCase().replace(/\s+/g, '-'),
             name: productName,
             category,
+            subcategory,
             trending,
             image: mainImage,
             listingImages,
@@ -467,9 +486,24 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
-                                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none">
-                                    {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                                </select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <select value={category} onChange={(e) => { setCategory(e.target.value); setSubcategory(''); }} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none">
+                                        <option value="" disabled>Select Category</option>
+                                        {categories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
+                                    </select>
+
+                                    <select
+                                        value={subcategory}
+                                        onChange={(e) => setSubcategory(e.target.value)}
+                                        disabled={!category}
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none disabled:opacity-50"
+                                    >
+                                        <option value="">{category ? 'Select Subcategory' : 'Select Category First'}</option>
+                                        {selectedCategoryData?.subcategories?.map((sub: string) => (
+                                            <option key={sub} value={sub}>{sub}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                                 <input type="checkbox" id="trending" checked={trending} onChange={(e) => setTrending(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
