@@ -2,8 +2,22 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Shield, Ruler, FileText, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Assuming this exists, otherwise I'll use template literals
+import { Check, Shield, Ruler, FileText, ChevronDown, Hexagon, Shirt, Zap, Wind, Sun, Feather, Maximize, Droplets, Award } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const ICON_MAP: Record<string, any> = {
+    check: Check,
+    hexagon: Hexagon,
+    shirt: Shirt,
+    shield: Shield,
+    zap: Zap,
+    wind: Wind,
+    sun: Sun,
+    feather: Feather,
+    maximize: Maximize,
+    droplets: Droplets,
+    award: Award,
+};
 
 interface ProductInfoTabsProps {
     description?: string;
@@ -67,17 +81,20 @@ export default function ProductInfoTabs({ description, features, careInstruction
 
                         {activeTab === 'features' && features && (
                             <div className="grid grid-cols-1 gap-4">
-                                {features.map((feature, idx) => (
-                                    <div key={idx} className="group flex gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-indigo-100 transition-colors">
-                                        <div className="flex-none p-2 bg-white rounded-lg text-indigo-600 shadow-sm border border-gray-100">
-                                            <Check size={18} strokeWidth={2.5} />
+                                {features.map((feature, idx) => {
+                                    const IconComponent = ICON_MAP[feature.icon?.toLowerCase() || 'check'] || Check;
+                                    return (
+                                        <div key={idx} className="group flex gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-indigo-100 transition-colors">
+                                            <div className="flex-none p-2 bg-white rounded-lg text-indigo-600 shadow-sm border border-gray-100">
+                                                <IconComponent size={18} strokeWidth={2.5} />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-gray-900 text-sm mb-1">{feature.title}</h4>
+                                                <p className="text-xs text-gray-500 leading-relaxed">{feature.description}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900 text-sm mb-1">{feature.title}</h4>
-                                            <p className="text-xs text-gray-500 leading-relaxed">{feature.description}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
 
@@ -103,7 +120,6 @@ export default function ProductInfoTabs({ description, features, careInstruction
                                                 <th className="px-6 py-4 text-left">Size</th>
                                                 <th className="px-6 py-4">Width (in)</th>
                                                 <th className="px-6 py-4">Length (in)</th>
-                                                {/* Allow for more flexibility if data varies */}
                                             </tr>
                                         </thead>
                                         <tbody className="bg-white divide-y divide-gray-100">

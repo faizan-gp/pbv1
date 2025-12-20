@@ -671,7 +671,26 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <div className="space-y-3">
                                     {features.map((f, i) => (
                                         <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                                            <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
+                                            <div className="flex gap-2">
+                                                <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="flex-1 bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
+                                                <select
+                                                    value={f.icon || 'check'}
+                                                    onChange={(e) => { const n = [...features]; n[i].icon = e.target.value; setFeatures(n) }}
+                                                    className="w-24 text-[10px] bg-white border border-gray-200 rounded px-1 outline-none uppercase font-bold text-gray-500"
+                                                >
+                                                    <option value="check">Check</option>
+                                                    <option value="hexagon">Material</option>
+                                                    <option value="shirt">Fit</option>
+                                                    <option value="shield">Durable</option>
+                                                    <option value="zap">Fast Dry</option>
+                                                    <option value="wind">Breathable</option>
+                                                    <option value="sun">UV Protect</option>
+                                                    <option value="feather">Light</option>
+                                                    <option value="maximize">Stretch</option>
+                                                    <option value="droplets">Wicking</option>
+                                                    <option value="award">Quality</option>
+                                                </select>
+                                            </div>
                                             <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />
                                             <button onClick={() => setFeatures(prev => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500">Remove</button>
                                         </div>
