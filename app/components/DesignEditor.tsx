@@ -468,9 +468,17 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
                                 >
                                     <option value="Arial">Arial</option>
-                                    <option value="Times New Roman">Times</option>
-                                    <option value="Courier New">Courier</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Courier New">Courier New</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Trebuchet MS">Trebuchet MS</option>
+                                    <option value="Comic Sans MS">Comic Sans MS</option>
                                     <option value="Impact">Impact</option>
+                                    <option value="Monaco">Monaco</option>
+                                    <option value="Optima">Optima</option>
+                                    <option value="Brush Script MT">Brush Script</option>
                                 </select>
                                 <div className="flex items-center border border-slate-200 rounded-lg bg-slate-50 px-2">
                                     <span className="text-xs text-slate-400 mr-2">Color</span>
@@ -479,13 +487,25 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                             </div>
 
                             <div>
-                                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block">Presets</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {['#1e293b', '#ffffff', '#ef4444', '#3b82f6', '#10b981', '#f59e0b'].map(c => (
+                                <label className="text-[10px] font-bold uppercase text-slate-400 mb-2 block">Color Palette</label>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                    {/* Custom Picker */}
+                                    <label className="w-8 h-8 rounded-full border border-slate-200 shadow-sm overflow-hidden relative cursor-pointer hover:scale-110 transition-transform bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center group" title="Custom Color">
+                                        <input
+                                            type="color"
+                                            value={textColor}
+                                            onChange={(e) => updateObject('fill', e.target.value)}
+                                            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                                        />
+                                        <Palette size={14} className="text-white drop-shadow-md group-hover:scale-110 transition-transform" />
+                                    </label>
+
+                                    {/* Presets */}
+                                    {['#1e293b', '#ffffff', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#7c3aed', '#ec4899', '#64748b'].map(c => (
                                         <button
                                             key={c}
                                             onClick={() => updateObject('fill', c)}
-                                            className={`w-8 h-8 rounded-full border shadow-sm ${textColor === c ? 'ring-2 ring-indigo-500 scale-110' : 'border-slate-200'}`}
+                                            className={`w-8 h-8 rounded-full border shadow-sm transition-transform ${textColor === c ? 'ring-2 ring-indigo-500 scale-110' : 'border-slate-200 hover:scale-110'}`}
                                             style={{ backgroundColor: c }}
                                         />
                                     ))}
