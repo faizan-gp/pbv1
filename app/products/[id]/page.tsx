@@ -20,7 +20,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     if (!product) notFound();
 
     return (
-        <div className="min-h-screen bg-[#FDFDFD] text-slate-900 selection:bg-black selection:text-white">
+        <div className="min-h-screen bg-[#FDFDFD] text-slate-900 selection:bg-black selection:text-white overflow-x-hidden">
             <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-20">
                 <ProductDetailView product={product} />
             </main>
