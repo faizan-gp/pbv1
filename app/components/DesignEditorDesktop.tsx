@@ -22,12 +22,12 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
 
     // Refs
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const wrapperRef = useRef<HTMLDivElement>(null); // The responsive container
+    const wrapperRef = useRef<HTMLDivElement>(null);
 
     // State
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
-    const [scale, setScale] = useState(1); // CSS Scale factor
+    const [scale, setScale] = useState(1);
 
     // Design State
     const [textColor, setTextColor] = useState<string>('#333333');
@@ -38,33 +38,38 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
     const currentDesignZone = activePreview.editorZone || product.designZone;
 
-    // --- 1. RESPONSIVE SCALING LOGIC ---
+    // --- 1. INTELLIGENT RESPONSIVE SCALING ---
     useEffect(() => {
         const handleResize = () => {
             if (!wrapperRef.current) return;
 
-            // Available space in the container
-            const availableWidth = wrapperRef.current.clientWidth;
-            const availableHeight = wrapperRef.current.clientHeight;
+            // 1. Get total available space
+            const totalWidth = wrapperRef.current.clientWidth;
+            const totalHeight = wrapperRef.current.clientHeight;
 
-            // Desired 'padding' around the shirt (15% breathing room)
-            const padding = 0.85;
+            // 2. Account for the side panel 
+            // If an object is selected, we reserve 320px (panel width) + 40px (padding) on the right
+            const sidebarReservedWidth = selectedObject ? 360 : 0;
 
-            // Calculate scale to fit the Master Frame (canvasSize) into available space
-            const scaleX = (availableWidth * padding) / product.canvasSize;
-            const scaleY = (availableHeight * padding) / product.canvasSize;
+            // 3. Calculate the "Safe Zone" dimensions
+            const safeWidth = totalWidth - sidebarReservedWidth;
+            const safeHeight = totalHeight;
 
-            // Use the smaller scale to ensure it fits entirely
+            // 4. Desired 'padding' inside the safe zone (10% breathing room)
+            const paddingFactor = 0.9;
+
+            // 5. Calculate scale to fit the Master Frame into the Safe Zone
+            const scaleX = (safeWidth * paddingFactor) / product.canvasSize;
+            const scaleY = (safeHeight * paddingFactor) / product.canvasSize;
+
+            // Use the smaller scale to ensure full visibility
             setScale(Math.min(scaleX, scaleY));
         };
 
-        // Initial calc
+        // Recalculate whenever window resizes OR selection changes (panel opens/closes)
         handleResize();
 
-        // Listen for window resize
         window.addEventListener('resize', handleResize);
-
-        // Also listen for container resize (if sidebar opens/closes)
         const resizeObserver = new ResizeObserver(handleResize);
         if (wrapperRef.current) resizeObserver.observe(wrapperRef.current);
 
@@ -72,21 +77,16 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             window.removeEventListener('resize', handleResize);
             resizeObserver.disconnect();
         };
-    }, [product.canvasSize]);
+    }, [product.canvasSize, selectedObject]); // Added selectedObject dependency
 
-    // --- 2. CANVAS INITIALIZATION ---
+    // --- 2. CANVAS INITIALIZATION (Standard Fabric Setup) ---
     useEffect(() => {
         if (!canvasRef.current) return;
+        if (fabricCanvas) fabricCanvas.dispose();
 
-        // Clean up old canvas
-        if (fabricCanvas) {
-            fabricCanvas.dispose();
-        }
-
-        // Initialize Fabric with fixed dimensions matching the product base image
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: product.canvasSize,
-            height: product.canvasSize, // STRICTLY LOCKED TO PRODUCT DIMENSIONS
+            height: product.canvasSize,
             backgroundColor: 'transparent',
             preserveObjectStacking: true,
             selectionColor: 'rgba(99, 102, 241, 0.1)',
@@ -94,7 +94,6 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             selectionLineWidth: 1.5,
         });
 
-        // Configure Controls
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#ffffff',
@@ -107,7 +106,6 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.1)', blur: 5 })
         });
 
-        // Add Design Zone Guide (Dashed Box)
         const designZone = new fabric.Rect({
             left: currentDesignZone.left,
             top: currentDesignZone.top,
@@ -120,11 +118,9 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             selectable: false,
             evented: false,
             visible: true,
-            id: 'design-zone' // Tagging it to find later if needed
         });
         canvas.add(designZone);
 
-        // Add Clip Path (Forces content to stay inside print area)
         const clipPath = new fabric.Rect({
             left: currentDesignZone.left,
             top: currentDesignZone.top,
@@ -136,23 +132,13 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
 
         setFabricCanvas(canvas);
 
-        // --- EXPORT LOGIC ---
         const handleUpdate = () => {
-            // Hide guide before export
             designZone.set('visible', false);
-
             const dataUrl = canvas.toDataURL({
-                format: 'png',
-                multiplier: 2, // High res export
-                quality: 1,
-                // Only export the printable area
-                left: currentDesignZone.left,
-                top: currentDesignZone.top,
-                width: currentDesignZone.width,
-                height: currentDesignZone.height,
+                format: 'png', multiplier: 2, quality: 1,
+                left: currentDesignZone.left, top: currentDesignZone.top,
+                width: currentDesignZone.width, height: currentDesignZone.height,
             });
-
-            // Show guide again
             designZone.set('visible', true);
             onUpdate(dataUrl);
         };
@@ -173,12 +159,10 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
         canvas.on('selection:updated', handleSelection);
         canvas.on('selection:cleared', () => setSelectedObject(null));
 
-        return () => {
-            canvas.dispose();
-        };
-    }, [product.id, activeViewId]); // Re-init when product or view changes
+        return () => { canvas.dispose(); };
+    }, [product.id, activeViewId]);
 
-    // --- ACTIONS (Unchanged logic) ---
+    // --- HELPER FUNCTIONS ---
     const addText = () => {
         if (!fabricCanvas) return;
         const centerX = currentDesignZone.left + currentDesignZone.width / 2;
@@ -255,24 +239,23 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                 <div className="absolute inset-0 z-0 opacity-40 bg-[radial-gradient(#cbd5e1_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
 
                 {/* THE MASTER FRAME */}
-                {/* This div is strictly sized to the product dimensions. We use CSS transform to fit it on screen. */}
                 <div
-                    className="relative shadow-2xl transition-transform duration-200 ease-out origin-center bg-white"
+                    className="relative shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center bg-white"
                     style={{
                         width: product.canvasSize,
                         height: product.canvasSize,
-                        transform: `scale(${scale})`
+                        // UX FIX: We translate X to the left when the panel opens so the shirt stays centered in the VISIBLE area
+                        transform: `
+                            translateX(${selectedObject ? '-160px' : '0px'}) 
+                            scale(${scale})
+                        `
                     }}
                 >
-                    {/* A. Product Image Layer (Bottom) */}
                     <img
                         src={activePreview.editorCutout || product.image}
                         alt="Product Base"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
                     />
-
-                    {/* B. Fabric Canvas Layer (Top) */}
-                    {/* The canvas sits exactly on top of the image 1:1 */}
                     <canvas ref={canvasRef} className="absolute inset-0 z-10" />
                 </div>
 
@@ -293,7 +276,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                 selectedObject ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"
             )}>
                 <div className="h-full bg-white/85 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-3xl p-6 flex flex-col gap-6 ring-1 ring-black/5 overflow-y-auto custom-scrollbar">
-                    {/* Header */}
+                    {/* Panel Content (Same as before) */}
                     <div className="flex items-center justify-between pb-4 border-b border-slate-100/50">
                         <div className="flex items-center gap-2 text-slate-800 font-bold">
                             {selectedObject instanceof fabric.IText ? <TypeIcon size={18} className="text-indigo-500" /> : <ImageIcon size={18} className="text-purple-500" />}
@@ -305,7 +288,6 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                         </div>
                     </div>
 
-                    {/* Text Tools */}
                     {selectedObject instanceof fabric.IText && (
                         <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <div className="space-y-1.5">
@@ -359,7 +341,6 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                         </div>
                     )}
 
-                    {/* Transform Tools */}
                     <div className="space-y-4 pt-4 border-t border-slate-100/50">
                         <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                             <Maximize2 size={10} /> Transform
@@ -398,7 +379,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
     );
 }
 
-// Sub components retained from previous snippet
+// Sub components
 function ToolButton({ icon: Icon, label, onClick, loading, tooltip }: any) {
     return (
         <div className="group relative flex items-center">
