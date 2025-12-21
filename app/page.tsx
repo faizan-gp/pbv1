@@ -199,67 +199,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- USE CASES: SHOP BY OCCASION --- */}
-      <section className="py-20 bg-white z-10">
-        <div className="container-width">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-            <div>
-              <h2 className="text-3xl font-black text-slate-900">Designed for Every Moment</h2>
-              <p className="text-slate-600 mt-2">Whether it's for work or play, we have the perfect fit.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Card 1: Startups */}
-            <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] cursor-pointer">
-              <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/10 transition-colors z-10"></div>
-              <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=600&q=80" alt="Team" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                <div className="flex items-center gap-2 text-indigo-300 mb-1">
-                  <Briefcase size={16} /> <span className="text-xs font-bold uppercase tracking-wider">Business</span>
-                </div>
-                <h3 className="text-white text-xl font-bold">Startup Swag</h3>
-              </div>
-            </div>
-
-            {/* Card 2: Events */}
-            <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] cursor-pointer">
-              <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/10 transition-colors z-10"></div>
-              <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt="Party" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                <div className="flex items-center gap-2 text-pink-300 mb-1">
-                  <PartyPopper size={16} /> <span className="text-xs font-bold uppercase tracking-wider">Events</span>
-                </div>
-                <h3 className="text-white text-xl font-bold">Bachelor Parties</h3>
-              </div>
-            </div>
-
-            {/* Card 3: Gifts */}
-            <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] cursor-pointer">
-              <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/10 transition-colors z-10"></div>
-              <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=600&q=80" alt="Gifts" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                <div className="flex items-center gap-2 text-yellow-300 mb-1">
-                  <Gift size={16} /> <span className="text-xs font-bold uppercase tracking-wider">Personal</span>
-                </div>
-                <h3 className="text-white text-xl font-bold">Unique Gifts</h3>
-              </div>
-            </div>
-
-            {/* Card 4: Merch */}
-            <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] cursor-pointer">
-              <div className="absolute inset-0 bg-slate-900/20 group-hover:bg-slate-900/10 transition-colors z-10"></div>
-              <img src="https://images.unsplash.com/photo-1460661619277-d61798cdb5bd?auto=format&fit=crop&w=600&q=80" alt="Merch" className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-              <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent z-20">
-                <div className="flex items-center gap-2 text-green-300 mb-1">
-                  <Users size={16} /> <span className="text-xs font-bold uppercase tracking-wider">Creators</span>
-                </div>
-                <h3 className="text-white text-xl font-bold">Fan Merch</h3>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* --- VALUE PROPS --- */}
       <div className="border-y border-slate-100 bg-slate-50 py-12">
