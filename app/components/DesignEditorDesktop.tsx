@@ -23,6 +23,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
     // Refs
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const designZoneRef = useRef<fabric.Rect | null>(null);
 
     // State
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
@@ -120,6 +121,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             visible: true,
         });
         canvas.add(designZone);
+        designZoneRef.current = designZone;
 
         const clipPath = new fabric.Rect({
             left: currentDesignZone.left,
@@ -262,7 +264,12 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                 {/* Reset View Button */}
                 <div className="absolute top-8 right-8 z-20">
                     <button
-                        onClick={() => { fabricCanvas?.clear(); fabricCanvas?.fire('object:modified'); }}
+                        onClick={() => {
+                            fabricCanvas?.getObjects().forEach((o) => {
+                                if (o !== designZoneRef.current) fabricCanvas.remove(o);
+                            });
+                            fabricCanvas?.fire('object:modified');
+                        }}
                         className="p-3 bg-white/80 backdrop-blur border border-slate-100 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm"
                     >
                         <RotateCcw size={18} />
