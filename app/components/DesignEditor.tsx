@@ -15,12 +15,10 @@ import { cn } from '@/lib/utils'; // Assuming you have a cn utility, or I will u
 interface DesignEditorProps {
     onUpdate: (dataUrl: string) => void;
     product: Product;
-    selectedColor: ProductColor;
-    onColorChange: (color: ProductColor) => void;
     activeViewId: string;
 }
 
-export default function DesignEditor({ onUpdate, product, selectedColor, onColorChange, activeViewId }: DesignEditorProps) {
+export default function DesignEditor({ onUpdate, product, activeViewId }: DesignEditorProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -35,7 +33,8 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
     const [saving, setSaving] = useState(false);
 
     // UI State for Mobile Drawers
-    const [activeMobileTab, setActiveMobileTab] = useState<'none' | 'colors'>('none');
+    // UI State for Mobile Drawers
+    // const [activeMobileTab, setActiveMobileTab] = useState<'none' | 'colors'>('none');
 
     // Derived Logic
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
@@ -130,7 +129,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
         const handleSelection = (e: any) => {
             const selected = e.selected?.[0];
             setSelectedObject(selected || null);
-            if (selected) setActiveMobileTab('none'); // Close other drawers when object selected
+            // if (selected) setActiveMobileTab('none'); // Close other drawers when object selected
 
             if (selected && selected instanceof fabric.IText) {
                 setTextColor(selected.fill as string);
@@ -311,18 +310,7 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                 <div className="h-px w-8 bg-slate-200 my-2"></div>
 
                 {/* Desktop Color Picker */}
-                <div className="flex flex-col gap-3 items-center">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">Colors</span>
-                    {product.colors.map((c) => (
-                        <button
-                            key={c.name}
-                            onClick={() => onColorChange(c)}
-                            className={`w-6 h-6 rounded-full border border-slate-200 shadow-sm transition-transform hover:scale-125 ${selectedColor.name === c.name ? 'ring-2 ring-indigo-500 ring-offset-2 scale-110' : ''}`}
-                            style={{ backgroundColor: c.hex }}
-                            title={c.name}
-                        />
-                    ))}
-                </div>
+
 
                 <div className="mt-auto pb-4">
                     <ToolButton icon={Save} label="Save" onClick={saveDesign} loading={saving} active />
@@ -387,31 +375,9 @@ export default function DesignEditor({ onUpdate, product, selectedColor, onColor
                     <span className="text-[10px] font-medium text-slate-500">Image</span>
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </label>
-                <MobileToolBtn
-                    icon={Palette}
-                    label="Colors"
-                    onClick={() => setActiveMobileTab(activeMobileTab === 'colors' ? 'none' : 'colors')}
-                    active={activeMobileTab === 'colors'}
-                />
             </div>
 
-            {/* 4. MOBILE COLOR DRAWER (Slide Up) */}
-            <div className={`md:hidden fixed bottom-20 left-0 right-0 bg-white border-t border-slate-200 p-4 transition-transform duration-300 z-20 ${activeMobileTab === 'colors' ? 'translate-y-0' : 'translate-y-full'}`}>
-                <div className="flex justify-between items-center mb-3">
-                    <span className="text-xs font-bold uppercase text-slate-400">Product Color</span>
-                    <button onClick={() => setActiveMobileTab('none')}><X size={16} className="text-slate-400" /></button>
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                    {product.colors.map((c) => (
-                        <button
-                            key={c.name}
-                            onClick={() => onColorChange(c)}
-                            className={`flex-shrink-0 w-10 h-10 rounded-full border border-slate-200 ${selectedColor.name === c.name ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}`}
-                            style={{ backgroundColor: c.hex }}
-                        />
-                    ))}
-                </div>
-            </div>
+
 
             {/* 5. OBJECT PROPERTIES PANEL (Responsive) */}
             {selectedObject && (

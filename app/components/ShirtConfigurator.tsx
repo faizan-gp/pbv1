@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import DesignEditor from './DesignEditor';
 import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, ArrowLeft, Check, Layers } from 'lucide-react';
 import Link from 'next/link';
 
@@ -14,13 +14,15 @@ interface ShirtConfiguratorProps {
 
 export default function ShirtConfigurator({ product }: ShirtConfiguratorProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { addToCart } = useCart();
     const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState(product);
 
-    // Initial color fallback
+    // Initial color from URL or fallback
     const defaultColor = { name: 'Default', hex: '#ffffff', images: {} };
-    const initialColor = product.colors && product.colors.length > 0 ? product.colors[0] : defaultColor;
+    const urlColorName = searchParams.get('color');
+    const initialColor = product.colors?.find((c: any) => c.name === urlColorName) || product.colors?.[0] || defaultColor;
 
     const [selectedColor, setSelectedColor] = useState(initialColor);
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
@@ -65,7 +67,6 @@ export default function ShirtConfigurator({ product }: ShirtConfiguratorProps) {
                         onUpdate={setDesignTextureUrl}
                         product={selectedProduct}
                         selectedColor={selectedColor}
-                        onColorChange={setSelectedColor}
                         activeViewId={activeViewId}
                     />
                 </div>
