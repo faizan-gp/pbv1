@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { User, LogOut, Package, Palette } from 'lucide-react';
+import { User, LogOut, Package } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 
 export default function UserMenu() {
@@ -66,14 +66,6 @@ export default function UserMenu() {
                     <div className="py-1">
                         <Link
                             href="/profile"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                            <Palette size={16} className="text-slate-400" />
-                            My Designs
-                        </Link>
-                        <Link
-                            href="/profile?tab=orders"
                             onClick={() => setIsOpen(false)}
                             className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                         >

@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
     Type, Image as ImageIcon, RotateCcw, MousePointer2, ChevronDown,
-    Save, Loader2, X, Palette, Trash2, Smartphone, Monitor,
+    X, Palette, Trash2, Smartphone, Monitor,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Move
 } from 'lucide-react';
 import { Product, ProductColor } from '../data/products';
@@ -30,7 +30,7 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontFamily, setFontFamily] = useState<string>('Arial');
-    const [saving, setSaving] = useState(false);
+
 
     // Derived Logic
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
@@ -256,36 +256,7 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
         fabricCanvas.fire('object:removed');
     };
 
-    const saveDesign = async () => {
-        if (!session) {
-            router.push('/login');
-            return;
-        }
-        if (!fabricCanvas) return;
-        setSaving(true);
-        try {
-            const dataUrl = fabricCanvas.toDataURL({ format: 'png', multiplier: 0.5, quality: 0.8 });
-            const config = fabricCanvas.toJSON();
-            const res = await fetch('/api/user/designs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    productId: product.id,
-                    name: `Design ${new Date().toLocaleDateString()}`,
-                    previewImage: dataUrl,
-                    config: config
-                }),
-            });
-            if (!res.ok) throw new Error('Failed to save');
-            alert('Design saved successfully!');
-            router.refresh();
-        } catch (err) {
-            console.error(err);
-            alert('Failed to save design');
-        } finally {
-            setSaving(false);
-        }
-    };
+
 
     // --- RENDER ---
     return (
@@ -296,14 +267,7 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
                 {/* Mobile Header */}
                 <div className="h-14 bg-white border-b border-slate-100 flex items-center justify-between px-4 z-10">
                     <span className="font-bold text-slate-800 text-sm">{activePreview.name}</span>
-                    <button
-                        onClick={saveDesign}
-                        disabled={saving}
-                        className="text-sm font-bold text-indigo-600 flex items-center gap-1 bg-indigo-50 px-3 py-1.5 rounded-full"
-                    >
-                        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                        Save
-                    </button>
+
                 </div>
 
                 {/* Canvas Container */}

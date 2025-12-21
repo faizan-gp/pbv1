@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
-    Type, Image as ImageIcon, RotateCcw, RotateCw,
-    Save, Loader2, X, Palette, Trash2,
+    Image as ImageIcon, RotateCcw, RotateCw,
+    X, Palette, Trash2, Type,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Move,
     Type as TypeIcon, Maximize2, ChevronDown
 } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
     // Design State
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontFamily, setFontFamily] = useState<string>('Arial');
-    const [saving, setSaving] = useState(false);
+
 
     // Derived Data
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
@@ -230,8 +230,7 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                         <ToolButton icon={ImageIcon} label="Image" onClick={() => { }} tooltip="Upload Image" />
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
                     </label>
-                    <div className="h-px w-8 bg-slate-100 mx-auto my-1" />
-                    <ToolButton icon={Save} label="Save" onClick={() => { setSaving(true); setTimeout(() => setSaving(false), 800) }} loading={saving} tooltip="Save Draft" />
+
                 </div>
             </div>
 
@@ -394,11 +393,11 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
 }
 
 // Sub components
-function ToolButton({ icon: Icon, label, onClick, loading, tooltip }: any) {
+function ToolButton({ icon: Icon, label, onClick, tooltip }: any) {
     return (
         <div className="group relative flex items-center">
-            <button onClick={onClick} disabled={loading} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95 disabled:opacity-50">
-                {loading ? <Loader2 size={20} className="animate-spin" /> : <Icon size={20} strokeWidth={1.5} />}
+            <button onClick={onClick} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95 disabled:opacity-50">
+                <Icon size={20} strokeWidth={1.5} />
             </button>
             {tooltip && (
                 <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none translate-x-[-10px] group-hover:translate-x-0 duration-200 z-50">
