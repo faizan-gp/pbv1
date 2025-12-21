@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import DesignEditor from './DesignEditor';
+import DesignEditor from './DesignEditorDesktop';
 import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
 import { useRouter, useSearchParams } from 'next/navigation';
