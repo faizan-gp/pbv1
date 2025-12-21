@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
-    Type, Image as ImageIcon, RotateCcw,
+    Type, Image as ImageIcon, RotateCcw, RotateCw,
     Save, Loader2, X, Palette, Trash2,
     ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Move,
     Type as TypeIcon, Maximize2, ChevronDown
@@ -362,6 +362,13 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
                                     <button onClick={() => modify('scale', -0.1)} className="p-2 hover:bg-slate-50 text-slate-500"><Minus size={14} /></button>
                                     <div className="flex-1 flex items-center justify-center text-[10px] font-bold text-slate-400 border-x border-slate-100">SCALE</div>
                                     <button onClick={() => modify('scale', 0.1)} className="p-2 hover:bg-slate-50 text-slate-500"><Plus size={14} /></button>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                <div className="flex-1 flex bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                                    <button onClick={() => modify('rotate', -90)} className="p-2 hover:bg-slate-50 text-slate-500"><RotateCcw size={14} /></button>
+                                    <div className="flex-1 flex items-center justify-center text-[10px] font-bold text-slate-400 border-x border-slate-100">ROTATE</div>
+                                    <button onClick={() => modify('rotate', 90)} className="p-2 hover:bg-slate-50 text-slate-500"><RotateCw size={14} /></button>
                                 </div>
                             </div>
                         </div>
