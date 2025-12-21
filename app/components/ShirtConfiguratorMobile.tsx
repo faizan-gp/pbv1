@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { generateCompositeImage } from '@/app/lib/canvasUtils';
 import DesignEditor from './DesignEditorMobile';
 import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
@@ -28,23 +29,57 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         setIsAdding(true);
-        // Simulate network delay for UX
-        setTimeout(() => {
+        try {
+            // 1. Determine Base Image (Current View)
+            const baseImage = selectedColor.images[activeViewId] || selectedColor.images['front'] || selectedProduct.image;
+
+            // 2. Generate Composite Image if design exists
+            let finalImage = baseImage;
+
+            if (designTextureUrl) {
+                const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
+                const currentZone = activePreview.previewZone || product.designZone;
+
+                finalImage = await generateCompositeImage(
+                    baseImage,
+                    designTextureUrl,
+                    currentZone,
+                    product.canvasSize
+                );
+            }
+
             addToCart({
                 productId: selectedProduct.id,
                 name: selectedProduct.name,
                 price: 29.99,
                 quantity: 1,
-                image: designTextureUrl || selectedColor.images['front'] || selectedProduct.image,
+                image: finalImage,
                 options: {
                     color: selectedColor.name,
                     customText: 'Custom Design',
                 },
             });
             router.push("/cart");
-        }, 800);
+        } catch (error) {
+            console.error("Failed to generate cart preview:", error);
+            // Fallback to basic image even if generation fails
+            addToCart({
+                productId: selectedProduct.id,
+                name: selectedProduct.name,
+                price: 29.99,
+                quantity: 1,
+                image: selectedColor.images['front'] || selectedProduct.image,
+                options: {
+                    color: selectedColor.name,
+                    customText: 'Custom Design',
+                },
+            });
+            router.push("/cart");
+        } finally {
+            // setIsAdding(false); // No need to reset as we redirect
+        }
     };
 
     return (
