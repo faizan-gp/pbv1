@@ -19,7 +19,9 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const { addToCart } = useCart();
 
     // State
-    const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
+    const [designStates, setDesignStates] = useState<Record<string, any>>({});
+    const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
+
     const [selectedProduct, setSelectedProduct] = useState(product);
 
     // Color Logic
@@ -31,6 +33,20 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
 
+    // Derived state for current view
+    const designTextureUrl = designPreviews[activeViewId] || null;
+
+    const handleDesignUpdate = (data: { dataUrl: string; jsonState: any }) => {
+        setDesignPreviews(prev => ({
+            ...prev,
+            [activeViewId]: data.dataUrl
+        }));
+        setDesignStates(prev => ({
+            ...prev,
+            [activeViewId]: data.jsonState
+        }));
+    };
+
     const handleAddToCart = () => {
         setIsAdding(true);
         setTimeout(() => {
@@ -39,7 +55,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                 name: selectedProduct.name,
                 price: 29.99,
                 quantity: 1,
-                image: designTextureUrl || selectedColor.images['front'] || selectedProduct.image,
+                image: designPreviews['front'] || designPreviews[activeViewId] || selectedColor.images['front'] || selectedProduct.image,
                 options: {
                     color: selectedColor.name,
                     customText: 'Custom Design',
@@ -89,10 +105,10 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                 <div className="flex-1 bg-slate-100/50 relative flex flex-col p-6 overflow-hidden">
                     <div className="flex-1 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-black/5 overflow-hidden flex flex-col relative transition-all duration-500">
                         <DesignEditor
-                            onUpdate={setDesignTextureUrl}
+                            onUpdate={handleDesignUpdate}
                             product={selectedProduct}
                             activeViewId={activeViewId}
-                        // Assuming DesignEditor might need color info or rendering context
+                            initialState={designStates[activeViewId]}
                         />
                     </div>
                 </div>
@@ -108,7 +124,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                             <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-3xl opacity-0 group-hover:opacity-10 transition-opacity duration-500"></div>
                             <div className="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden relative aspect-square shadow-inner">
                                 <ProductPreview
-                                    designTextureUrl={designTextureUrl}
+                                    designTextureUrl={designTextureUrl} // already derived above
                                     product={selectedProduct}
                                     selectedColor={selectedColor}
                                     activeViewId={activeViewId}

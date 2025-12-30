@@ -13,12 +13,13 @@ import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface DesignEditorProps {
-    onUpdate: (dataUrl: string) => void;
+    onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
     product: Product;
     activeViewId: string;
+    initialState?: any;
 }
 
-export default function DesignEditorMobile({ onUpdate, product, activeViewId }: DesignEditorProps) {
+export default function DesignEditorMobile({ onUpdate, product, activeViewId, initialState }: DesignEditorProps) {
     const { data: session } = useSession();
     const router = useRouter();
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,30 +71,51 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
             touchCornerSize: 24, // Much bigger hit area for mobile
         });
 
-        // Guidelines
-        const designZone = new fabric.Rect({
-            left: currentDesignZone.left,
-            top: currentDesignZone.top,
-            width: currentDesignZone.width,
-            height: currentDesignZone.height,
-            fill: 'transparent',
-            stroke: 'rgba(79, 70, 229, 0.3)',
-            strokeWidth: 2,
-            strokeDashArray: [10, 5],
-            selectable: false,
-            evented: false,
-        });
-        canvas.add(designZone);
-        designZoneRef.current = designZone;
+        // Helper to setup overlays
+        const initOverlays = () => {
+            const designZone = new fabric.Rect({
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
+                fill: 'transparent',
+                stroke: 'rgba(79, 70, 229, 0.3)',
+                strokeWidth: 2,
+                strokeDashArray: [10, 5],
+                selectable: false,
+                evented: false,
+                excludeFromExport: true,
+            });
+            canvas.add(designZone);
+            designZoneRef.current = designZone;
 
-        // Clip Path
-        const clipPath = new fabric.Rect({
-            left: currentDesignZone.left,
-            top: currentDesignZone.top,
-            width: currentDesignZone.width,
-            height: currentDesignZone.height,
-        });
-        canvas.clipPath = clipPath;
+            const clipPath = new fabric.Rect({
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
+                absolutePositioned: true,
+            });
+            canvas.clipPath = clipPath;
+
+            canvas.bringObjectToFront(designZone);
+            canvas.requestRenderAll();
+        };
+
+        // Async Init
+        const initializeCanvas = async () => {
+            if (initialState) {
+                try {
+                    await canvas.loadFromJSON(initialState);
+                } catch (e) {
+                    console.error("Error loading state", e);
+                }
+            }
+            // Always setup overlays AFTER loading
+            initOverlays();
+        };
+
+        initializeCanvas();
 
         setFabricCanvas(canvas);
 
@@ -101,6 +123,7 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
             if (!designZoneRef.current) return;
             designZoneRef.current.set('visible', false);
 
+            // Capture High Res Image logic (unchanged mostly)
             const originalZoom = canvas.getZoom();
             const originalVpt = canvas.viewportTransform;
             canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
@@ -116,10 +139,15 @@ export default function DesignEditorMobile({ onUpdate, product, activeViewId }: 
                 height: currentDesignZone.height,
             });
 
+            // Restore Canvas View
             canvas.setZoom(originalZoom);
             if (originalVpt) canvas.setViewportTransform(originalVpt);
+
+            // Get JSON State
+            const jsonState = canvas.toJSON(['id', 'gradient', 'selectable']);
+
             designZoneRef.current.set('visible', true);
-            onUpdate(dataUrl);
+            onUpdate({ dataUrl, jsonState });
         };
 
         const handleSelection = (e: any) => {

@@ -23,21 +23,42 @@ export async function POST(req: Request) {
         }
 
 
-        // Determine user ID (if logged in) or keep undefined for guest
-        const userId = session?.user ? (session.user as any).id : undefined;
+        // Determine user ID (if logged in) or keep null for guest (Firestore doesn't like undefined)
+        const userId = session?.user ? (session.user as any).id : null;
+
+        const { uploadBase64Image } = await import("@/lib/storage");
+
+        // Process items: Upload images and sanitize data
+        const processedItems = await Promise.all(items.map(async (item: any) => {
+            let previewUrl = item.image || null;
+
+            // If image is a base64 string, upload it
+            if (previewUrl && typeof previewUrl === 'string' && previewUrl.startsWith('data:image')) {
+                try {
+                    const uniqueId = Math.random().toString(36).substring(2, 9);
+                    const path = `orders/${new Date().toISOString().split('T')[0]}/${uniqueId}.png`;
+                    previewUrl = await uploadBase64Image(previewUrl, path);
+                } catch (err) {
+                    console.error("Failed to upload order image:", err);
+                    // Fallback: keep original or set to null if too large? 
+                    // Keeping original might fail if it's too big for Firestore, but let's try.
+                }
+            }
+
+            return {
+                productId: item.productId || item.id,
+                designId: item.designId || null, // Sanitize undefined -> null
+                quantity: item.quantity,
+                price: item.price,
+                configSnapshot: item.options || {},
+                previewSnapshot: previewUrl
+            };
+        }));
 
         // Create the order
         const orderId = await createOrder({
             userId: userId,
-            items: items.map((item: any) => ({
-                productId: item.productId || item.id, // Handle both id formats
-                designId: item.designId, // Pass designId if present, assuming string
-                quantity: item.quantity,
-                price: item.price,
-                // Add snapshots if available, or just basics
-                configSnapshot: item.options,
-                previewSnapshot: item.image
-            })),
+            items: processedItems,
             total: total,
             status: 'pending',
             shippingDetails: {
@@ -47,7 +68,7 @@ export async function POST(req: Request) {
                 city: shippingDetails.city,
                 state: shippingDetails.state,
                 postalCode: shippingDetails.postalCode,
-                country: 'US', // Defaulting for now
+                country: 'US',
             }
         });
 

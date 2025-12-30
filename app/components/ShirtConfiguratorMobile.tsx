@@ -17,7 +17,9 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const router = useRouter();
     const searchParams = useSearchParams();
     const { addToCart } = useCart();
-    const [designTextureUrl, setDesignTextureUrl] = useState<string | null>(null);
+    const [designStates, setDesignStates] = useState<Record<string, any>>({});
+    const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
+
     const [selectedProduct, setSelectedProduct] = useState(product);
 
     // Initial color from URL or fallback
@@ -29,6 +31,20 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
 
+    // Derived state for current view
+    const designTextureUrl = designPreviews[activeViewId] || null;
+
+    const handleDesignUpdate = (data: { dataUrl: string; jsonState: any }) => {
+        setDesignPreviews(prev => ({
+            ...prev,
+            [activeViewId]: data.dataUrl
+        }));
+        setDesignStates(prev => ({
+            ...prev,
+            [activeViewId]: data.jsonState
+        }));
+    };
+
     const handleAddToCart = async () => {
         setIsAdding(true);
         try {
@@ -38,13 +54,16 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
             // 2. Generate Composite Image if design exists
             let finalImage = baseImage;
 
-            if (designTextureUrl) {
+            // Check if there is a preview for the CURRENT view
+            const currentViewDesignUrl = designPreviews[activeViewId];
+
+            if (currentViewDesignUrl) {
                 const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
                 const currentZone = activePreview.previewZone || product.designZone;
 
                 finalImage = await generateCompositeImage(
                     baseImage,
-                    designTextureUrl,
+                    currentViewDesignUrl,
                     currentZone,
                     product.canvasSize
                 );
@@ -96,9 +115,10 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
 
                 <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col relative">
                     <DesignEditor
-                        onUpdate={setDesignTextureUrl}
+                        onUpdate={handleDesignUpdate}
                         product={selectedProduct}
                         activeViewId={activeViewId}
+                        initialState={designStates[activeViewId]}
                     />
                 </div>
             </div>

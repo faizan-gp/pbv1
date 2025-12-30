@@ -12,12 +12,13 @@ import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 
 interface DesignEditorProps {
-    onUpdate: (dataUrl: string) => void;
+    onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
     product: any;
     activeViewId: string;
+    initialState?: any;
 }
 
-export default function DesignEditorDesktop({ onUpdate, product, activeViewId }: DesignEditorProps) {
+export default function DesignEditorDesktop({ onUpdate, product, activeViewId, initialState }: DesignEditorProps) {
     const { data: session } = useSession();
 
     // Refs
@@ -107,42 +108,75 @@ export default function DesignEditorDesktop({ onUpdate, product, activeViewId }:
             shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.1)', blur: 5 })
         });
 
-        const designZone = new fabric.Rect({
-            left: currentDesignZone.left,
-            top: currentDesignZone.top,
-            width: currentDesignZone.width,
-            height: currentDesignZone.height,
-            fill: 'transparent',
-            stroke: 'rgba(99, 102, 241, 0.3)',
-            strokeWidth: 2,
-            strokeDashArray: [10, 10],
-            selectable: false,
-            evented: false,
-            visible: true,
-        });
-        canvas.add(designZone);
-        designZoneRef.current = designZone;
+        // Helper to setup overlays (Guides & ClipPath)
+        const initOverlays = () => {
+            // 1. Create Design Zone Guide
+            const designZone = new fabric.Rect({
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
+                fill: 'transparent',
+                stroke: 'rgba(99, 102, 241, 0.3)',
+                strokeWidth: 2,
+                strokeDashArray: [10, 10],
+                selectable: false,
+                evented: false,
+                visible: true,
+                excludeFromExport: true, // Custom property
+            });
+            canvas.add(designZone);
+            designZoneRef.current = designZone;
 
-        const clipPath = new fabric.Rect({
-            left: currentDesignZone.left,
-            top: currentDesignZone.top,
-            width: currentDesignZone.width,
-            height: currentDesignZone.height,
-            absolutePositioned: true,
-        });
-        canvas.clipPath = clipPath;
+            // 2. Create Clip Path
+            const clipPath = new fabric.Rect({
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
+                absolutePositioned: true,
+            });
+            canvas.clipPath = clipPath;
+
+            // 3. Ensure Guide is on top
+            canvas.bringObjectToFront(designZone);
+            canvas.requestRenderAll();
+        };
+
+        // Initialize State
+        const initializeCanvas = async () => {
+            if (initialState) {
+                try {
+                    // Fabric v6: loadFromJSON is async and clears canvas
+                    await canvas.loadFromJSON(initialState);
+                } catch (err) {
+                    console.error("Failed to load design state:", err);
+                }
+            }
+            // Always setup overlays AFTER loading (or fresh init)
+            initOverlays();
+        };
+
+        initializeCanvas();
 
         setFabricCanvas(canvas);
 
         const handleUpdate = () => {
-            designZone.set('visible', false);
+            if (!designZoneRef.current) return;
+            designZoneRef.current.set('visible', false);
             const dataUrl = canvas.toDataURL({
                 format: 'png', multiplier: 2, quality: 1,
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
             });
-            designZone.set('visible', true);
-            onUpdate(dataUrl);
+
+            // Generate JSON State (Serialize everything except the guide if configured)
+            // We use a custom property 'excludeFromExport' or just filter explicitly if needed
+            // But usually standard JSON is fine if we reconstruct the guide on load
+            const jsonState = canvas.toJSON(['id', 'gradient', 'selectable']);
+
+            designZoneRef.current.set('visible', true);
+            onUpdate({ dataUrl, jsonState });
         };
 
         const handleSelection = (e: any) => {

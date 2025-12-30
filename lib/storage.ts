@@ -11,3 +11,10 @@ export async function uploadProductImage(file: File, folder: string = "misc"): P
     await uploadBytes(storageRef, file);
     return await getDownloadURL(storageRef);
 }
+
+export async function uploadBase64Image(base64String: string, path: string): Promise<string> {
+    const storageRef = ref(storage, path);
+    // Remove header if present (e.g. "data:image/png;base64,")
+    const uploadRef = await import("firebase/storage").then(m => m.uploadString(storageRef, base64String, 'data_url'));
+    return await getDownloadURL(storageRef);
+}

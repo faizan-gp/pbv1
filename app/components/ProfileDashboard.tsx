@@ -56,11 +56,11 @@ export default function ProfileDashboard({ user, designs, orders }: ProfileDashb
                         ) : (
                             <div className="space-y-4">
                                 {orders.map((order) => (
-                                    <Link href={`/order-success/${order._id}`} key={order._id} className="block group">
+                                    <Link href={`/order-success/${order.id}`} key={order.id} className="block group">
                                         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center justify-between hover:shadow-md transition-shadow group-hover:border-indigo-100">
                                             <div>
                                                 <div className="flex items-center gap-3 mb-1">
-                                                    <span className="font-bold text-slate-900">#{order._id.toString().slice(-8).toUpperCase()}</span>
+                                                    <span className="font-bold text-slate-900">#{order.id.slice(-8).toUpperCase()}</span>
                                                     <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${order.status === 'delivered' ? 'bg-green-100 text-green-700' :
                                                         order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
                                                             'bg-amber-100 text-amber-700'

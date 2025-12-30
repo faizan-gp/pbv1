@@ -20,8 +20,8 @@ export default async function ProfilePage() {
     // Fetch Orders
     const orders = await getUserOrders((session.user as any).id);
 
-    // Serialize MongoDB objects (convert _id/dates to strings if needed for basic props)
-    // .lean() helps, but sometimes Dates need manual string conversion for Next.js props
+    // Serialize objects (convert Dates to strings if needed for basic props)
+    // .lean() is not needed for Firestore, but serialization ensures plain objects
     const serializedDesigns = JSON.parse(JSON.stringify(designs));
     const serializedOrders = JSON.parse(JSON.stringify(orders));
 
