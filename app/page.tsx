@@ -35,6 +35,27 @@ const GALLERY_IMAGES = [
   { src: "https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&q=80&w=800", alt: "Typography Shirt", user: "@type_matters" },
 ];
 
+const steps = [
+  {
+    id: "01",
+    title: "Pick a Product",
+    description: "Choose from our premium catalog of t-shirts, hoodies, and eco-friendly accessories.",
+    icon: <ShoppingBag className="w-6 h-6 text-white" />,
+  },
+  {
+    id: "02",
+    title: "Add Your Design",
+    description: "Upload photos, use our AI generator, or combine text and shapes in the studio.",
+    icon: <Palette className="w-6 h-6 text-white" />,
+  },
+  {
+    id: "03",
+    title: "We Print & Ship",
+    description: "We handle the printing, quality checks, and shipping directly to your doorstep.",
+    icon: <Truck className="w-6 h-6 text-white" />,
+  },
+];
+
 export default function Home() {
   const [activeColor, setActiveColor] = useState(HERO_COLORS[0]);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -161,14 +182,14 @@ export default function Home() {
                 <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: activeColor.class === 'bg-white' ? '#f8fafc' : '' }}></div>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <img
-                    src="/hoodie.jpg"
+                    src="/products/shirt/colors/shirt_sand_dune.png"
                     alt="Custom Hoodie"
                     className="w-full h-full object-cover mix-blend-multiply transition-all duration-500"
-                    style={{ filter: activeColor.filter }}
+                  // style={{ filter: activeColor.filter }}
                   />
                 </div>
                 {/* Design Zone Overlay */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-64 border-2 border-dashed border-indigo-500/50 rounded bg-indigo-500/5 flex flex-col items-center justify-center text-indigo-600 animate-pulse">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-48 border-2 border-dashed border-indigo-500/50 rounded bg-indigo-500/5 flex flex-col items-center justify-center text-indigo-600 animate-pulse">
                   <Upload className="w-8 h-8 mb-2 opacity-50" />
                   <span className="text-xs font-bold uppercase tracking-wider opacity-70">Your Design Here</span>
                 </div>
@@ -219,33 +240,37 @@ export default function Home() {
       </div>
 
       {/* --- FEATURE DEEP DIVE (NEW) --- */}
-      <section className="py-24 bg-white z-10">
-        <div className="container-width">
-          <div className="flex flex-col md:flex-row gap-16 items-center">
+      <section className="py-24 bg-white z-10 overflow-hidden">
+        <div className="container-width mx-auto px-4">
+          <div className="flex flex-col lg:flex-row gap-16 items-center">
+
+            {/* LEFT CONTENT */}
             <div className="flex-1 space-y-8">
-              <h2 className="text-4xl font-black tracking-tight text-slate-900">
+              <h2 className="text-4xl font-black tracking-tight text-slate-900 leading-tight">
                 Powerful tools, <br />
                 <span className="text-indigo-600">Zero experience needed.</span>
               </h2>
-              <p className="text-lg text-slate-600">Our design studio handles the technical stuff—print files, color matching, and layers—so you can focus on creativity.</p>
+              <p className="text-lg text-slate-600">
+                Our design studio handles the technical stuff—print files, color matching, and layers—so you can focus on creativity.
+              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-purple-200">
                   <Wand2 className="w-8 h-8 text-purple-600 mb-3" />
                   <h4 className="font-bold text-slate-900 mb-1">AI Generator</h4>
                   <p className="text-sm text-slate-500">Describe an image and our AI will create unique art for you.</p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-blue-200">
                   <Layers className="w-8 h-8 text-blue-600 mb-3" />
                   <h4 className="font-bold text-slate-900 mb-1">Smart Layers</h4>
                   <p className="text-sm text-slate-500">Easily combine text, shapes, and uploaded images.</p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-indigo-200">
                   <ImageIcon className="w-8 h-8 text-indigo-600 mb-3" />
                   <h4 className="font-bold text-slate-900 mb-1">Instant Preview</h4>
                   <p className="text-sm text-slate-500">See exactly how your design looks on the fabric before buying.</p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-yellow-200">
                   <Zap className="w-8 h-8 text-yellow-600 mb-3" />
                   <h4 className="font-bold text-slate-900 mb-1">One-Click Print</h4>
                   <p className="text-sm text-slate-500">Done designing? Add to cart and we handle production.</p>
@@ -253,20 +278,33 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Visual for Tool Interface */}
-            <div className="flex-1 relative">
-              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl rotate-3 opacity-20 blur-xl"></div>
-              <div className="relative bg-slate-900 rounded-3xl p-2 shadow-2xl border border-slate-800 rotate-[-2deg] transition-transform hover:rotate-0 duration-500">
-                <img src="/interface_mock.jpg" alt="Editor Interface" className="rounded-2xl w-full h-auto opacity-90" />
-                {/* Fallback visual if no image */}
-                <div className="h-64 sm:h-80 w-full rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 border-dashed">
-                  <div className="text-center">
-                    <Palette className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-                    <p className="text-slate-500 font-mono text-sm">Design Canvas Interface</p>
-                  </div>
-                </div>
+            {/* RIGHT VISUAL - DESIGN TOOL */}
+            <div className="flex-1 relative w-full max-w-2xl lg:max-w-none">
+              {/* Background Glow Effect */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-3xl rotate-3 opacity-20 blur-xl scale-95"></div>
+
+              {/* Main Container */}
+              <div className="relative bg-slate-900 rounded-3xl p-2 shadow-2xl border border-slate-800 rotate-[-1deg] transition-transform hover:rotate-0 duration-500">
+
+                {/* --- DESKTOP IMAGE (Hidden on Mobile) --- */}
+                {/* Ensure your desktop image is roughly 16:9 or landscape */}
+                <img
+                  src="/design_editor.png"
+                  alt="Desktop Editor Interface"
+                  className="hidden md:block rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
+                />
+
+                {/* --- MOBILE IMAGE (Hidden on Desktop) --- */}
+                {/* Ensure your mobile image is portrait or square */}
+                <img
+                  src="/design_editor_mobile.png"
+                  alt="Mobile Editor Interface"
+                  className="block md:hidden rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
+                />
+
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -292,19 +330,69 @@ export default function Home() {
       </section>
 
       {/* --- HOW IT WORKS --- */}
-      <section id="how-it-works" className="relative py-24 z-10 bg-white border-t border-slate-100">
-        <div className="container-width">
+      <section id="how-it-works" className="relative py-24 bg-slate-50 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
+          <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+          <div className="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30"></div>
+        </div>
+
+        <div className="container-width relative z-10 mx-auto px-4">
+          {/* Section Header */}
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <div className="inline-block px-4 py-1.5 rounded-full bg-slate-100 text-slate-600 text-sm font-bold mb-4">Simple Process</div>
-            <h2 className="text-4xl font-bold tracking-tight text-slate-900 mb-4">You Design. We Do The Rest.</h2>
-            <p className="text-lg text-slate-600">Turn your ideas into tangible products in 3 easy steps.</p>
+            <span className="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold tracking-wider uppercase mb-4">
+              How it Works
+            </span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-6">
+              You Design. <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">We Do The Rest.</span>
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Turn your ideas into tangible products without managing inventory or shipping.
+            </p>
           </div>
 
+          {/* Steps Grid */}
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="hidden md:block absolute top-[28%] left-[16%] right-[16%] h-0.5 border-t-2 border-dashed border-slate-200 -z-10"></div>
-            <ProcessCard number="01" title="Pick a Product" description="Choose from our catalog of t-shirts, hoodies, and accessories." icon={<ShoppingBag className="h-6 w-6 text-white" />} />
-            <ProcessCard number="02" title="Add Your Design" description="Upload photos, add text, or use our icons in the Design Studio." icon={<Palette className="h-6 w-6 text-white" />} />
-            <ProcessCard number="03" title="We Print & Ship" description="We print your custom piece and mail it directly to you." icon={<Truck className="h-6 w-6 text-white" />} isLast />
+
+            {/* Connector Line (Desktop: Horizontal) */}
+            <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-1 bg-gradient-to-r from-indigo-200 via-purple-200 to-indigo-200 rounded-full -z-10"></div>
+
+            {/* Connector Line (Mobile: Vertical) */}
+            <div className="md:hidden absolute top-12 bottom-12 left-1/2 w-1 -ml-0.5 bg-gradient-to-b from-indigo-200 via-purple-200 to-indigo-200 rounded-full -z-10"></div>
+
+            {steps.map((step, index) => (
+              <div
+                key={step.id}
+                className="group relative bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300"
+              >
+                {/* Large Watermark Number */}
+                <div className="absolute -top-6 -right-4 text-9xl font-black text-slate-50 opacity-50 select-none group-hover:text-indigo-50 transition-colors duration-300">
+                  {step.id}
+                </div>
+
+                {/* Icon Bubble */}
+                <div className="relative w-16 h-16 mx-auto md:mx-0 mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform duration-300">
+                  {step.icon}
+                </div>
+
+                {/* Content */}
+                <div className="relative text-center md:text-left">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{step.title}</h3>
+                  <p className="text-slate-600 leading-relaxed text-sm">{step.description}</p>
+                </div>
+
+                {/* Mobile visual connector (Dot) */}
+                <div className="md:hidden absolute -bottom-16 left-1/2 -ml-2 w-4 h-4 rounded-full border-4 border-slate-50 bg-indigo-300"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Call to Action at bottom */}
+          <div className="mt-16 text-center">
+            <button className="inline-flex items-center justify-center px-8 py-3 text-base font-semibold text-white transition-all duration-200 bg-slate-900 rounded-full hover:bg-slate-700 hover:shadow-lg hover:-translate-y-1">
+              Start Creating Now
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </button>
           </div>
         </div>
       </section>
@@ -318,7 +406,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-indigo-500 rounded-3xl rotate-2 group-hover:rotate-1 transition-transform"></div>
               <div className="relative h-[400px] w-full bg-slate-800 rounded-3xl overflow-hidden border border-slate-700">
                 {/* Placeholder for fabric closeup */}
-                <img src="https://images.unsplash.com/photo-1620799140408-ed5341cd2431?auto=format&fit=crop&q=80&w=1000" alt="Fabric Texture" className="w-full h-full object-cover opacity-80" />
+                <img src="./" alt="Fabric Texture" className="w-full h-full object-cover opacity-80" />
                 <div className="absolute bottom-6 left-6 right-6 bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="text-green-400" />

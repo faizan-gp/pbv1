@@ -16,6 +16,7 @@
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "fabric": "^6.9.0",
+    "firebase": "^12.7.0",
     "framer-motion": "^12.23.26",
     "lucide-react": "^0.556.0",
     "mongoose": "^9.0.1",
