@@ -486,34 +486,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- INSPIRATION GALLERY (NEW) --- */}
-      <section className="py-24 bg-white border-b border-slate-100">
-        <div className="container-width">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-black text-slate-900 mb-4">Made by our Community</h2>
-            <p className="text-slate-600">See what others are creating right now.</p>
-          </div>
-
-          <div className="columns-1 md:columns-2 lg:columns-4 gap-4 space-y-4">
-            {GALLERY_IMAGES.map((img, i) => (
-              <div key={i} className="break-inside-avoid relative group rounded-2xl overflow-hidden cursor-pointer">
-                <img src={img.src} alt={img.alt} className="w-full h-auto transform transition-transform duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="absolute bottom-4 left-4 text-white">
-                    <p className="font-bold text-sm">{img.alt}</p>
-                    <p className="text-xs opacity-80">{img.user}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {/* Promo Card in Grid */}
-            <div className="break-inside-avoid relative bg-indigo-600 rounded-2xl p-8 text-center text-white flex flex-col items-center justify-center h-[200px]">
-              <h3 className="font-bold text-2xl mb-2">Your Turn?</h3>
-              <Link href="/products" className="underline underline-offset-4 hover:text-indigo-200">Start Designing</Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* --- FAQ ACCORDION (NEW) --- */}
       <section className="py-24 bg-slate-50">
