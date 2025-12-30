@@ -3,9 +3,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { useToast } from './Toast';
-import { IProduct, IProductFeature } from '@/models/Product';
+import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save } from 'lucide-react';
+import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, Loader2 } from 'lucide-react';
+import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
 
@@ -165,6 +166,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
 
 
@@ -360,19 +362,29 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
 
     // HELPERS
-    const handleListingImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleListingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
-        if (!files) return;
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (f) => {
-                const result = f.target?.result as string;
-                if (result) {
-                    setListingImages(prev => [...prev, { url: result, color: 'All', isThumbnail: prev.length === 0 }]);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            const uploadPromises = Array.from(files).map(file => uploadProductImage(file, 'listings'));
+            const urls = await Promise.all(uploadPromises);
+
+            setListingImages(prev => [
+                ...prev,
+                ...urls.map((url, i) => ({
+                    url,
+                    color: 'All',
+                    isThumbnail: prev.length === 0 && i === 0
+                }))
+            ]);
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload images', 'error');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const toggleThumbnail = (index: number) => {
@@ -399,15 +411,20 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         setProductColors(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'editor' | 'preview') => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'editor' | 'preview') => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (f) => {
-            const result = f.target?.result as string;
-            setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, [type === 'editor' ? 'editorImage' : 'image']: result } : v));
-        };
-        reader.readAsDataURL(file);
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'views');
+            setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, [type === 'editor' ? 'editorImage' : 'image']: url } : v));
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const addView = () => {
@@ -435,7 +452,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             {currentStep < 4 ? (
                                 <button onClick={() => setCurrentStep(Math.min(4, currentStep + 1))} className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2">Next <ChevronRight size={16} /></button>
                             ) : (
-                                <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+                                <button onClick={handleSave} disabled={isSaving || isUploading} className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
                                     {isSaving ? 'Saving...' : 'Save Product'} <Save size={16} />
                                 </button>
                             )}
@@ -585,7 +602,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 ))}
                                 <label className="aspect-[4/1] sm:aspect-auto border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all min-h-[120px]">
                                     <Plus className="text-gray-400 mb-2" />
-                                    <span className="text-xs font-medium text-gray-500">Add Images</span>
+                                    <span className="text-xs font-medium text-gray-500">{isUploading ? 'Uploading...' : 'Add Images'}</span>
                                     <input type="file" multiple accept="image/*" className="hidden" onChange={handleListingImageUpload} />
                                 </label>
                             </div>

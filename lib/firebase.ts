@@ -14,11 +14,14 @@ const firebaseConfig = {
     measurementId: "G-WFEL1PLWME"
 };
 
+import { getStorage } from "firebase/storage";
+
 // Initialize Firebase
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize analytics only on client side
 const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-export { app, analytics, db };
+export { app, analytics, db, storage };
