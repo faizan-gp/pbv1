@@ -11,7 +11,6 @@ export default function CheckoutPage() {
     const { items, cartTotal, clearCart } = useCart();
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState<'card' | 'paypal'>('card');
     const [mounted, setMounted] = useState(false);
 
     // Form State
@@ -222,113 +221,51 @@ export default function CheckoutPage() {
                             {/* 3. Payment Method */}
                             <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8">
                                 <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
                                         <CreditCard className="w-5 h-5" />
                                     </div>
                                     <h2 className="text-xl font-bold text-slate-900">Payment Method</h2>
                                 </div>
 
-                                {/* Visual Toggle */}
-                                <div className="grid grid-cols-2 gap-4 mb-8">
-                                    <div
-                                        onClick={() => setPaymentMethod('card')}
-                                        className={`cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-3 transition-all ${paymentMethod === 'card' ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600' : 'border-slate-200 hover:border-indigo-200'}`}
-                                    >
-                                        <CreditCard className={`w-8 h-8 ${paymentMethod === 'card' ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                        <span className={`font-bold text-sm ${paymentMethod === 'card' ? 'text-indigo-900' : 'text-slate-600'}`}>Credit Card</span>
+                                <div className="mt-6">
+                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl mb-6 text-blue-800 text-sm">
+                                        <p>Securely pay with PayPal, PayPal Credit, or Debit/Credit Card.</p>
                                     </div>
-                                    <div
-                                        onClick={() => setPaymentMethod('paypal')}
-                                        className={`cursor-pointer rounded-2xl border p-4 flex flex-col items-center justify-center gap-3 transition-all ${paymentMethod === 'paypal' ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-slate-200 hover:border-blue-200'}`}
-                                    >
-                                        {/* Simple PayPal Icon SVG */}
-                                        <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M7.05078 20.0039H10.5132L11.238 15.3906H13.882C17.0211 15.3906 18.7844 13.868 19.1672 10.9633C19.3492 9.58281 18.8922 8.44141 17.8922 7.575C16.8922 6.70859 15.3469 6.27539 13.257 6.27539H8.72109C8.32813 6.27539 8.00313 6.57031 7.94219 6.96094L6.34688 19.0687C6.30938 19.3523 6.53203 19.6008 6.81797 19.6008H7.05078V20.0039Z" fill="#253B80" />
-                                        </svg>
-                                        <span className={`font-bold text-sm ${paymentMethod === 'paypal' ? 'text-blue-900' : 'text-slate-600'}`}>PayPal</span>
+
+                                    {/* PayPal Buttons Integration */}
+                                    <div className="relative z-0">
+                                        <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
+                                            <PayPalButtons
+                                                style={{ layout: "vertical", shape: "rect", color: "blue", label: "pay" }}
+                                                createOrder={(data, actions) => {
+                                                    return actions.order.create({
+                                                        intent: "CAPTURE",
+                                                        purchase_units: [{
+                                                            amount: {
+                                                                currency_code: "USD",
+                                                                value: total.toFixed(2),
+                                                            },
+                                                            description: "PrintBrawl Custom Order"
+                                                        }],
+                                                    });
+                                                }}
+                                                onApprove={async (data, actions) => {
+                                                    if (actions.order) {
+                                                        const details = await actions.order.capture();
+                                                        try {
+                                                            const orderId = await createOrderRecord(details);
+                                                            setIsSuccess(true); // Prevent redirect to cart
+                                                            clearCart();
+                                                            router.push(`/order-success/${orderId}`);
+                                                        } catch (err) {
+                                                            alert('Error saving order');
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                        </PayPalScriptProvider>
                                     </div>
                                 </div>
-
-                                {paymentMethod === 'card' && (
-                                    <div className="space-y-6 animate-in fade-in slide-in-from-top-2">
-                                        <div className="space-y-1">
-                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Card Number</label>
-                                            <div className="relative">
-                                                <input
-                                                    required
-                                                    type="text"
-                                                    placeholder="0000 0000 0000 0000"
-                                                    className="block w-full rounded-xl border-slate-200 py-3 pl-4 pr-10 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50"
-                                                />
-                                                <Lock className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-6">
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Expiry Date</label>
-                                                <input required type="text" placeholder="MM/YY" className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
-                                            </div>
-                                            <div className="space-y-1">
-                                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">CVC</label>
-                                                <input required type="text" placeholder="123" className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            disabled={isSubmitting}
-                                            type="submit"
-                                            className="w-full mt-6 rounded-2xl border border-transparent bg-slate-900 px-4 py-4 text-base font-bold text-white shadow-xl hover:bg-indigo-600 hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
-                                        >
-                                            {isSubmitting ? "Processing Payment..." : `Pay $${total.toFixed(2)}`}
-                                        </button>
-
-                                        <div className="flex items-center justify-center gap-2 text-xs text-slate-400">
-                                            <Lock className="w-3 h-3" /> Payments are secure and encrypted.
-                                        </div>
-                                    </div>
-                                )}
-
-                                {paymentMethod === 'paypal' && (
-                                    <div className="mt-6 animate-in fade-in slide-in-from-top-2">
-                                        <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl mb-6 text-blue-800 text-sm">
-                                            <p>Use the test account provided in documentation or a sandbox account to test this flow.</p>
-                                        </div>
-
-                                        {/* PayPal Buttons Integration */}
-                                        <div className="relative z-0">
-                                            <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
-                                                <PayPalButtons
-                                                    style={{ layout: "vertical", shape: "rect", color: "blue", label: "pay" }}
-                                                    createOrder={(data, actions) => {
-                                                        return actions.order.create({
-                                                            intent: "CAPTURE",
-                                                            purchase_units: [{
-                                                                amount: {
-                                                                    currency_code: "USD",
-                                                                    value: total.toFixed(2),
-                                                                },
-                                                                description: "PrintBrawl Custom Order"
-                                                            }],
-                                                        });
-                                                    }}
-                                                    onApprove={async (data, actions) => {
-                                                        if (actions.order) {
-                                                            const details = await actions.order.capture();
-                                                            try {
-                                                                const orderId = await createOrderRecord(details);
-                                                                setIsSuccess(true); // Prevent redirect to cart
-                                                                clearCart();
-                                                                router.push(`/order-success/${orderId}`);
-                                                            } catch (err) {
-                                                                alert('Error saving order');
-                                                            }
-                                                        }
-                                                    }}
-                                                />
-                                            </PayPalScriptProvider>
-                                        </div>
-                                    </div>
-                                )}
                             </section>
                         </form>
                     </div>
