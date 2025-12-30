@@ -75,6 +75,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
                 price: 29.99,
                 quantity: 1,
                 image: finalImage,
+                previews: designPreviews,
                 options: {
                     color: selectedColor.name,
                     customText: 'Custom Design',

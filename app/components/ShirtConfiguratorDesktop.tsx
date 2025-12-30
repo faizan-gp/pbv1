@@ -56,6 +56,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                 price: 29.99,
                 quantity: 1,
                 image: designPreviews['front'] || designPreviews[activeViewId] || selectedColor.images['front'] || selectedProduct.image,
+                previews: designPreviews,
                 options: {
                     color: selectedColor.name,
                     customText: 'Custom Design',

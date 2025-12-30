@@ -7,7 +7,8 @@ export interface OrderItem {
     quantity: number;
     price: number;
     configSnapshot?: any;
-    previewSnapshot?: string;
+    previewSnapshot?: string; // Main thumbnail
+    previewsSnapshot?: Record<string, string>; // Map of viewId -> URL
 }
 
 export interface Order {

@@ -31,17 +31,33 @@ export async function POST(req: Request) {
         // Process items: Upload images and sanitize data
         const processedItems = await Promise.all(items.map(async (item: any) => {
             let previewUrl = item.image || null;
+            let previewsSnapshot: Record<string, string> = {};
 
-            // If image is a base64 string, upload it
-            if (previewUrl && typeof previewUrl === 'string' && previewUrl.startsWith('data:image')) {
-                try {
-                    const uniqueId = Math.random().toString(36).substring(2, 9);
-                    const path = `orders/${new Date().toISOString().split('T')[0]}/${uniqueId}.png`;
-                    previewUrl = await uploadBase64Image(previewUrl, path);
-                } catch (err) {
-                    console.error("Failed to upload order image:", err);
-                    // Fallback: keep original or set to null if too large? 
-                    // Keeping original might fail if it's too big for Firestore, but let's try.
+            // Helper to check and upload base64
+            const processImage = async (img: string, prefix: string = '') => {
+                if (img && typeof img === 'string' && img.startsWith('data:image')) {
+                    try {
+                        const uniqueId = Math.random().toString(36).substring(2, 9);
+                        const path = `orders/${new Date().toISOString().split('T')[0]}/${prefix}${uniqueId}.png`;
+                        return await uploadBase64Image(img, path);
+                    } catch (err) {
+                        console.error("Failed to upload order image:", err);
+                        return null;
+                    }
+                }
+                return img;
+            };
+
+            // 1. Upload Main Image
+            previewUrl = await processImage(previewUrl, 'main_');
+
+            // 2. Upload All View Previews (if present)
+            if (item.previews) {
+                for (const [viewId, base64] of Object.entries(item.previews as Record<string, string>)) {
+                    const url = await processImage(base64, `${viewId}_`);
+                    if (url) {
+                        previewsSnapshot[viewId] = url;
+                    }
                 }
             }
 
@@ -51,7 +67,8 @@ export async function POST(req: Request) {
                 quantity: item.quantity,
                 price: item.price,
                 configSnapshot: item.options || {},
-                previewSnapshot: previewUrl
+                previewSnapshot: previewUrl,
+                previewsSnapshot: Object.keys(previewsSnapshot).length > 0 ? previewsSnapshot : undefined
             };
         }));
 

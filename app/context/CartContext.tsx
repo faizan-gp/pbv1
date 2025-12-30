@@ -9,6 +9,7 @@ export interface CartItem {
     price: number;
     quantity: number;
     image: string;
+    previews?: Record<string, string>; // Map of viewId -> base64/url
     options: {
         color?: string;
         size?: string;

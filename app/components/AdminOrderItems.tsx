@@ -35,7 +35,7 @@ function AdminOrderItem({ item, product, orderId }: { item: any, product: any, o
             <div className="w-full xl:w-[400px] flex-none bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                 <div className="h-[400px]">
                     <ProductPreview
-                        designTextureUrl={item.previewSnapshot}
+                        designTextureUrl={item.previewsSnapshot?.[activeViewId] || item.previewSnapshot}
                         product={product}
                         selectedColor={selectedColor}
                         activeViewId={activeViewId}
@@ -71,29 +71,53 @@ function AdminOrderItem({ item, product, orderId }: { item: any, product: any, o
                     </div>
                 </div>
 
-                <div className="mt-8 pt-8 border-t border-slate-200 flex flex-wrap items-end justify-between gap-4">
-                    <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Total Price</span>
-                        <span className="text-3xl font-black text-slate-900">${(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
+                <div className="mt-8 pt-8 border-t border-slate-200">
+                    {/* Previews Gallery */}
+                    {item.previewsSnapshot && Object.keys(item.previewsSnapshot).length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            {Object.entries(item.previewsSnapshot).map(([viewId, url]) => (
+                                <div key={viewId} className="space-y-2">
+                                    <div className="aspect-square rounded-lg border border-slate-200 bg-slate-50 overflow-hidden relative group">
+                                        <img src={url as string} alt={viewId} className="w-full h-full object-contain p-2" />
+                                        <a
+                                            href={url as string}
+                                            target="_blank"
+                                            download={`design_${viewId}.png`}
+                                            className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+                                        >
+                                            <Download size={20} />
+                                        </a>
+                                    </div>
+                                    <p className="text-xs text-center font-bold text-slate-500 uppercase">{viewId}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
 
-                    {item.previewSnapshot ? (
-                        <a
-                            href={item.previewSnapshot}
-                            download={`design_${orderId}_${item.productId}.png`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-3 px-6 py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-500/20 active:scale-95 group"
-                        >
-                            <Download size={20} className="group-hover:-translate-y-1 transition-transform" />
-                            <span>Download Design File</span>
-                        </a>
-                    ) : (
-                        <button disabled className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-400 font-bold rounded-xl cursor-not-allowed">
-                            <Box size={20} />
-                            No Design File
-                        </button>
-                    )}
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Total Price</span>
+                            <span className="text-3xl font-black text-slate-900">${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+
+                        {item.previewSnapshot ? (
+                            <a
+                                href={item.previewSnapshot}
+                                download={`design_${orderId}_${item.productId}.png`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 px-6 py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-500/20 active:scale-95 group"
+                            >
+                                <Download size={20} className="group-hover:-translate-y-1 transition-transform" />
+                                <span>Download Primary Design</span>
+                            </a>
+                        ) : (
+                            <button disabled className="flex items-center gap-2 px-6 py-4 bg-slate-100 text-slate-400 font-bold rounded-xl cursor-not-allowed">
+                                <Box size={20} />
+                                No Design File
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
