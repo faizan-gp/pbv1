@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle, ArrowRight, Package, MapPin, Calendar, Printer } from "lucide-react";
 import PrintOrderButton from "@/app/components/PrintOrderButton";
+import OrderHistoryItem from "@/app/components/OrderHistoryItem";
 import { getOrderById } from "@/lib/firestore/orders";
 import { notFound } from "next/navigation";
 
@@ -15,6 +16,25 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
     if (!order) {
         return notFound();
     }
+
+    // Helper to fetch products (same as admin page)
+    const getProductsForOrder = async (items: any[]) => {
+        const { getProductById } = await import("@/lib/firestore/products");
+        try {
+            const productIds = Array.from(new Set(items.map((item: any) => item.productId)));
+            const products = await Promise.all(productIds.map(id => getProductById(id as string)));
+            const productMap: Record<string, any> = {};
+            products.forEach((p) => {
+                if (p) productMap[p.id] = p;
+            });
+            return productMap;
+        } catch (e) {
+            console.error(e);
+            return {};
+        }
+    };
+
+    const products = await getProductsForOrder(order.items);
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -59,37 +79,14 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
                     </div>
 
                     <div className="p-6 md:p-8 space-y-8">
-
-                        {/* Items */}
+                        {/* Items with Interactive Preview */}
                         <div className="space-y-6">
                             {order.items.map((item: any, idx: number) => (
-                                <div key={idx} className="flex gap-4 sm:gap-6">
-                                    <div className="h-24 w-24 flex-none rounded-xl border border-slate-100 bg-slate-50 p-2 relative group overflow-hidden">
-                                        <img
-                                            src={item.previewSnapshot || '/placeholder.png'}
-                                            alt="Product"
-                                            className="h-full w-full object-contain mix-blend-multiply"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="font-bold text-slate-900">{item.productId}</h3>
-                                        {/* Ideally we'd fetch product name, but productId contains the slug usually, e.g. t-shirt-standard */}
-
-                                        <div className="mt-1 flex flex-wrap gap-2">
-                                            {item.configSnapshot && (
-                                                <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                                    Color: {item.configSnapshot.color}
-                                                </span>
-                                            )}
-                                            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                                                Qty: {item.quantity}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-slate-900">${(item.price * item.quantity).toFixed(2)}</p>
-                                    </div>
-                                </div>
+                                <OrderHistoryItem
+                                    key={idx}
+                                    item={item}
+                                    product={products[item.productId]}
+                                />
                             ))}
                         </div>
 
