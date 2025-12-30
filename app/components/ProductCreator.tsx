@@ -7,6 +7,7 @@ import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, Loader2 } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
+import { v4 as uuidv4 } from 'uuid';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
 
@@ -287,7 +288,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         const mainImage = thumbnail ? thumbnail.url : (views[0]?.editorImage || views[0]?.image || '');
 
         const config = {
-            id: isEditing && initialData?.id ? initialData.id : productName.toLowerCase().replace(/\s+/g, '-'),
+            id: isEditing && initialData?.id ? initialData.id : uuidv4(),
             name: productName,
             category,
             subcategory,
