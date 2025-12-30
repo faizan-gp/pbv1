@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
+import { createOrder } from "@/lib/firestore/orders";
 
 export async function POST(req: Request) {
     try {
@@ -23,16 +22,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Shipping details required" }, { status: 400 });
         }
 
-        await dbConnect();
 
         // Determine user ID (if logged in) or keep undefined for guest
         const userId = session?.user ? (session.user as any).id : undefined;
 
         // Create the order
-        const newOrder = await Order.create({
+        const orderId = await createOrder({
             userId: userId,
             items: items.map((item: any) => ({
                 productId: item.productId || item.id, // Handle both id formats
+                designId: item.designId, // Pass designId if present, assuming string
                 quantity: item.quantity,
                 price: item.price,
                 // Add snapshots if available, or just basics
@@ -52,7 +51,7 @@ export async function POST(req: Request) {
             }
         });
 
-        return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
+        return NextResponse.json({ orderId: orderId }, { status: 201 });
 
     } catch (error: any) {
         console.error("Order creation error:", error);

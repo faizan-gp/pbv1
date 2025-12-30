@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
+import { updateOrder, getOrderById } from "@/lib/firestore/orders";
 
 export async function PATCH(req: Request) {
     try {
@@ -13,10 +12,10 @@ export async function PATCH(req: Request) {
 
         const { orderId, status } = await req.json();
 
-        await dbConnect();
-        const order = await Order.findByIdAndUpdate(orderId, { status }, { new: true });
+        await updateOrder(orderId, { status });
+        const updatedOrder = await getOrderById(orderId);
 
-        return NextResponse.json(order);
+        return NextResponse.json(updatedOrder);
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

@@ -1,12 +1,10 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { redirect } from 'next/navigation';
-import dbConnect from "@/lib/db";
-import Design from "@/models/Design";
-import Order from "@/models/Order";
+import { getUserDesigns } from "@/lib/firestore/designs";
+import { getUserOrders } from "@/lib/firestore/orders";
 import ProfileDashboard from "../components/ProfileDashboard";
 import Navbar from "../components/Navbar";
-import { Types } from "mongoose";
 
 export default async function ProfilePage() {
     const session = await getServerSession(authOptions);
@@ -15,17 +13,12 @@ export default async function ProfilePage() {
         redirect('/login');
     }
 
-    await dbConnect();
 
     // Fetch Designs
-    const designs = await Design.find({ userId: new Types.ObjectId((session.user as any).id) })
-        .sort({ createdAt: -1 })
-        .lean();
+    const designs = await getUserDesigns((session.user as any).id);
 
     // Fetch Orders
-    const orders = await Order.find({ userId: (session.user as any).id })
-        .sort({ createdAt: -1 })
-        .lean();
+    const orders = await getUserOrders((session.user as any).id);
 
     // Serialize MongoDB objects (convert _id/dates to strings if needed for basic props)
     // .lean() helps, but sometimes Dates need manual string conversion for Next.js props

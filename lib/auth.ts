@@ -1,8 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { getUserByEmail } from "@/lib/firestore/users";
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -17,9 +16,8 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Invalid credentials");
                 }
 
-                await dbConnect();
 
-                const user = await User.findOne({ email: credentials.email }).select("+password");
+                const user = await getUserByEmail(credentials.email);
 
                 if (!user || !user.password) {
                     throw new Error("Invalid credentials");
@@ -35,7 +33,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    id: user._id.toString(),
+                    id: user.id,
                     name: user.name,
                     email: user.email,
                     image: user.image,

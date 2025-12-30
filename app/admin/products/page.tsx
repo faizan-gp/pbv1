@@ -1,12 +1,9 @@
 import Link from 'next/link';
-import dbConnect from '@/lib/db';
-import Product from '@/models/Product';
+import { getAllProducts } from '@/lib/firestore/products';
 import { Edit, Plus, ExternalLink } from 'lucide-react';
 
 async function getProducts() {
-    await dbConnect();
-    const products = await Product.find({}).sort({ _id: -1 }).lean();
-    return JSON.parse(JSON.stringify(products));
+    return await getAllProducts();
 }
 
 export default async function AdminProductsPage() {

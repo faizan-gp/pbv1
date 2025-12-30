@@ -1,14 +1,12 @@
-import Product from '@/models/Product';
-import dbConnect from '@/lib/db';
+import { getProductById } from '@/lib/firestore/products';
 import { notFound } from 'next/navigation';
 import { Metadata } from "next";
 import ShirtConfigurator from '../../components/ShirtConfigurator';
 
 async function getProduct(id: string) {
-    await dbConnect();
-    const product = await Product.findOne({ id }).lean();
+    const product = await getProductById(id);
     if (!product) return null;
-    return JSON.parse(JSON.stringify(product));
+    return product;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {

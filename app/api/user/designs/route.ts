@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/db";
-import Design from "@/models/Design";
-import mongoose from "mongoose";
+import { getUserDesigns, createDesign } from "@/lib/firestore/designs";
 
 export async function GET(req: Request) {
     try {
@@ -12,8 +10,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        await dbConnect();
-        const designs = await Design.find({ userId: (session.user as any).id }).sort({ createdAt: -1 });
+        const designs = await getUserDesigns((session.user as any).id);
 
         return NextResponse.json(designs);
     } catch (error: any) {
@@ -34,17 +31,28 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "Missing required fields" }, { status: 400 });
         }
 
-        await dbConnect();
 
-        const design = await Design.create({
-            userId: new mongoose.Types.ObjectId((session.user as any).id),
+        const designId = await createDesign({
+            userId: (session.user as any).id,
             productId,
             name,
             previewImage,
             config,
         });
 
-        return NextResponse.json(design, { status: 201 });
+        // Construct response with ID (createDesign returns ID)
+        const newDesign = {
+            id: designId,
+            userId: (session.user as any).id,
+            productId,
+            name,
+            previewImage,
+            config,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        return NextResponse.json(newDesign, { status: 201 });
     } catch (error: any) {
         return NextResponse.json({ message: error.message }, { status: 500 });
     }

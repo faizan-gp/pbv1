@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { createUser, getUserByEmail } from "@/lib/firestore/users";
+import { v4 as uuidv4 } from "uuid";
 
 export async function POST(req: Request) {
     try {
@@ -14,9 +14,8 @@ export async function POST(req: Request) {
             );
         }
 
-        await dbConnect();
 
-        const existingUser = await User.findOne({ email });
+        const existingUser = await getUserByEmail(email);
 
         if (existingUser) {
             return NextResponse.json(
@@ -26,11 +25,13 @@ export async function POST(req: Request) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const userId = uuidv4();
 
-        await User.create({
+        await createUser(userId, {
             name,
             email,
             password: hashedPassword,
+            role: 'user'
         });
 
         return NextResponse.json(

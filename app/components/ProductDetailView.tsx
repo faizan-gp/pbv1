@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { IProduct } from '@/models/Product';
+import { Product as IProduct } from '@/lib/firestore/products';
 import { Star, ArrowRight, ShieldCheck, Zap, Package, Heart } from 'lucide-react';
 import ProductInfoTabs from './ProductInfoTabs';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
         let urls = images.map(img => (typeof img === 'string' ? img : img.url));
         if (urls.length === 0 && product.image) urls = [product.image];
         if (urls.length === 0 && (product.listingImages || []).length > 0) {
-            urls = product.listingImages.map(img => (typeof img === 'string' ? img : img.url));
+            urls = (product.listingImages || []).map(img => (typeof img === 'string' ? img : img.url));
         }
         return urls;
     }, [product.listingImages, product.image, selectedColor]);

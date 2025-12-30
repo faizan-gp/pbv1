@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -18,5 +19,6 @@ const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize analytics only on client side
 const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
+const db = getFirestore(app);
 
-export { app, analytics };
+export { app, analytics, db };

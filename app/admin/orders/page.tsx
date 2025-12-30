@@ -1,13 +1,11 @@
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
-import User from "@/models/User";
+import { getAllOrders } from "@/lib/firestore/orders";
 import { Package } from 'lucide-react';
 
 async function getOrders() {
-    await dbConnect();
-    // Populate user details for the email
-    const orders = await Order.find({}).populate('userId', 'name email').sort({ createdAt: -1 }).lean();
-    return JSON.parse(JSON.stringify(orders));
+    // Note: populate user not implemented yet, relying on shippingDetails
+    const orders = await getAllOrders();
+    // Sort manually since we fetched all
+    return orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
 export default async function AdminOrdersPage() {
@@ -46,9 +44,9 @@ export default async function AdminOrdersPage() {
                             </tr>
                         ) : (
                             orders.map((order: any) => (
-                                <tr key={order._id}>
+                                <tr key={order.id}>
                                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
-                                        #{order._id.toString().slice(-8).toUpperCase()}
+                                        #{order.id.slice(0, 8).toUpperCase()}
                                     </td>
                                     <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
                                         <div className="font-medium text-slate-900">{order.shippingDetails?.name || 'Guest'}</div>
@@ -70,7 +68,7 @@ export default async function AdminOrdersPage() {
                                         </span>
                                     </td>
                                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                        <a href={`/admin/orders/${order._id}`} className="text-indigo-600 hover:text-indigo-900">View</a>
+                                        <a href={`/admin/orders/${order.id}`} className="text-indigo-600 hover:text-indigo-900">View</a>
                                     </td>
                                 </tr>
                             ))

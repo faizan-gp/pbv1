@@ -1,32 +1,30 @@
-import Product from "@/models/Product";
+import { Product } from "@/lib/firestore/products";
+// Actually AdminOrderItems likely uses any or assumes structure, let's fix imports first
 import AdminOrderItems from "@/app/components/AdminOrderItems";
 import Link from "next/link";
 import { ArrowLeft, Package, MapPin, Calendar, Mail, User } from "lucide-react";
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
+import { getOrderById, updateOrder } from "@/lib/firestore/orders";
+import { getProductById } from "@/lib/firestore/products";
 import { notFound } from "next/navigation";
 import OrderStatusUpdater from "@/app/components/OrderStatusUpdater";
 
 async function getOrder(id: string) {
-    try {
-        await dbConnect();
-        const order = await Order.findById(id).lean();
-        if (!order) return null;
-        return JSON.parse(JSON.stringify(order));
-    } catch (e) {
-        return null;
-    }
+    return await getOrderById(id);
 }
 
 async function getProductsForOrder(items: any[]) {
     try {
-        await dbConnect();
         const productIds = Array.from(new Set(items.map(item => item.productId)));
-        const products = await Product.find({ id: { $in: productIds } }).lean();
+        // Fetch in parallel
+        const products = await Promise.all(
+            productIds.map(id => getProductById(id))
+        );
 
         const productMap: Record<string, any> = {};
-        products.forEach((p: any) => {
-            productMap[p.id] = JSON.parse(JSON.stringify(p));
+        products.forEach((p) => {
+            if (p) {
+                productMap[p.id] = p;
+            }
         });
         return productMap;
     } catch (e) {
@@ -52,20 +50,20 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order #{order._id.slice(-8).toUpperCase()}</h1>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Order #{order.id.slice(0, 8).toUpperCase()}</h1>
                     <p className="text-sm text-slate-500">
                         Placed on {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
                     </p>
                 </div>
                 <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm">
-                    <OrderStatusUpdater orderId={order._id} currentStatus={order.status} />
+                    <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
                 {/* Main Content: Items */}
                 <div className="space-y-6">
-                    <AdminOrderItems items={order.items} products={products} orderId={order._id} />
+                    <AdminOrderItems items={order.items} products={products} orderId={order.id} />
                 </div>
 
                 {/* Customer & Summary */}

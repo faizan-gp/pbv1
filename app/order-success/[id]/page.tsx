@@ -1,19 +1,11 @@
 import Link from "next/link";
 import { CheckCircle, ArrowRight, Package, MapPin, Calendar, Printer } from "lucide-react";
 import PrintOrderButton from "@/app/components/PrintOrderButton";
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
+import { getOrderById } from "@/lib/firestore/orders";
 import { notFound } from "next/navigation";
 
 async function getOrder(id: string) {
-    try {
-        await dbConnect();
-        const order = await Order.findById(id).lean();
-        if (!order) return null;
-        return JSON.parse(JSON.stringify(order));
-    } catch (e) {
-        return null;
-    }
+    return await getOrderById(id);
 }
 
 export default async function OrderSuccessPage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,7 +27,7 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight text-slate-900">Order Placed Successfully!</h1>
                     <p className="mt-2 text-lg text-slate-500">
-                        Thank you for your purchase. Your order <span className="font-mono font-bold text-slate-900">#{order._id.slice(-8).toUpperCase()}</span> has been confirmed.
+                        Thank you for your purchase. Your order <span className="font-mono font-bold text-slate-900">#{order.id.slice(0, 8).toUpperCase()}</span> has been confirmed.
                     </p>
                     <div className="mt-8 flex justify-center gap-4">
                         <Link

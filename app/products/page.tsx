@@ -2,25 +2,30 @@ import Link from "next/link";
 import ProductCard from "../components/ProductCard";
 import ProductSidebar from "../components/ProductSidebar";
 import { Filter, ChevronDown, LayoutGrid, Sparkles } from "lucide-react";
-import Product from '@/models/Product';
-import dbConnect from '@/lib/db';
+import { getAllProducts } from '@/lib/firestore/products';
 import { Metadata } from "next";
 
 // Force dynamic rendering so search params work
 export const dynamic = 'force-dynamic';
 
 async function getProducts(category?: string, subcategory?: string) {
-    await dbConnect();
-    const query: any = {};
-    if (category) {
-        // Case insensitive regex for better UX
-        query.category = { $regex: new RegExp(category, 'i') };
-    }
-    if (subcategory) {
-        query.subcategory = { $regex: new RegExp(subcategory, 'i') };
-    }
-    const products = await Product.find(query).lean();
-    return JSON.parse(JSON.stringify(products));
+    const allProducts = await getAllProducts();
+
+    return allProducts.filter(product => {
+        let matches = true;
+
+        if (category) {
+            const regex = new RegExp(category, 'i');
+            if (!regex.test(product.category)) matches = false;
+        }
+
+        if (subcategory) {
+            const regex = new RegExp(subcategory, 'i');
+            if (!regex.test(product.subcategory || '')) matches = false;
+        }
+
+        return matches;
+    });
 }
 
 export const metadata: Metadata = {

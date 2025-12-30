@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import Category from '@/models/Category';
+import { getAllCategories, createCategory, seedCategoriesBatch } from '@/lib/firestore/categories';
 
 // Seed Data from User's Image
 const SEED_DATA = [
@@ -27,31 +26,33 @@ const SEED_DATA = [
 ];
 
 export async function GET() {
-    await dbConnect();
     try {
-        const categories = await Category.find({});
+        const categories = await getAllCategories();
         // Auto-seed if empty
         if (categories.length === 0) {
-            await Category.insertMany(SEED_DATA);
+            await seedCategoriesBatch(SEED_DATA);
+            // Return seed data since we just seeded and fetching again might have latency/consistency delay (though Firestore is usually fast)
+            // But to be safe and fast:
             return NextResponse.json({ success: true, data: SEED_DATA });
         }
         return NextResponse.json({ success: true, data: categories });
     } catch (error) {
+        console.error("Categories fetch error:", error);
         return NextResponse.json({ success: false, error: 'Failed to fetch categories' }, { status: 500 });
     }
 }
 
 export async function POST(req: Request) {
-    await dbConnect();
     try {
         const body = await req.json();
         const { name, subcategories } = body;
 
         if (!name) return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
 
-        const category = await Category.create({ name, subcategories: subcategories || [] });
-        return NextResponse.json({ success: true, data: category });
+        const id = await createCategory({ name, subcategories: subcategories || [] });
+        return NextResponse.json({ success: true, data: { id, name, subcategories } });
     } catch (error) {
+        console.error("Category create error:", error);
         return NextResponse.json({ success: false, error: 'Failed to create category' }, { status: 500 });
     }
 }

@@ -1,11 +1,9 @@
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
+import { getAllUsers } from "@/lib/firestore/users";
 import { Users, Shield, ShieldAlert } from 'lucide-react';
 
 async function getUsers() {
-    await dbConnect();
-    const users = await User.find({}).sort({ createdAt: -1 }).lean();
-    return JSON.parse(JSON.stringify(users));
+    const users = await getAllUsers();
+    return users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
 
 export default async function AdminUsersPage() {
@@ -34,7 +32,7 @@ export default async function AdminUsersPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-200 bg-white">
                         {users.map((user: any) => (
-                            <tr key={user._id}>
+                            <tr key={user.id}>
                                 <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
                                     <div className="flex items-center gap-3">
                                         {user.image ? (
@@ -52,8 +50,8 @@ export default async function AdminUsersPage() {
                                 </td>
                                 <td className="whitespace-nowrap px-3 py-4 text-sm">
                                     <span className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${user.role === 'admin'
-                                            ? 'bg-purple-50 text-purple-700 ring-purple-600/20'
-                                            : 'bg-slate-50 text-slate-600 ring-slate-500/10'
+                                        ? 'bg-purple-50 text-purple-700 ring-purple-600/20'
+                                        : 'bg-slate-50 text-slate-600 ring-slate-500/10'
                                         }`}>
                                         {user.role === 'admin' ? <Shield size={12} /> : <Users size={12} />}
                                         {user.role}

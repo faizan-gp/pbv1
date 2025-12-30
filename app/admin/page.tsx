@@ -1,18 +1,23 @@
-import dbConnect from "@/lib/db";
-import User from "@/models/User";
-import Order from "@/models/Order";
-import Product from "@/models/Product";
+import { getAllUsers } from "@/lib/firestore/users";
+import { getAllOrders } from "@/lib/firestore/orders";
+import { getAllProducts } from "@/lib/firestore/products";
 import { CreditCard, ShoppingBag, Users as UsersIcon, TrendingUp } from 'lucide-react';
 
 async function getStats() {
-    await dbConnect();
-    const userCount = await User.countDocuments();
-    const orderCount = await Order.countDocuments();
-    const productCount = await Product.countDocuments();
+    const [users, orders, products] = await Promise.all([
+        getAllUsers(),
+        getAllOrders(),
+        getAllProducts()
+    ]);
+
+    const userCount = users.length;
+    const orderCount = orders.length;
+    const productCount = products.length;
 
     // Calculate Revenue
-    const orders = await Order.find({ status: { $ne: 'cancelled' } });
-    const totalRevenue = orders.reduce((acc, order) => acc + (order.total || 0), 0);
+    // Filter active orders if status field exists and is consistent
+    const validOrders = orders.filter(o => o.status !== 'cancelled');
+    const totalRevenue = validOrders.reduce((acc, order) => acc + (order.total || 0), 0);
 
     return {
         userCount,

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db';
-import Product from '@/models/Product';
+import { getAllProducts, createProduct, getProductById } from '@/lib/firestore/products';
 
 
 export async function GET() {
     try {
-        await dbConnect();
-        const products = await Product.find({}).sort({ _id: -1 });
+        const products = await getAllProducts();
+
         return NextResponse.json({ success: true, data: products });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
@@ -15,13 +14,17 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        await dbConnect();
         const body = await req.json();
 
-        // Basic validation could go here, but Mongoose schema handles most of it
-        // Ensure ID is unique or generate one if not provided (though our frontend provides it based on name)
+        // Basic validation
+        if (!body.id || !body.name) {
+            return NextResponse.json(
+                { error: 'Product ID and Name are required' },
+                { status: 400 }
+            );
+        }
 
-        const existingProduct = await Product.findOne({ id: body.id });
+        const existingProduct = await getProductById(body.id);
         if (existingProduct) {
             return NextResponse.json(
                 { error: 'Product with this ID already exists' },
@@ -29,9 +32,9 @@ export async function POST(req: Request) {
             );
         }
 
-        const product = await Product.create(body);
+        await createProduct(body);
 
-        return NextResponse.json({ success: true, data: product }, { status: 201 });
+        return NextResponse.json({ success: true, data: body }, { status: 201 });
     } catch (error: any) {
         console.error('Error creating product:', error);
         return NextResponse.json(

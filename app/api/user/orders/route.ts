@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/db";
-import Order from "@/models/Order";
+import { getUserOrders } from "@/lib/firestore/orders";
 
 export async function GET(req: Request) {
     try {
@@ -11,8 +10,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        await dbConnect();
-        const orders = await Order.find({ userId: (session.user as any).id }).sort({ createdAt: -1 });
+        const orders = await getUserOrders((session.user as any).id);
+        // Sort in memory as getUserOrders helper might not sort
+        orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
         return NextResponse.json(orders);
     } catch (error: any) {

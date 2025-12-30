@@ -1,16 +1,14 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import dbConnect from '@/lib/db';
-import Product, { IProduct } from '@/models/Product';
+import { getProductById, Product } from '@/lib/firestore/products';
 import ProductDetailView from '@/app/components/ProductDetailView';
 
 export const dynamic = 'force-dynamic';
 
 async function getProduct(id: string) {
-    await dbConnect();
-    const product = await Product.findOne({ id }).lean();
+    const product = await getProductById(id);
     if (!product) return null;
-    return JSON.parse(JSON.stringify(product)) as IProduct;
+    return product;
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
