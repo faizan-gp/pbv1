@@ -7,6 +7,21 @@ import { FormEvent, useState, useEffect } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import Image from "next/image";
 
+const US_STATES = [
+    { name: 'Alabama', code: 'AL' }, { name: 'Alaska', code: 'AK' }, { name: 'Arizona', code: 'AZ' }, { name: 'Arkansas', code: 'AR' }, { name: 'California', code: 'CA' },
+    { name: 'Colorado', code: 'CO' }, { name: 'Connecticut', code: 'CT' }, { name: 'Delaware', code: 'DE' }, { name: 'Florida', code: 'FL' }, { name: 'Georgia', code: 'GA' },
+    { name: 'Hawaii', code: 'HI' }, { name: 'Idaho', code: 'ID' }, { name: 'Illinois', code: 'IL' }, { name: 'Indiana', code: 'IN' }, { name: 'Iowa', code: 'IA' },
+    { name: 'Kansas', code: 'KS' }, { name: 'Kentucky', code: 'KY' }, { name: 'Louisiana', code: 'LA' }, { name: 'Maine', code: 'ME' }, { name: 'Maryland', code: 'MD' },
+    { name: 'Massachusetts', code: 'MA' }, { name: 'Michigan', code: 'MI' }, { name: 'Minnesota', code: 'MN' }, { name: 'Mississippi', code: 'MS' }, { name: 'Missouri', code: 'MO' },
+    { name: 'Montana', code: 'MT' }, { name: 'Nebraska', code: 'NE' }, { name: 'Nevada', code: 'NV' }, { name: 'New Hampshire', code: 'NH' }, { name: 'New Jersey', code: 'NJ' },
+    { name: 'New Mexico', code: 'NM' }, { name: 'New York', code: 'NY' }, { name: 'North Carolina', code: 'NC' }, { name: 'North Dakota', code: 'ND' }, { name: 'Ohio', code: 'OH' },
+    { name: 'Oklahoma', code: 'OK' }, { name: 'Oregon', code: 'OR' }, { name: 'Pennsylvania', code: 'PA' }, { name: 'Rhode Island', code: 'RI' }, { name: 'South Carolina', code: 'SC' },
+    { name: 'South Dakota', code: 'SD' }, { name: 'Tennessee', code: 'TN' }, { name: 'Texas', code: 'TX' }, { name: 'Utah', code: 'UT' }, { name: 'Vermont', code: 'VT' },
+    { name: 'Virginia', code: 'VA' }, { name: 'Washington', code: 'WA' }, { name: 'West Virginia', code: 'WV' }, { name: 'Wisconsin', code: 'WI' }, { name: 'Wyoming', code: 'WY' },
+    { name: 'District of Columbia', code: 'DC' }
+];
+
+
 export default function CheckoutPage() {
     const { items, cartTotal, clearCart } = useCart();
     const router = useRouter();
@@ -83,44 +98,23 @@ export default function CheckoutPage() {
         }
     };
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-        const shippingDetails = {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            address: formData.address,
-            city: formData.city,
-            state: formData.state,
-            postalCode: formData.postalCode,
-        };
+    const validateForm = () => {
+        const newErrors: Record<string, string> = {};
 
-        try {
-            const res = await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items,
-                    total,
-                    shippingDetails,
-                    paymentMethod
-                }),
-            });
+        if (!formData.email) newErrors.email = 'Email is required';
+        else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
 
-            if (!res.ok) throw new Error('Order failed');
+        if (!formData.firstName) newErrors.firstName = 'First name is required';
+        if (!formData.lastName) newErrors.lastName = 'Last name is required';
+        if (!formData.address) newErrors.address = 'Address is required';
+        if (!formData.city) newErrors.city = 'City is required';
+        if (!formData.state) newErrors.state = 'State is required';
+        if (!formData.postalCode) newErrors.postalCode = 'ZIP code is required';
 
-            const { orderId } = await res.json();
-            setIsSuccess(true); // Prevent redirect to cart
-            clearCart();
-            router.push(`/order-success/${orderId}`);
-        } catch (error) {
-            console.error(error);
-            alert('Failed to place order. Please try again.');
-        } finally {
-            setIsSubmitting(false);
-        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     if (!mounted) return null;
@@ -154,7 +148,7 @@ export default function CheckoutPage() {
                     {/* --- LEFT COLUMN: FORMS --- */}
                     <div className="lg:col-span-7 space-y-8">
 
-                        <form id="checkout-form" onSubmit={handleSubmit}>
+                        <form id="checkout-form" onSubmit={(e) => e.preventDefault()}>
                             {/* 1. Contact Info */}
                             <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 md:p-8 mb-6">
                                 <div className="flex items-center gap-3 mb-6">
@@ -177,6 +171,7 @@ export default function CheckoutPage() {
                                                 className="block w-full rounded-xl border-slate-200 pl-11 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50"
                                                 placeholder="you@example.com"
                                             />
+                                            {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
                                         </div>
                                     </div>
                                 </div>
@@ -193,27 +188,51 @@ export default function CheckoutPage() {
                                 <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">First Name</label>
-                                        <input required type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <input required type="text" name="firstName" value={formData.firstName} onChange={handleInputChange} className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 ${errors.firstName ? 'border-red-500 bg-red-50' : ''}`} />
+                                        {errors.firstName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.firstName}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Last Name</label>
-                                        <input required type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <input required type="text" name="lastName" value={formData.lastName} onChange={handleInputChange} className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 ${errors.lastName ? 'border-red-500 bg-red-50' : ''}`} />
+                                        {errors.lastName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.lastName}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Street Address</label>
-                                        <input required type="text" name="address" value={formData.address} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <input required type="text" name="address" value={formData.address} onChange={handleInputChange} className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 ${errors.address ? 'border-red-500 bg-red-50' : ''}`} />
+                                        {errors.address && <p className="text-red-500 text-xs mt-1 ml-1">{errors.address}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">City</label>
-                                        <input required type="text" name="city" value={formData.city} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <input required type="text" name="city" value={formData.city} onChange={handleInputChange} className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 ${errors.city ? 'border-red-500 bg-red-50' : ''}`} />
+                                        {errors.city && <p className="text-red-500 text-xs mt-1 ml-1">{errors.city}</p>}
                                     </div>
                                     <div className="space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">State / Province</label>
-                                        <input required type="text" name="state" value={formData.state} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <div className="relative">
+                                            <select
+                                                required
+                                                name="state"
+                                                value={formData.state}
+                                                onChange={handleInputChange as any}
+                                                className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 appearance-none ${errors.state ? 'border-red-500 bg-red-50' : ''}`}
+                                            >
+                                                <option value="">Select State</option>
+                                                {US_STATES.map((state) => (
+                                                    <option key={state.code} value={state.code}>
+                                                        {state.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
+                                                <ChevronRight className="h-4 w-4 rotate-90" />
+                                            </div>
+                                        </div>
+                                        {errors.state && <p className="text-red-500 text-xs mt-1 ml-1">{errors.state}</p>}
                                     </div>
                                     <div className="col-span-2 space-y-1">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">ZIP / Postal Code</label>
-                                        <input required type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} className="block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50" />
+                                        <input required type="text" name="postalCode" value={formData.postalCode} onChange={handleInputChange} className={`block w-full rounded-xl border-slate-200 py-3 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-slate-50 ${errors.postalCode ? 'border-red-500 bg-red-50' : ''}`} />
+                                        {errors.postalCode && <p className="text-red-500 text-xs mt-1 ml-1">{errors.postalCode}</p>}
                                     </div>
                                 </div>
                             </section>
@@ -237,6 +256,12 @@ export default function CheckoutPage() {
                                         <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
                                             <PayPalButtons
                                                 style={{ layout: "vertical", shape: "rect", color: "blue", label: "pay" }}
+                                                onClick={(data, actions) => {
+                                                    if (!validateForm()) {
+                                                        return actions.reject();
+                                                    }
+                                                    return actions.resolve();
+                                                }}
                                                 createOrder={(data, actions) => {
                                                     return actions.order.create({
                                                         intent: "CAPTURE",
