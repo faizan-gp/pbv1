@@ -15,13 +15,11 @@ async function getProducts(category?: string, subcategory?: string) {
         let matches = true;
 
         if (category) {
-            const regex = new RegExp(category, 'i');
-            if (!regex.test(product.category)) matches = false;
+            if (product.category.toLowerCase() !== category.toLowerCase()) matches = false;
         }
 
         if (subcategory) {
-            const regex = new RegExp(subcategory, 'i');
-            if (!regex.test(product.subcategory || '')) matches = false;
+            if ((product.subcategory || '').toLowerCase() !== subcategory.toLowerCase()) matches = false;
         }
 
         return matches;
