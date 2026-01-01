@@ -388,7 +388,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
 
     // HELPERS
-    const handleListingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleListingImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetColor: string = 'All') => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
 
@@ -401,7 +401,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 ...prev,
                 ...urls.map((url, i) => ({
                     url,
-                    color: 'All',
+                    color: targetColor,
                     isThumbnail: prev.length === 0 && i === 0
                 }))
             ]);
@@ -592,46 +592,71 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             </div>
                         </div>
 
-                        {/* Listing Images */}
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                        {/* Listing Images Grouped by Color */}
+                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                             <h4 className="font-bold text-gray-900">Listing Images</h4>
-                            <p className="text-sm text-gray-500">Upload additional shots and link them to colors.</p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {listingImages.map((img, i) => (
-                                    <div key={i} className="flex gap-4 p-3 border border-gray-200 rounded-xl bg-gray-50 relative group">
-                                        <div className="w-24 h-24 bg-white rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
-                                            <img src={img.url} alt="listing" className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex-1 space-y-2">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Link to Color</label>
-                                                <select
-                                                    value={img.color}
-                                                    onChange={(e) => updateImageColor(i, e.target.value)}
-                                                    className="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:border-indigo-500 outline-none"
-                                                >
-                                                    <option value="All">All Colors</option>
-                                                    {productColors.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                                                </select>
-                                            </div>
-                                            <div onClick={() => toggleThumbnail(i)} className="flex items-center gap-2 cursor-pointer select-none">
-                                                <div className={cn("w-4 h-4 rounded-full border flex items-center justify-center transition-all", img.isThumbnail ? "border-indigo-600 bg-indigo-600" : "border-gray-300 bg-white")}>
-                                                    {img.isThumbnail && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                                                </div>
-                                                <span className={cn("text-xs font-medium", img.isThumbnail ? "text-indigo-600" : "text-gray-500")}>Set as Thumbnail</span>
+                            <p className="text-sm text-gray-500">Upload shots for specific colors.</p>
+
+                            {/* General / All Colors Section */}
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <h5 className="text-sm font-bold text-gray-700">General / All Colors</h5>
+                                    <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                                        <Plus size={14} /> Add Images
+                                        <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, 'All')} />
+                                    </label>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                    {listingImages.filter(img => img.color === 'All').map((img, i) => (
+                                        <div key={i} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                                            <img src={img.url} className="w-full h-full object-cover" />
+                                            <button onClick={() => setListingImages(prev => prev.filter(item => item !== img))} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Trash2 size={12} />
+                                            </button>
+                                            <div onClick={() => toggleThumbnail(listingImages.indexOf(img))} className={cn("absolute bottom-2 left-2 right-2 py-1 text-[10px] text-center rounded-md font-bold cursor-pointer transition-colors backdrop-blur-sm", img.isThumbnail ? "bg-indigo-600/90 text-white" : "bg-white/90 text-gray-600 opacity-0 group-hover:opacity-100")}>
+                                                {img.isThumbnail ? 'Thumbnail' : 'Set Main'}
                                             </div>
                                         </div>
-                                        <button onClick={() => setListingImages(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition-colors">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                                <label className="aspect-[4/1] sm:aspect-auto border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all min-h-[120px]">
-                                    <Plus className="text-gray-400 mb-2" />
-                                    <span className="text-xs font-medium text-gray-500">{isUploading ? 'Uploading...' : 'Add Images'}</span>
-                                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleListingImageUpload} />
-                                </label>
+                                    ))}
+                                    {listingImages.filter(img => img.color === 'All').length === 0 && (
+                                        <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                            No general images
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+
+                            {/* Per-Color Sections */}
+                            {productColors.map((color, idx) => (
+                                <div key={idx} className="space-y-3 pt-4 border-t border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }}></div>
+                                            <h5 className="text-sm font-bold text-gray-700">{color.name}</h5>
+                                        </div>
+                                        <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                                            <Plus size={14} /> Add {color.name} Images
+                                            <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, color.name)} />
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                        {listingImages.filter(img => img.color === color.name).map((img, i) => (
+                                            <div key={i} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                                                <img src={img.url} className="w-full h-full object-cover" />
+                                                <button onClick={() => setListingImages(prev => prev.filter(item => item !== img))} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                                {/* Allow moving back to All? Maybe later. For now just delete. */}
+                                            </div>
+                                        ))}
+                                        {listingImages.filter(img => img.color === color.name).length === 0 && (
+                                            <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                                No images for {color.name}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
