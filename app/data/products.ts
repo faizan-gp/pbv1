@@ -47,7 +47,7 @@ export interface Product {
 
 export const products: Product[] = [
     {
-        id: 't-shirt-standard',
+        id: 'unisex-jersey-tee-bella-canvas-3001',
         name: 'Unisex Jersey Tee | Bella+Canvas 3001',
         category: "Men's Clothing",
         trending: true,
@@ -78,7 +78,7 @@ export const products: Product[] = [
         ]
     },
     {
-        id: 'canvas-prod',
+        id: 'stretched-canvas-12x16',
         name: 'Stretched Canvas | 12x16',
         category: "Home & Living",
         trending: true,

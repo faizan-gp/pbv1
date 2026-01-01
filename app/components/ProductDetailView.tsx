@@ -116,6 +116,11 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                         <h1 className="text-3xl lg:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight break-words">
                             {product.name}
                         </h1>
+                        {product.shortDescription && (
+                            <p className="text-base md:text-lg text-slate-600 font-medium leading-relaxed max-w-xl">
+                                {product.shortDescription}
+                            </p>
+                        )}
 
                         <div className="flex flex-wrap items-center gap-4 lg:gap-6">
                             <div className="flex items-baseline gap-3">

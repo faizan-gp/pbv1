@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
-import { seedProductsBatch } from '@/lib/firestore/products';
+import { seedProductsBatch, getAllProducts, PRODUCTS_COLLECTION } from '@/lib/firestore/products';
+import { db } from '@/lib/firebase';
+import { writeBatch, doc } from 'firebase/firestore';
 import { products } from '@/app/data/products';
 
 export async function GET() {
@@ -11,6 +13,24 @@ export async function GET() {
         // If we really wanted to clear, we'd need to fetch all IDs and delete them.
         // For migration "Seed" usually just means ensure these exist.
 
+        // 1. Fetch all existing products
+        const existingProducts = await getAllProducts();
+
+        // 2. Delete them (batch delete to be efficient)
+        // Since getAllProducts returns data, we might need IDs. 
+        // Let's assume we can get IDs or refactor getAllProducts to return docs, 
+        // OR we just use a helper if we had one.
+        // For now, simpler: loop and delete (dev only). 
+        // Actually, let's use writeBatch for deletion too.
+
+        const deleteBatch = writeBatch(db);
+        existingProducts.forEach(p => {
+            const ref = doc(db, PRODUCTS_COLLECTION, p.id);
+            deleteBatch.delete(ref);
+        });
+        await deleteBatch.commit();
+
+        // 3. Seed new products
         await seedProductsBatch(products);
 
         return NextResponse.json({ message: 'Database seeded successfully', products });
