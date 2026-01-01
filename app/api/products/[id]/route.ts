@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getProductById, updateProduct } from '@/lib/firestore/products';
+import { getProductById, updateProduct, deleteProduct, createProduct } from '@/lib/firestore/products';
 
 type Props = {
     params: Promise<{
@@ -46,7 +46,30 @@ export async function PUT(
             );
         }
 
-        // Update in Firestore
+        // Check if ID is changing (Migration)
+        if (body.id && body.id !== params.id) {
+            console.log(`Migrating product from ${params.id} to ${body.id}`);
+
+            // 1. Check if new ID already exists
+            const conflict = await getProductById(body.id);
+            if (conflict) {
+                return NextResponse.json(
+                    { error: 'Cannot rename: Product with new ID already exists' },
+                    { status: 409 }
+                );
+            }
+
+            // 2. Create new product with new ID
+            await createProduct(body);
+
+            // 3. Delete old product
+            await deleteProduct(params.id);
+
+            // 4. Return new data
+            return NextResponse.json({ success: true, data: body });
+        }
+
+        // Standard Update
         await updateProduct(params.id, body);
 
         // Fetch updated to return

@@ -1,5 +1,5 @@
 import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, collection, getDocs, query, where, writeBatch } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 export interface IPreviewConfig {
     id: string;
@@ -102,4 +102,9 @@ export async function seedProductsBatch(products: Product[]): Promise<void> {
     });
 
     await batch.commit();
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+    const productRef = doc(db, PRODUCTS_COLLECTION, id);
+    await deleteDoc(productRef);
 }

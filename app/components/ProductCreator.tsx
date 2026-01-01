@@ -7,7 +7,6 @@ import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, Loader2 } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
-import { v4 as uuidv4 } from 'uuid';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
 
@@ -282,13 +281,39 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     }, [fabricCanvas, activeViewId, viewMode, currentStep]);
 
 
+    // HELPERS
+    const slugify = (text: string) => {
+        return text
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/[^\w\-]+/g, '')
+            .replace(/\-\-+/g, '-');
+    };
+
     // JSON PREVIEW & SAVE LOGIC
     useEffect(() => {
         const thumbnail = listingImages.find(img => img.isThumbnail);
         const mainImage = thumbnail ? thumbnail.url : (views[0]?.editorImage || views[0]?.image || '');
 
+        // Determine ID:
+        // 1. If editing and name hasn't changed (or matches old slug), keep old ID. (Actually, if name matches old slug, re-slugifying is fine).
+        // 2. If name changed, we want to update the ID (User Request).
+        // However, we must be careful: if the user opens "My Shirt" (id: 123) and doesn't touch it, we shouldn't change ID to "my-shirt" automatically on save?
+        // But the user SAID: "If i rename the title, the id should update as well"
+        // This implies if they *rename* it.
+        // If initialData.name === productName, we can keep initialData.id to be safe?
+        // But if initialData.name === productName, slugify(productName) might NOT match initialData.id (legacy IDs).
+        // So: If name is unchanged, keep ID. If name is changed, generate new slug.
+
+        const isNameChanged = !isEditing || (initialData?.name !== productName);
+        const generatedId = (!isNameChanged && initialData?.id)
+            ? initialData.id
+            : (productName ? slugify(productName) : 'new-product-id');
+
         const config = {
-            id: isEditing && initialData?.id ? initialData.id : uuidv4(),
+            id: generatedId,
             name: productName,
             category,
             subcategory,
