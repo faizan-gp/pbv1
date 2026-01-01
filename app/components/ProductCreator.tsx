@@ -9,6 +9,23 @@ import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Sav
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Zone {
     left: number;
@@ -413,10 +430,149 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    // DRAG AND DROP SETUP
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
+    const moveListingImage = (image: ListingImage, direction: 'left' | 'right') => {
+        setListingImages(prev => {
+            const newList = [...prev];
+            const currentIndex = newList.indexOf(image);
+            if (currentIndex === -1) return prev;
+
+            // Find swap target: next/prev item OF THE SAME COLOR
+            let swapIndex = -1;
+            if (direction === 'left') {
+                for (let i = currentIndex - 1; i >= 0; i--) {
+                    if (newList[i].color === image.color) {
+                        swapIndex = i;
+                        break;
+                    }
+                }
+            } else {
+                for (let i = currentIndex + 1; i < newList.length; i++) {
+                    if (newList[i].color === image.color) {
+                        swapIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (swapIndex !== -1) {
+                // Swap
+                [newList[currentIndex], newList[swapIndex]] = [newList[swapIndex], newList[currentIndex]];
+                return newList;
+            }
+
+            return prev;
+        });
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+
+        if (active.id !== over?.id) {
+            setListingImages((items) => {
+                const oldIndex = items.findIndex((item) => item.url === active.id);
+                const newIndex = items.findIndex((item) => item.url === over?.id);
+
+                // Only allow reordering if strictly within same list?
+                // Actually dnd-kit might let us drag between lists if we use unique IDs.
+                // But for simplicity, we assume we just call arrayMove. 
+                // However, our `items` is the GLOBAL list of all images (all colors). 
+                // If we filter in UI, arrayMove on the global list might behave weirdly if indices don't match displayed indices.
+                // WE NEED TO BE CAREFUL.
+                // Correct approach:
+                // 1. Identify which "Group" (color) the drag happened in.
+                // 2. Extract that group's items.
+                // 3. Perform arrayMove on that sub-list.
+                // 4. Merge back into main list? 
+
+                // Simpler: Just rely on unique URL ids? 
+                // If I drag Item A (Red) to Item B (Red)'s position. 
+                // arrayMove(items, oldIndex, newIndex) works IF oldIndex and newIndex are correct in the MASTER array.
+                // Yes, findIndex searches the master array. So standard arrayMove works fine even if they are far apart in the array, 
+                // AS LONG AS we don't change the "color" property during move. 
+                // And since we are reordering "visual" position, arrayMove on the master list *should* reflect the new visual order 
+                // assuming the render loop just Filters and Maps safely.
+                // Yes: `items.filter(...).map(...)`. If I swap two Red items in the master list, their relative order in the filtered list swaps too.
+
+                return arrayMove(items, oldIndex, newIndex);
+            });
+        }
+    };
+
+    const SortableListingImage = ({ img, index, colorGroup }: { img: ListingImage, index: number, colorGroup: string }) => {
+        const {
+            attributes,
+            listeners,
+            setNodeRef,
+            transform,
+            transition,
+        } = useSortable({ id: img.url });
+
+        const style = {
+            transform: CSS.Transform.toString(transform),
+            transition,
+        };
+
+        return (
+            <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden touch-none">
+                {/* Reusing the card content but we need to ensure buttons (delete/move) don't trigger drag? 
+                     Actually standard listeners on the parent div make the whole card draggable. 
+                     We might want a specific handle or use `PointerSensor` activation constraints. 
+                     Or just let it be. Buttons usually capture their own clicks. */}
+                <img src={img.url} className="w-full h-full object-cover" />
+
+                {/* Overlay Actions */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                    <div className="flex justify-between">
+                        {/* Move buttons are redundant with DnD but good for accessibility/precision */}
+                        <button
+                            onPointerDown={e => e.stopPropagation()} // Prevent drag start
+                            onClick={() => moveListingImage(img, 'left')}
+                            className="p-1 bg-white/90 rounded text-gray-700 hover:text-indigo-600 hover:bg-white transition-colors"
+                        >
+                            <ChevronLeft size={12} />
+                        </button>
+                        <button
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={() => setListingImages(prev => prev.filter(item => item !== img))}
+                            className="p-1 bg-white/90 rounded text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                        >
+                            <Trash2 size={12} />
+                        </button>
+                        <button
+                            onPointerDown={e => e.stopPropagation()}
+                            onClick={() => moveListingImage(img, 'right')}
+                            className="p-1 bg-white/90 rounded text-gray-700 hover:text-indigo-600 hover:bg-white transition-colors"
+                        >
+                            <ChevronRight size={12} />
+                        </button>
+                    </div>
+
+                    <div
+                        onPointerDown={e => e.stopPropagation()}
+                        onClick={() => toggleThumbnail(listingImages.indexOf(img))}
+                        className={cn(
+                            "py-1 text-[10px] text-center rounded-md font-bold cursor-pointer transition-colors backdrop-blur-sm select-none",
+                            img.isThumbnail ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
+                        )}
+                    >
+                        {img.isThumbnail ? 'Thumbnail' : 'Set Main'}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const toggleThumbnail = (index: number) => {
         setListingImages(prev => prev.map((img, i) => ({ ...img, isThumbnail: i === index })));
     };
-
     const updateImageColor = (index: number, color: string) => {
         setListingImages(prev => prev.map((img, i) => i === index ? { ...img, color } : img));
     };
@@ -454,8 +610,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     };
 
     const addView = () => {
-        const newId = `view-${views.length + 1}`;
-        setViews(prev => [...prev, { ...defaultView, id: newId, name: `View ${views.length + 1}` }]);
+        const newId = `view - ${views.length + 1} `;
+        setViews(prev => [...prev, { ...defaultView, id: newId, name: `View ${views.length + 1} ` }]);
         setActiveViewId(newId);
     };
 
@@ -488,7 +644,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     {/* Progress Bar */}
                     <div className="flex items-center justify-between relative">
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 -z-10 rounded-full"></div>
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 -z-10 rounded-full transition-all duration-300" style={{ width: `${((currentStep - 1) / 3) * 100}%` }}></div>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-indigo-600 -z-10 rounded-full transition-all duration-300" style={{ width: `${((currentStep - 1) / 3) * 100}% ` }}></div>
 
                         {STEPS.map((step) => (
                             <div key={step.id} onClick={() => setCurrentStep(step.id)} className={cn("flex flex-col items-center gap-2 cursor-pointer group", currentStep === step.id ? "opacity-100" : "opacity-60 hover:opacity-100")}>
@@ -579,7 +735,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             <input
                                                 type="text"
                                                 value={color.hex.replace('#', '')}
-                                                onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value}`)}
+                                                onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
                                                 placeholder="HEX"
                                                 className="w-full bg-transparent outline-none text-sm uppercase font-mono"
                                             />
@@ -593,220 +749,229 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         </div>
 
                         {/* Listing Images Grouped by Color */}
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
-                            <h4 className="font-bold text-gray-900">Listing Images</h4>
-                            <p className="text-sm text-gray-500">Upload shots for specific colors.</p>
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                                <h4 className="font-bold text-gray-900">Listing Images</h4>
+                                <p className="text-sm text-gray-500">Upload shots for specific colors. Drag to reorder.</p>
 
-                            {/* General / All Colors Section */}
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <h5 className="text-sm font-bold text-gray-700">General / All Colors</h5>
-                                    <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
-                                        <Plus size={14} /> Add Images
-                                        <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, 'All')} />
-                                    </label>
-                                </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                                    {listingImages.filter(img => img.color === 'All').map((img, i) => (
-                                        <div key={i} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                            <img src={img.url} className="w-full h-full object-cover" />
-                                            <button onClick={() => setListingImages(prev => prev.filter(item => item !== img))} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Trash2 size={12} />
-                                            </button>
-                                            <div onClick={() => toggleThumbnail(listingImages.indexOf(img))} className={cn("absolute bottom-2 left-2 right-2 py-1 text-[10px] text-center rounded-md font-bold cursor-pointer transition-colors backdrop-blur-sm", img.isThumbnail ? "bg-indigo-600/90 text-white" : "bg-white/90 text-gray-600 opacity-0 group-hover:opacity-100")}>
-                                                {img.isThumbnail ? 'Thumbnail' : 'Set Main'}
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {listingImages.filter(img => img.color === 'All').length === 0 && (
-                                        <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-                                            No general images
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Per-Color Sections */}
-                            {productColors.map((color, idx) => (
-                                <div key={idx} className="space-y-3 pt-4 border-t border-gray-100">
+                                {/* General / All Colors Section */}
+                                <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }}></div>
-                                            <h5 className="text-sm font-bold text-gray-700">{color.name}</h5>
-                                        </div>
+                                        <h5 className="text-sm font-bold text-gray-700">General / All Colors</h5>
                                         <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
-                                            <Plus size={14} /> Add {color.name} Images
-                                            <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, color.name)} />
+                                            <Plus size={14} /> Add Images
+                                            <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, 'All')} />
                                         </label>
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                                        {listingImages.filter(img => img.color === color.name).map((img, i) => (
-                                            <div key={i} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
-                                                <img src={img.url} className="w-full h-full object-cover" />
-                                                <button onClick={() => setListingImages(prev => prev.filter(item => item !== img))} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <Trash2 size={12} />
-                                                </button>
-                                                {/* Allow moving back to All? Maybe later. For now just delete. */}
-                                            </div>
-                                        ))}
-                                        {listingImages.filter(img => img.color === color.name).length === 0 && (
-                                            <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
-                                                No images for {color.name}
-                                            </div>
-                                        )}
-                                    </div>
+                                    <SortableContext
+                                        items={listingImages.filter(img => img.color === 'All').map(img => img.url)}
+                                        strategy={rectSortingStrategy}
+                                    >
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                            {listingImages.filter(img => img.color === 'All').map((img, i) => (
+                                                <SortableListingImage key={img.url} img={img} index={i} colorGroup="All" />
+                                            ))}
+                                            {listingImages.filter(img => img.color === 'All').length === 0 && (
+                                                <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                                    No general images
+                                                </div>
+                                            )}
+                                        </div>
+                                    </SortableContext>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+
+                                {/* Per-Color Sections */}
+                                {productColors.map((color, idx) => (
+                                    <div key={idx} className="space-y-3 pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: color.hex }}></div>
+                                                <h5 className="text-sm font-bold text-gray-700">{color.name}</h5>
+                                            </div>
+                                            <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                                                <Plus size={14} /> Add {color.name} Images
+                                                <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, color.name)} />
+                                            </label>
+                                        </div>
+                                        <SortableContext
+                                            items={listingImages.filter(img => img.color === color.name).map(img => img.url)}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                                {listingImages.filter(img => img.color === color.name).map((img, i) => (
+                                                    <SortableListingImage key={img.url} img={img} index={i} colorGroup={color.name} />
+                                                ))}
+                                                {listingImages.filter(img => img.color === color.name).length === 0 && (
+                                                    <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                                        No images for {color.name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SortableContext>
+                                    </div>
+                                ))}
+                            </div>
+                        </DndContext>
+                    </div >
+                )
+                }
 
                 {/* STEP 2: VISUAL EDITOR */}
-                {currentStep === 2 && (
-                    <div className="flex flex-col lg:flex-row h-full">
-                        {/* SIDEBAR */}
-                        <div className="w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col z-20">
-                            <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
-                                <h3 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Configuration</h3>
-                                <button onClick={addView} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100 text-indigo-600">+ Add View</button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                                <div className="grid grid-cols-2 gap-2">
-                                    {views.map(view => (
-                                        <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("text-left px-3 py-2 rounded-lg text-xs font-medium border transition-all", activeViewId === view.id ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300")}>
-                                            {view.name}
-                                        </button>
-                                    ))}
+                {
+                    currentStep === 2 && (
+                        <div className="flex flex-col lg:flex-row h-full">
+                            {/* SIDEBAR */}
+                            <div className="w-full lg:w-80 bg-white border-r border-gray-200 flex flex-col z-20">
+                                <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+                                    <h3 className="font-bold text-xs uppercase text-gray-500 tracking-wider">Configuration</h3>
+                                    <button onClick={addView} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100 text-indigo-600">+ Add View</button>
                                 </div>
-                                {activeViewsConfig(views, activeViewId, setViews, handleImageUpload)}
-                            </div>
-                        </div>
-
-                        {/* CANVAS */}
-                        <div className="flex-1 relative bg-[#09090b] flex flex-col items-center justify-center overflow-hidden">
-                            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-
-                            <div className="absolute top-6 flex gap-2 z-30">
-                                <button onClick={() => setViewMode('editor')} className={cn("px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2", viewMode === 'editor' ? "bg-zinc-800 text-blue-400 border border-zinc-700" : "text-zinc-500")}>
-                                    <div className={cn("w-2 h-2 rounded-full", viewMode === 'editor' ? "bg-blue-500" : "bg-zinc-600")} /> Editor Zone
-                                </button>
-                                <button onClick={() => setViewMode('preview')} className={cn("px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2", viewMode === 'preview' ? "bg-zinc-800 text-green-400 border border-zinc-700" : "text-zinc-500")}>
-                                    <div className={cn("w-2 h-2 rounded-full", viewMode === 'preview' ? "bg-green-500" : "bg-zinc-600")} /> Preview Zone
-                                </button>
-                            </div>
-
-                            <div className="relative shadow-2xl rounded-lg overflow-hidden border border-zinc-800 bg-[#111]" style={{ width: 600, height: 600 }}>
-                                {activeView && (
-                                    <img
-                                        src={viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image}
-                                        className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-100"
-                                        alt="background"
-                                    />
-                                )}
-                                <div className="absolute inset-0 w-full h-full origin-top-left" style={{ transform: 'scale(0.5859375)', width: 1024, height: 1024 }}>
-                                    <canvas ref={canvasRef} />
+                                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {views.map(view => (
+                                            <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("text-left px-3 py-2 rounded-lg text-xs font-medium border transition-all", activeViewId === view.id ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300")}>
+                                                {view.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload)}
                                 </div>
                             </div>
+
+                            {/* CANVAS */}
+                            <div className="flex-1 relative bg-[#09090b] flex flex-col items-center justify-center overflow-hidden">
+                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear - gradient(#fff 1px, transparent 1px), linear - gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+
+                                <div className="absolute top-6 flex gap-2 z-30">
+                                    <button onClick={() => setViewMode('editor')} className={cn("px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2", viewMode === 'editor' ? "bg-zinc-800 text-blue-400 border border-zinc-700" : "text-zinc-500")}>
+                                        <div className={cn("w-2 h-2 rounded-full", viewMode === 'editor' ? "bg-blue-500" : "bg-zinc-600")} /> Editor Zone
+                                    </button>
+                                    <button onClick={() => setViewMode('preview')} className={cn("px-4 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-2", viewMode === 'preview' ? "bg-zinc-800 text-green-400 border border-zinc-700" : "text-zinc-500")}>
+                                        <div className={cn("w-2 h-2 rounded-full", viewMode === 'preview' ? "bg-green-500" : "bg-zinc-600")} /> Preview Zone
+                                    </button>
+                                </div>
+
+                                <div className="relative shadow-2xl rounded-lg overflow-hidden border border-zinc-800 bg-[#111]" style={{ width: 600, height: 600 }}>
+                                    {activeView && (
+                                        <img
+                                            src={viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image}
+                                            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-100"
+                                            alt="background"
+                                        />
+                                    )}
+                                    <div className="absolute inset-0 w-full h-full origin-top-left" style={{ transform: 'scale(0.5859375)', width: 1024, height: 1024 }}>
+                                        <canvas ref={canvasRef} />
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* STEP 3: RICH DETAILS */}
-                {currentStep === 3 && (
-                    <div className="max-w-3xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-center mb-8">
-                            <h3 className="text-2xl font-bold text-gray-900">Tell your product's story</h3>
-                            <p className="text-gray-500">Add rich details to engage customers.</p>
-                        </div>
-
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
-                                <textarea value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} className="w-full h-24 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Catchy summary..." />
+                {
+                    currentStep === 3 && (
+                        <div className="max-w-3xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-bold text-gray-900">Tell your product's story</h3>
+                                <p className="text-gray-500">Add rich details to engage customers.</p>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Full Story</label>
-                                <textarea value={fullDescription} onChange={(e) => setFullDescription(e.target.value)} className="w-full h-48 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Detailed description..." />
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-bold text-gray-900">Features</h4>
-                                    <button onClick={() => setFeatures([...features, { title: '', description: '', icon: 'check' }])} className="text-xs text-indigo-600 font-medium">+ Add</button>
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Short Description</label>
+                                    <textarea value={shortDescription} onChange={(e) => setShortDescription(e.target.value)} className="w-full h-24 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Catchy summary..." />
                                 </div>
-                                <div className="space-y-3">
-                                    {features.map((f, i) => (
-                                        <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                                            <div className="flex gap-2">
-                                                <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="flex-1 bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
-                                                <select
-                                                    value={f.icon || 'check'}
-                                                    onChange={(e) => { const n = [...features]; n[i].icon = e.target.value; setFeatures(n) }}
-                                                    className="w-24 text-[10px] bg-white border border-gray-200 rounded px-1 outline-none uppercase font-bold text-gray-500"
-                                                >
-                                                    <option value="check">Check</option>
-                                                    <option value="hexagon">Material</option>
-                                                    <option value="shirt">Fit</option>
-                                                    <option value="shield">Durable</option>
-                                                    <option value="zap">Fast Dry</option>
-                                                    <option value="wind">Breathable</option>
-                                                    <option value="sun">UV Protect</option>
-                                                    <option value="feather">Light</option>
-                                                    <option value="maximize">Stretch</option>
-                                                    <option value="droplets">Wicking</option>
-                                                    <option value="award">Quality</option>
-                                                </select>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Full Story</label>
+                                    <textarea value={fullDescription} onChange={(e) => setFullDescription(e.target.value)} className="w-full h-48 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Detailed description..." />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-bold text-gray-900">Features</h4>
+                                        <button onClick={() => setFeatures([...features, { title: '', description: '', icon: 'check' }])} className="text-xs text-indigo-600 font-medium">+ Add</button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {features.map((f, i) => (
+                                            <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                                                <div className="flex gap-2">
+                                                    <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="flex-1 bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
+                                                    <select
+                                                        value={f.icon || 'check'}
+                                                        onChange={(e) => { const n = [...features]; n[i].icon = e.target.value; setFeatures(n) }}
+                                                        className="w-24 text-[10px] bg-white border border-gray-200 rounded px-1 outline-none uppercase font-bold text-gray-500"
+                                                    >
+                                                        <option value="check">Check</option>
+                                                        <option value="hexagon">Material</option>
+                                                        <option value="shirt">Fit</option>
+                                                        <option value="shield">Durable</option>
+                                                        <option value="zap">Fast Dry</option>
+                                                        <option value="wind">Breathable</option>
+                                                        <option value="sun">UV Protect</option>
+                                                        <option value="feather">Light</option>
+                                                        <option value="maximize">Stretch</option>
+                                                        <option value="droplets">Wicking</option>
+                                                        <option value="award">Quality</option>
+                                                    </select>
+                                                </div>
+                                                <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />
+                                                <button onClick={() => setFeatures(prev => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500">Remove</button>
                                             </div>
-                                            <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />
-                                            <button onClick={() => setFeatures(prev => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500">Remove</button>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h4 className="font-bold text-gray-900">Care Instructions</h4>
-                                    <button onClick={() => setCareInstructions([...careInstructions, ''])} className="text-xs text-indigo-600 font-medium">+ Add</button>
-                                </div>
-                                <div className="space-y-3">
-                                    {careInstructions.map((c, i) => (
-                                        <div key={i} className="flex gap-2">
-                                            <input type="text" value={c} onChange={(e) => { const n = [...careInstructions]; n[i] = e.target.value; setCareInstructions(n) }} className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="e.g. Machine wash cold" />
-                                            <button onClick={() => setCareInstructions(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 p-2"><Trash2 size={16} /></button>
-                                        </div>
-                                    ))}
+                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-bold text-gray-900">Care Instructions</h4>
+                                        <button onClick={() => setCareInstructions([...careInstructions, ''])} className="text-xs text-indigo-600 font-medium">+ Add</button>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {careInstructions.map((c, i) => (
+                                            <div key={i} className="flex gap-2">
+                                                <input type="text" value={c} onChange={(e) => { const n = [...careInstructions]; n[i] = e.target.value; setCareInstructions(n) }} className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="e.g. Machine wash cold" />
+                                                <button onClick={() => setCareInstructions(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 p-2"><Trash2 size={16} /></button>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* STEP 4: SIZE GUIDE & REVIEW */}
-                {currentStep === 4 && (
-                    <div className="max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="text-center mb-8">
-                            <h3 className="text-2xl font-bold text-gray-900">Size Guide & Review</h3>
-                            <p className="text-gray-500">Configure sizing and verify data before saving.</p>
-                        </div>
+                {
+                    currentStep === 4 && (
+                        <div className="max-w-4xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-bold text-gray-900">Size Guide & Review</h3>
+                                <p className="text-gray-500">Configure sizing and verify data before saving.</p>
+                            </div>
 
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
-                            <h4 className="font-bold text-gray-900 mb-6">Size Char Configuration</h4>
-                            <SizeGuideEditor data={sizeGuide} onChange={setSizeGuide} />
-                        </div>
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm">
+                                <h4 className="font-bold text-gray-900 mb-6">Size Char Configuration</h4>
+                                <SizeGuideEditor data={sizeGuide} onChange={setSizeGuide} />
+                            </div>
 
-                        <div className="bg-zinc-900 p-6 rounded-2xl shadow-xl overflow-hidden">
-                            <h4 className="text-xs font-bold text-zinc-500 uppercase mb-4">JSON Payload Preview</h4>
-                            <pre className="text-[10px] text-zinc-400 font-mono overflow-auto max-h-60 custom-scrollbar">
-                                {jsonOutput}
-                            </pre>
+                            <div className="bg-zinc-900 p-6 rounded-2xl shadow-xl overflow-hidden">
+                                <h4 className="text-xs font-bold text-zinc-500 uppercase mb-4">JSON Payload Preview</h4>
+                                <pre className="text-[10px] text-zinc-400 font-mono overflow-auto max-h-60 custom-scrollbar">
+                                    {jsonOutput}
+                                </pre>
+                            </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
-            </div>
+            </div >
         </div >
     );
 }
