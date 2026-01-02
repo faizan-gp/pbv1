@@ -6,6 +6,7 @@ import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, ArrowLeft, Check, Layers, Sparkles, Share2 } from 'lucide-react';
+import { useToast } from './Toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils'; // Assuming you have a cn utility, or simply use template literals
 
@@ -17,6 +18,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const router = useRouter();
     const searchParams = useSearchParams();
     const { addToCart } = useCart();
+    const { showToast } = useToast();
 
     // State
     const [designStates, setDesignStates] = useState<Record<string, any>>({});
@@ -29,6 +31,8 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const urlColorName = searchParams.get('color');
     const initialColor = product.colors?.find((c: any) => c.name === urlColorName) || product.colors?.[0] || defaultColor;
     const [selectedColor, setSelectedColor] = useState(initialColor);
+
+    const [selectedSize, setSelectedSize] = useState<string>('');
 
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
@@ -48,6 +52,11 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     };
 
     const handleAddToCart = () => {
+        if (product.sizeGuide?.imperial?.length > 0 && !selectedSize) {
+            showToast('Please select a size', 'error');
+            return;
+        }
+
         setIsAdding(true);
         setTimeout(() => {
             addToCart({
@@ -59,6 +68,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                 previews: designPreviews,
                 options: {
                     color: selectedColor.name,
+                    size: selectedSize,
                     customText: 'Custom Design',
                 },
             });
@@ -161,6 +171,38 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                                 ))}
                             </div>
                         </div>
+
+
+                        {/* Size Selection */}
+                        {product.sizeGuide?.imperial && product.sizeGuide.imperial.length > 0 && (
+                            <div className="space-y-3 pt-6 border-t border-slate-100">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Size</label>
+                                    <span className="text-xs font-medium text-slate-700">
+                                        {selectedSize ? (
+                                            product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.size +
+                                            ` (${product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.width}" x ${product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.length}")`
+                                        ) : 'Select a size'}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {product.sizeGuide.imperial.map((s: any) => (
+                                        <button
+                                            key={s.size}
+                                            onClick={() => setSelectedSize(s.size)}
+                                            className={cn(
+                                                "py-2.5 text-xs font-bold rounded-lg border transition-all duration-200",
+                                                selectedSize === s.size
+                                                    ? "bg-slate-900 text-white border-slate-900 shadow-md transform scale-[1.02]"
+                                                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                            )}
+                                        >
+                                            {s.size}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Product Details (Collapsible styling visually) */}
                         <div className="pt-6 border-t border-slate-100 space-y-3">

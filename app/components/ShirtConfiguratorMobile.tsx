@@ -7,7 +7,9 @@ import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ShoppingBag, ArrowLeft, Check } from 'lucide-react';
+import { useToast } from './Toast';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface ShirtConfiguratorProps {
     product: any;
@@ -17,6 +19,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const router = useRouter();
     const searchParams = useSearchParams();
     const { addToCart } = useCart();
+    const { showToast } = useToast();
     const [designStates, setDesignStates] = useState<Record<string, any>>({});
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
 
@@ -28,6 +31,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const initialColor = product.colors?.find((c: any) => c.name === urlColorName) || product.colors?.[0] || defaultColor;
 
     const [selectedColor, setSelectedColor] = useState(initialColor);
+    const [selectedSize, setSelectedSize] = useState<string>('');
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
 
@@ -46,6 +50,11 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     };
 
     const handleAddToCart = async () => {
+        if (product.sizeGuide?.imperial?.length > 0 && !selectedSize) {
+            showToast('Please select a size', 'error');
+            return;
+        }
+
         setIsAdding(true);
         try {
             // 1. Determine Base Image (Current View)
@@ -151,7 +160,36 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
                             <div className="text-xl font-mono font-bold text-indigo-300">$29.99</div>
                         </div>
 
+
                         <div className="space-y-4">
+                            {/* Size Selection */}
+                            {product.sizeGuide?.imperial && product.sizeGuide.imperial.length > 0 && (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Size</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {product.sizeGuide.imperial.map((s: any) => (
+                                            <button
+                                                key={s.size}
+                                                onClick={() => setSelectedSize(s.size)}
+                                                className={cn(
+                                                    "py-2 text-xs font-bold rounded-lg border transition-all duration-200",
+                                                    selectedSize === s.size
+                                                        ? "bg-white text-slate-900 border-white shadow-md transform scale-[1.02]"
+                                                        : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600 hover:bg-slate-700"
+                                                )}
+                                            >
+                                                <span className="block">{s.size}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {selectedSize && (
+                                        <p className="text-[10px] text-slate-400 text-center">
+                                            Dimensions: {product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.width}" x {product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.length}"
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
                                 <Check className="w-3 h-3 text-green-400" /> High-Resolution Export
                                 <span className="mx-1">&bull;</span>
