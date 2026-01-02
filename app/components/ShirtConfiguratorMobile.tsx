@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { generateCompositeImage } from '@/app/lib/canvasUtils';
 import DesignEditor from './DesignEditorMobile';
 import ProductPreview from './ProductPreview';
@@ -38,7 +38,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     // Derived state for current view
     const designTextureUrl = designPreviews[activeViewId] || null;
 
-    const handleDesignUpdate = (data: { dataUrl: string; jsonState: any }) => {
+    const handleDesignUpdate = useCallback((data: { dataUrl: string; jsonState: any }) => {
         setDesignPreviews(prev => ({
             ...prev,
             [activeViewId]: data.dataUrl
@@ -47,7 +47,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
             ...prev,
             [activeViewId]: data.jsonState
         }));
-    };
+    }, [activeViewId]);
 
     const handleAddToCart = async () => {
         if (product.sizeGuide?.imperial?.length > 0 && !selectedSize) {
