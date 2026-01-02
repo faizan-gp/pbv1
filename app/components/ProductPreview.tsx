@@ -69,7 +69,7 @@ export default function ProductPreview({ designTextureUrl, product, selectedColo
                             className="absolute z-20 pointer-events-none"
                             style={{
                                 ...zoneStyle,
-                                mixBlendMode: 'multiply', // This blends the ink into the fabric texture
+                                mixBlendMode: 'normal',
                                 opacity: 0.9,
                                 transform: activePreview.cssTransform || 'none',
                             }}
