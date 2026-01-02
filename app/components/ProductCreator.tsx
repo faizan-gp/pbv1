@@ -56,6 +56,7 @@ interface ListingImage {
 interface ProductColor {
     name: string;
     hex: string;
+    images: Record<string, string>; // Map viewId -> imageUrl
 }
 
 interface ProductCreatorProps {
@@ -346,7 +347,10 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             colors: productColors.map(c => ({
                 name: c.name,
                 hex: c.hex,
-                images: views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {})
+                images: {
+                    ...views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {}),
+                    ...(c.images || {})
+                }
             })),
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
@@ -578,7 +582,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     };
 
     const addProductColor = () => {
-        setProductColors(prev => [...prev, { name: 'New Color', hex: '#000000' }]);
+        setProductColors(prev => [...prev, { name: 'New Color', hex: '#000000', images: {} }]);
     };
 
     const updateProductColor = (index: number, field: keyof ProductColor, value: string) => {
@@ -604,6 +608,33 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         } catch (error) {
             console.error("Upload failed", error);
             showToast('Failed to upload image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleColorImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, colorIndex: number, viewId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'views');
+            setProductColors(prev => prev.map((c, i) => {
+                if (i === colorIndex) {
+                    return {
+                        ...c,
+                        images: {
+                            ...(c.images || {}),
+                            [viewId]: url
+                        }
+                    };
+                }
+                return c;
+            }));
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload color variant image', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -838,7 +869,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </button>
                                         ))}
                                     </div>
-                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload)}
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload)}
                                 </div>
                             </div>
 
@@ -977,7 +1008,14 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 }
 
 // Extracted UI helper for Step 2 Sidebar to keep main component cleaner
-function activeViewsConfig(views: ViewConfig[], activeViewId: string, setViews: Function, handleImageUpload: Function) {
+function activeViewsConfig(
+    views: ViewConfig[],
+    activeViewId: string,
+    setViews: Function,
+    handleImageUpload: Function,
+    productColors: ProductColor[],
+    handleColorImageUpload: Function
+) {
     const activeView = views.find(v => v.id === activeViewId);
     if (!activeView) return null;
 
@@ -1003,6 +1041,48 @@ function activeViewsConfig(views: ViewConfig[], activeViewId: string, setViews: 
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'preview')} />
                 </label>
             </div>
+
+            {/* Color Variants Overrides */}
+            {productColors && productColors.length > 0 && (
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
+                        Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
+                    </label>
+                    <div className="space-y-2">
+                        {productColors.map((color, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: color.hex }} title={color.name}></div>
+                                <label className="flex-1 h-8 border border-gray-200 rounded hover:border-indigo-300 cursor-pointer overflow-hidden relative bg-gray-50 flex items-center px-2">
+                                    {color.images?.[activeViewId] ? (
+                                        <div className="flex items-center gap-2 w-full">
+                                            <div className="w-4 h-4 rounded-sm bg-gray-200 shrink-0 overflow-hidden">
+                                                <img src={color.images[activeViewId]} className="w-full h-full object-cover" />
+                                            </div>
+                                            <span className="text-[10px] text-gray-600 truncate flex-1">Image Set</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] text-gray-400">Upload {color.name} variant...</span>
+                                    )}
+                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleColorImageUpload(e, idx, activeViewId)} />
+                                </label>
+                                {color.images?.[activeViewId] && (
+                                    <button
+                                        onClick={() => {
+                                            // Quick hack to delete: Reuse handle but create a cleaner deleter if needed. 
+                                            // Passing setProductColors might be needed for deletion if we want it here.
+                                            // For now, let's keep it simple: Just upload overrides.
+                                        }}
+                                        className="hidden text-gray-400 hover:text-red-500"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase">CSS Transform</label>
                 <input type="text" placeholder="rotate(-2deg)" value={activeView.cssTransform || ''} onChange={(e) => setViews((p: any) => p.map((v: any) => v.id === activeViewId ? { ...v, cssTransform: e.target.value } : v))} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono" />
