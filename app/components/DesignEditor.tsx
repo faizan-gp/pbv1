@@ -6,9 +6,10 @@ import DesignEditorMobile from './DesignEditorMobile';
 import { Product } from '../data/products';
 
 interface DesignEditorProps {
-    onUpdate: (dataUrl: string) => void;
+    onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
     product: Product;
     activeViewId: string;
+    initialState?: any;
 }
 
 export default function DesignEditor(props: DesignEditorProps) {

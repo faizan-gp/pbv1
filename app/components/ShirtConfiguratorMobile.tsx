@@ -1,218 +1,352 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
-import { generateCompositeImage } from '@/app/lib/canvasUtils';
-import DesignEditor from './DesignEditorMobile';
+import DesignEditor, { DesignEditorRef } from './DesignEditorMobile';
 import ProductPreview from './ProductPreview';
 import { useCart } from '../context/CartContext';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { ShoppingBag, ArrowLeft, Check } from 'lucide-react';
-import { useToast } from './Toast';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+    ArrowLeft, Check, Palette, Type, Image as ImageIcon, Ruler,
+    ChevronRight, ShoppingBag, Trash2, X, RefreshCw,
+    ArrowUp, ArrowDown, ArrowLeft as ArrowL, ArrowRight as ArrowR,
+    Minus, Plus, Eye, Edit3, Keyboard, Layers,
+    RefreshCcw
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface ShirtConfiguratorProps {
     product: any;
 }
 
+const TABS = [
+    { id: 'color', label: 'Color', icon: Palette },
+    { id: 'text', label: 'Text', icon: Type },
+    { id: 'image', label: 'Image', icon: ImageIcon },
+    { id: 'size', label: 'Size', icon: Ruler },
+];
+
 export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const { addToCart } = useCart();
-    const { showToast } = useToast();
-    const [designStates, setDesignStates] = useState<Record<string, any>>({});
-    const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
+    const editorRef = useRef<DesignEditorRef>(null);
 
-    const [selectedProduct, setSelectedProduct] = useState(product);
-
-    // Initial color from URL or fallback
-    const defaultColor = { name: 'Default', hex: '#ffffff', images: {} };
-    const urlColorName = searchParams.get('color');
-    const initialColor = product.colors?.find((c: any) => c.name === urlColorName) || product.colors?.[0] || defaultColor;
-
-    const [selectedColor, setSelectedColor] = useState(initialColor);
+    // --- STATE ---
+    const [activeTab, setActiveTab] = useState('color');
+    const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'White', hex: '#fff', images: {} });
     const [selectedSize, setSelectedSize] = useState<string>('');
-    const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [isAdding, setIsAdding] = useState(false);
 
-    // Derived state for current view
-    const designTextureUrl = designPreviews[activeViewId] || null;
+    // Canvas & View
+    const [designStates, setDesignStates] = useState<Record<string, any>>({});
+    const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
+    const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
+    const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');
 
+    // Selection
+    const [selectedElement, setSelectedElement] = useState<any | null>(null);
+
+    // --- HANDLERS ---
     const handleDesignUpdate = useCallback((data: { dataUrl: string; jsonState: any }) => {
-        setDesignPreviews(prev => ({
-            ...prev,
-            [activeViewId]: data.dataUrl
-        }));
-        setDesignStates(prev => ({
-            ...prev,
-            [activeViewId]: data.jsonState
-        }));
+        setDesignPreviews(prev => ({ ...prev, [activeViewId]: data.dataUrl }));
+        setDesignStates(prev => ({ ...prev, [activeViewId]: data.jsonState }));
     }, [activeViewId]);
 
-    const handleAddToCart = async () => {
-        if (product.sizeGuide?.imperial?.length > 0 && !selectedSize) {
-            showToast('Please select a size', 'error');
+    const handleSelectionChange = useCallback((selection: any | null) => {
+        setSelectedElement(selection);
+        if (selection) setViewMode('editor');
+    }, []);
+
+    const updateProperty = (key: string, value: any) => {
+        editorRef.current?.updateObject(key, value);
+        setSelectedElement((prev: any) => prev ? { ...prev, [key]: value } : null);
+    };
+
+    const modifySelection = (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => {
+        editorRef.current?.modify(action, val, y);
+        if (action === 'delete') setSelectedElement(null);
+    };
+
+    const handleAddToCart = () => {
+        if (!selectedSize) {
+            setActiveTab('size');
             return;
         }
-
         setIsAdding(true);
-        try {
-            // 1. Determine Base Image (Current View)
-            const baseImage = selectedColor.images[activeViewId] || selectedColor.images['front'] || selectedProduct.image;
-
-            // 2. Generate Composite Image if design exists
-            let finalImage = baseImage;
-
-            // Check if there is a preview for the CURRENT view
-            const currentViewDesignUrl = designPreviews[activeViewId];
-
-            if (currentViewDesignUrl) {
-                const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
-                const currentZone = activePreview.previewZone || product.designZone;
-
-                finalImage = await generateCompositeImage(
-                    baseImage,
-                    currentViewDesignUrl,
-                    currentZone,
-                    product.canvasSize
-                );
-            }
-
+        setTimeout(() => {
             addToCart({
-                productId: selectedProduct.id,
-                name: selectedProduct.name,
-                price: 29.99,
-                quantity: 1,
-                image: finalImage,
-                previews: designPreviews,
-                options: {
-                    color: selectedColor.name,
-                    customText: 'Custom Design',
-                },
+                productId: product.id, name: product.name, price: 29.99, quantity: 1,
+                image: designPreviews['front'] || selectedColor.images['front'],
+                options: { color: selectedColor.name, size: selectedSize }
             });
             router.push("/cart");
-        } catch (error) {
-            console.error("Failed to generate cart preview:", error);
-            // Fallback to basic image even if generation fails
-            addToCart({
-                productId: selectedProduct.id,
-                name: selectedProduct.name,
-                price: 29.99,
-                quantity: 1,
-                image: selectedColor.images['front'] || selectedProduct.image,
-                options: {
-                    color: selectedColor.name,
-                    customText: 'Custom Design',
-                },
-            });
-            router.push("/cart");
-        } finally {
-            // setIsAdding(false); // No need to reset as we redirect
-        }
+        }, 800);
     };
 
     return (
-        <div className="relative z-10 pt-20 pb-20 px-4 min-h-screen flex flex-col gap-6">
+        <div className="flex flex-col h-[100dvh] bg-white overflow-hidden font-sans">
 
-            {/* --- TOP: DESIGN STUDIO (The Workspace) --- */}
-            <div className="flex-1 flex flex-col min-h-[600px]">
-                {/* Studio Header */}
-                <div className="flex items-center justify-between mb-4">
-                    <Link href="/products" className="flex items-center text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
-                        <ArrowLeft className="w-4 h-4 mr-1" /> Back to Products
+            {/* ====================================================================
+                TOP SECTION: CANVAS (60% Height)
+               ==================================================================== */}
+            <div className="h-[60%] shrink-0 relative bg-[#F3F4F6] flex flex-col">
+
+                {/* Header (Floating on top of canvas bg) */}
+                <div className="absolute top-0 left-0 right-0 z-30 pt-safe px-4 pt-4 flex justify-between items-start pointer-events-none">
+                    <Link href="/products" className="w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-slate-700 pointer-events-auto active:scale-95 transition-transform">
+                        <ArrowLeft size={20} />
                     </Link>
-                </div>
 
-                <div className="flex-1 bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex flex-col relative">
-                    <DesignEditor
-                        onUpdate={handleDesignUpdate}
-                        product={selectedProduct}
-                        activeViewId={activeViewId}
-                        initialState={designStates[activeViewId]}
-                    />
-                </div>
-            </div>
-
-            {/* --- BOTTOM: PREVIEW & CHECKOUT --- */}
-            <div className="w-full flex flex-col gap-6">
-
-                {/* 3D Preview Card */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden flex-1 min-h-[400px]">
-                    <ProductPreview
-                        designTextureUrl={designTextureUrl}
-                        product={selectedProduct}
-                        selectedColor={selectedColor}
-                        activeViewId={activeViewId}
-                        onViewChange={setActiveViewId}
-                    />
-                </div>
-
-                {/* Checkout / Action Card */}
-                <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 pointer-events-none"></div>
-
-                    <div className="relative z-10">
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h2 className="text-xl font-bold tracking-tight">{product.name}</h2>
-                                <p className="text-slate-400 text-sm mt-1">{selectedColor.name} &bull; Custom Print</p>
-                            </div>
-                            <div className="text-xl font-mono font-bold text-indigo-300">$29.99</div>
-                        </div>
-
-
-                        <div className="space-y-4">
-                            {/* Size Selection */}
-                            {product.sizeGuide?.imperial && product.sizeGuide.imperial.length > 0 && (
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase text-slate-400 tracking-wider">Size</label>
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {product.sizeGuide.imperial.map((s: any) => (
-                                            <button
-                                                key={s.size}
-                                                onClick={() => setSelectedSize(s.size)}
-                                                className={cn(
-                                                    "py-2 text-xs font-bold rounded-lg border transition-all duration-200",
-                                                    selectedSize === s.size
-                                                        ? "bg-white text-slate-900 border-white shadow-md transform scale-[1.02]"
-                                                        : "bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-600 hover:bg-slate-700"
-                                                )}
-                                            >
-                                                <span className="block">{s.size}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                    {selectedSize && (
-                                        <p className="text-[10px] text-slate-400 text-center">
-                                            Dimensions: {product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.width}" x {product.sizeGuide.imperial.find((s: any) => s.size === selectedSize)?.length}"
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
-                                <Check className="w-3 h-3 text-green-400" /> High-Resolution Export
-                                <span className="mx-1">&bull;</span>
-                                <Check className="w-3 h-3 text-green-400" /> DTG Printing
-                            </div>
-
-                            <button
-                                onClick={handleAddToCart}
-                                disabled={isAdding}
-                                className="w-full h-14 rounded-2xl bg-white text-slate-900 font-bold text-lg hover:bg-indigo-50 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {isAdding ? (
-                                    <span className="animate-pulse">Processing...</span>
-                                ) : (
-                                    <>
-                                        <ShoppingBag className="w-5 h-5" /> Add to Cart
-                                    </>
-                                )}
+                    {/* View Switcher */}
+                    <div className="flex flex-col gap-2 pointer-events-auto">
+                        <div className="bg-white/90 backdrop-blur shadow-sm rounded-lg p-1 flex">
+                            <button onClick={() => setViewMode('editor')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'editor' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
+                                Edit
+                            </button>
+                            <button onClick={() => setViewMode('preview')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'preview' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
+                                Preview
                             </button>
                         </div>
                     </div>
                 </div>
+
+                {/* Main Stage */}
+                <div className="flex-1 relative w-full h-full overflow-hidden flex items-center justify-center">
+                    {/* Background Noise/Grid */}
+                    <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
+
+                    {/* Editor View */}
+                    <div className={cn("absolute inset-0 z-10 transition-opacity duration-300", viewMode === 'editor' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+                        <DesignEditor
+                            ref={editorRef}
+                            onUpdate={handleDesignUpdate}
+                            product={product}
+                            activeViewId={activeViewId}
+                            initialState={designStates[activeViewId]}
+                            onSelectionChange={handleSelectionChange}
+                        />
+                    </div>
+
+                    {/* Preview View */}
+                    <div className={cn("absolute inset-0 z-20 bg-[#F3F4F6] flex items-center justify-center transition-opacity duration-300", viewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+                        <ProductPreview
+                            designTextureUrl={designPreviews[activeViewId]}
+                            product={product}
+                            selectedColor={selectedColor}
+                            activeViewId={activeViewId}
+                            onViewChange={setActiveViewId}
+                            className="h-full w-full object-contain p-8"
+                        />
+                    </div>
+
+                    {/* Front/Back Toggles (Floating Bottom Right of Canvas) */}
+                    <div className="absolute right-4 bottom-4 flex gap-2 z-20 pointer-events-auto">
+                        {product.previews.map((view: any) => (
+                            <button
+                                key={view.id}
+                                onClick={() => setActiveViewId(view.id)}
+                                className={cn(
+                                    "px-3 py-1.5 rounded-full border shadow-sm text-[10px] font-bold transition-all active:scale-95",
+                                    activeViewId === view.id ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-500"
+                                )}
+                            >
+                                {view.name}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ====================================================================
+                BOTTOM SECTION: TOOLS (40% Height) - SCROLLABLE
+               ==================================================================== */}
+            <div className="h-[40%] shrink-0 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20 flex flex-col relative">
+
+                {/* SCENARIO A: PROPERTIES MODE (Object Selected) */}
+                {selectedElement && viewMode === 'editor' ? (
+                    <div className="flex flex-col h-full animate-in slide-in-from-bottom-4 duration-200">
+                        {/* 1. Tool Header */}
+                        <div className="h-12 border-b border-slate-100 flex items-center justify-between px-4 shrink-0 bg-white">
+                            <span className="text-xs font-bold uppercase text-slate-800 flex items-center gap-2">
+                                {selectedElement.type === 'i-text' ? <Type size={14} /> : <ImageIcon size={14} />}
+                                Properties
+                            </span>
+                            <div className="flex gap-2">
+                                <button onClick={() => modifySelection('delete')} className="p-1.5 bg-red-50 text-red-500 rounded hover:bg-red-100"><Trash2 size={16} /></button>
+                                <button onClick={() => editorRef.current?.deselect()} className="p-1.5 bg-slate-100 text-slate-500 rounded hover:bg-slate-200"><X size={16} /></button>
+                            </div>
+                        </div>
+
+                        {/* 2. Scrollable Properties Area */}
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                            <div className="space-y-6">
+                                {selectedElement.type === 'i-text' && (
+                                    <div className="space-y-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Text & Color</label>
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={selectedElement.text || ''}
+                                                    onChange={(e) => updateProperty('text', e.target.value)}
+                                                    className="flex-1 px-3 h-10 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:border-indigo-500 outline-none"
+                                                />
+                                                <div className="relative w-10 h-10 rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                                                    <input type="color" value={selectedElement.fill} onChange={(e) => updateProperty('fill', e.target.value)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                                    <div className="w-full h-full" style={{ backgroundColor: selectedElement.fill }} />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase">Typography</label>
+                                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                                                {['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia', 'Impact', 'Brush Script MT'].map(f => (
+                                                    <button key={f} onClick={() => updateProperty('fontFamily', f)} className={cn("px-3 py-1.5 rounded-md border text-xs whitespace-nowrap transition-colors", selectedElement.fontFamily === f ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200")}>{f}</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Common Transforms */}
+                                <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-100 grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase text-center block">Move</label>
+                                        <div className="grid grid-cols-3 gap-1 w-24 mx-auto">
+                                            <div /> <NudgeBtn icon={ArrowUp} onClick={() => modifySelection('move', 0, -2)} /> <div />
+                                            <NudgeBtn icon={ArrowL} onClick={() => modifySelection('move', -2, 0)} />
+                                            <div className="w-full aspect-square bg-slate-200/50 rounded-md" />
+                                            <NudgeBtn icon={ArrowR} onClick={() => modifySelection('move', 2, 0)} />
+                                            <div /> <NudgeBtn icon={ArrowDown} onClick={() => modifySelection('move', 0, 2)} /> <div />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 flex flex-col justify-center">
+                                        <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-1">
+                                            <button onClick={() => modifySelection('scale', -0.05)} className="p-1.5 hover:bg-slate-50 rounded"><Minus size={14} /></button>
+                                            <span className="text-[10px] font-bold text-slate-500">Size</span>
+                                            <button onClick={() => modifySelection('scale', 0.05)} className="p-1.5 hover:bg-slate-50 rounded"><Plus size={14} /></button>
+                                        </div>
+                                        <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-1">
+                                            <button onClick={() => modifySelection('rotate', -15)} className="p-1.5 hover:bg-slate-50 rounded"><RefreshCcw size={14} /></button>
+                                            <span className="text-[10px] font-bold text-slate-500">Rot</span>
+                                            <button onClick={() => modifySelection('rotate', 15)} className="p-1.5 hover:bg-slate-50 rounded"><RefreshCw size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    /* SCENARIO B: NAVIGATION MODE (Default) */
+                    <div className="flex flex-col h-full">
+
+                        {/* 1. Header Area (Shows Selection Summary) */}
+                        <div className="shrink-0 h-12 border-b border-slate-100 flex items-center justify-between px-4 bg-white">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    {activeTab === 'color' ? 'Select Color' :
+                                        activeTab === 'text' ? 'Typography' :
+                                            activeTab === 'image' ? 'Upload' : 'Dimensions'}
+                                </span>
+                                {activeTab === 'color' && <span className="text-xs font-bold text-slate-800">{selectedColor.name}</span>}
+                                {activeTab === 'size' && <span className="text-xs font-bold text-slate-800">{selectedSize || 'None Selected'}</span>}
+                            </div>
+
+                            {/* Primary Action (Add To Cart) - Always visible in Nav Mode */}
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={isAdding}
+                                className="h-8 px-4 bg-slate-900 text-white rounded-full flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                            >
+                                {isAdding ? <span className="text-[10px] font-bold">...</span> : <><ShoppingBag size={12} /><span className="text-[10px] font-bold">Add to Cart</span></>}
+                            </button>
+                        </div>
+
+                        {/* 2. Scrollable Content Area */}
+                        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/30">
+
+                            {activeTab === 'color' && (
+                                <div className="grid grid-cols-5 gap-3 animate-in fade-in slide-in-from-bottom-2">
+                                    {product.colors?.map((c: any) => (
+                                        <button key={c.name} onClick={() => setSelectedColor(c)} className={cn("aspect-square rounded-full flex items-center justify-center relative transition-transform active:scale-90", selectedColor.name === c.name ? "ring-2 ring-indigo-600 ring-offset-2" : "border border-slate-200")}>
+                                            <div className="w-full h-full rounded-full shadow-inner" style={{ backgroundColor: c.hex }} />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {activeTab === 'text' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                    <button onClick={() => { editorRef.current?.addText(); setViewMode('editor'); }} className="w-full h-16 bg-white border border-indigo-100 hover:border-indigo-300 rounded-xl flex items-center justify-between px-4 text-indigo-900 active:scale-[0.98] transition-all shadow-sm group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600"><Type size={20} /></div>
+                                            <div className="text-left">
+                                                <span className="font-bold text-sm block">Add New Text</span>
+                                                <span className="text-[10px] text-slate-400">Click to add layer</span>
+                                            </div>
+                                        </div>
+                                        <Plus size={18} className="text-slate-300 group-hover:text-indigo-500" />
+                                    </button>
+                                </div>
+                            )}
+
+                            {activeTab === 'image' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                    <label className="w-full h-16 bg-white border border-purple-100 hover:border-purple-300 rounded-xl flex items-center justify-between px-4 text-purple-900 active:scale-[0.98] transition-all shadow-sm cursor-pointer group">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center text-purple-600"><ImageIcon size={20} /></div>
+                                            <div className="text-left">
+                                                <span className="font-bold text-sm block">Upload Image</span>
+                                                <span className="text-[10px] text-slate-400">PNG or JPG</span>
+                                            </div>
+                                        </div>
+                                        <Plus size={18} className="text-slate-300 group-hover:text-purple-500" />
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                            if (e.target.files?.[0]) {
+                                                const r = new FileReader();
+                                                r.onload = (f) => { if (f.target?.result) { editorRef.current?.addImage(f.target.result as string); setViewMode('editor'); } };
+                                                r.readAsDataURL(e.target.files[0]);
+                                            }
+                                        }} />
+                                    </label>
+                                </div>
+                            )}
+
+                            {activeTab === 'size' && (
+                                <div className="grid grid-cols-4 gap-3 animate-in fade-in slide-in-from-bottom-2">
+                                    {product.sizeGuide?.imperial?.map((s: any) => (
+                                        <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("h-12 border rounded-lg font-bold text-sm transition-all active:scale-95", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600")}>{s.size}</button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 3. Bottom Tab Bar (Sticky) */}
+                        <div className="h-16 border-t border-slate-100 flex items-center justify-around bg-white shrink-0 pb-safe">
+                            {TABS.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={cn("flex flex-col items-center justify-center gap-1 w-16 h-full transition-colors", isActive ? "text-indigo-600" : "text-slate-400 hover:text-slate-600")}
+                                    >
+                                        <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                                        <span className={cn("text-[10px]", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
+}
+
+// Subcomponents
+function NudgeBtn({ icon: Icon, onClick }: any) {
+    return <button onClick={onClick} className="w-full h-9 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-indigo-600 active:bg-slate-50 flex items-center justify-center shadow-sm active:shadow-none transition-all"><Icon size={14} /></button>
 }
