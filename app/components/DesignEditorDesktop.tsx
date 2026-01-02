@@ -1,278 +1,451 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import {
-    Image as ImageIcon, RotateCcw,
-    Palette, Trash2,
-    ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus,
-    Type as TypeIcon, Maximize2, ChevronDown, MousePointer2,
-    RefreshCcw, RefreshCw, X
+    Image as ImageIcon, RotateCcw, RotateCw,
+    X, Palette, Trash2, Type,
+    ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Minus, Plus, Move,
+    Type as TypeIcon, Maximize2, ChevronDown
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-
-export interface DesignEditorRef {
-    addText: () => void;
-    addImage: (url: string) => void;
-    updateObject: (key: string, value: any) => void;
-    modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => void;
-    deselect: () => void;
-}
 
 interface DesignEditorProps {
     onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
     product: any;
     activeViewId: string;
     initialState?: any;
-    hideToolbar?: boolean;
-    onSelectionChange?: (selection: any | null) => void;
 }
 
-const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange }, ref) => {
+export default function DesignEditorDesktop({ onUpdate, product, activeViewId, initialState }: DesignEditorProps) {
+    const { data: session } = useSession();
 
+    // Refs
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const wrapperRef = useRef<HTMLDivElement>(null); // The Right-side container
+    const wrapperRef = useRef<HTMLDivElement>(null);
     const designZoneRef = useRef<fabric.Rect | null>(null);
 
+    // State
     const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
     const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
     const [scale, setScale] = useState(1);
 
+    // Design State
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontFamily, setFontFamily] = useState<string>('Arial');
 
+
+    // Derived Data
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
     const currentDesignZone = activePreview.editorZone || product.designZone;
 
-    // --- Responsive Scaling ---
+    // --- 1. INTELLIGENT RESPONSIVE SCALING ---
     useEffect(() => {
         const handleResize = () => {
             if (!wrapperRef.current) return;
 
-            // This width changes dynamically when the sidebar opens/closes
-            const containerW = wrapperRef.current.clientWidth;
-            const containerH = wrapperRef.current.clientHeight;
+            // 1. Get total available space
+            const totalWidth = wrapperRef.current.clientWidth;
+            const totalHeight = wrapperRef.current.clientHeight;
 
-            // Fit logic: 10% padding
-            const scaleX = (containerW * 0.9) / product.canvasSize;
-            const scaleY = (containerH * 0.9) / product.canvasSize;
+            // 2. Account for the side panel 
+            // If an object is selected, we reserve 320px (panel width) + 40px (padding) on the right
+            const sidebarReservedWidth = selectedObject ? 360 : 0;
 
-            // Ensure shirt fits in the remaining space
+            // 3. Calculate the "Safe Zone" dimensions
+            const safeWidth = totalWidth - sidebarReservedWidth;
+            const safeHeight = totalHeight;
+
+            // 4. Desired 'padding' inside the safe zone (10% breathing room)
+            const paddingFactor = 0.9;
+
+            // 5. Calculate scale to fit the Master Frame into the Safe Zone
+            const scaleX = (safeWidth * paddingFactor) / product.canvasSize;
+            const scaleY = (safeHeight * paddingFactor) / product.canvasSize;
+
+            // Use the smaller scale to ensure full visibility
             setScale(Math.min(scaleX, scaleY));
         };
 
-        // ResizeObserver is crucial here: it detects when the flex container shrinks
-        // caused by the sidebar opening
-        const resizeObserver = new ResizeObserver(() => {
-            // We wrap in requestAnimationFrame to avoid "ResizeObserver loop" errors
-            requestAnimationFrame(handleResize);
-        });
-
-        if (wrapperRef.current) {
-            resizeObserver.observe(wrapperRef.current);
-        }
-
-        // Initial call
+        // Recalculate whenever window resizes OR selection changes (panel opens/closes)
         handleResize();
 
+        window.addEventListener('resize', handleResize);
+        const resizeObserver = new ResizeObserver(handleResize);
+        if (wrapperRef.current) resizeObserver.observe(wrapperRef.current);
+
         return () => {
+            window.removeEventListener('resize', handleResize);
             resizeObserver.disconnect();
         };
-    }, [product.canvasSize]); // Removed selectedObject dependency as ResizeObserver handles it
+    }, [product.canvasSize, selectedObject]); // Added selectedObject dependency
 
-    // --- Canvas Init ---
+    // --- 2. CANVAS INITIALIZATION (Standard Fabric Setup) ---
     useEffect(() => {
         if (!canvasRef.current) return;
-        let isMounted = true;
-        if (fabricCanvas) try { fabricCanvas.dispose(); } catch (e) { }
+        if (fabricCanvas) fabricCanvas.dispose();
 
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: product.canvasSize,
             height: product.canvasSize,
             backgroundColor: 'transparent',
             preserveObjectStacking: true,
-            selectionColor: 'rgba(79, 70, 229, 0.1)',
-            selectionBorderColor: '#4f46e5',
+            selectionColor: 'rgba(99, 102, 241, 0.1)',
+            selectionBorderColor: '#6366f1',
             selectionLineWidth: 1.5,
         });
 
         fabric.Object.prototype.set({
             transparentCorners: false,
             cornerColor: '#ffffff',
-            cornerStrokeColor: '#6366f1',
+            cornerStrokeColor: '#cbd5e1',
             borderColor: '#6366f1',
             cornerSize: 12,
-            padding: 8,
+            padding: 10,
             cornerStyle: 'circle',
             borderDashArray: [4, 4],
+            shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.1)', blur: 5 })
         });
 
+        // Helper to setup overlays (Guides & ClipPath)
         const initOverlays = () => {
-            if (!isMounted) return;
+            // 1. Create Design Zone Guide
             const designZone = new fabric.Rect({
-                left: currentDesignZone.left, top: currentDesignZone.top,
-                width: currentDesignZone.width, height: currentDesignZone.height,
-                fill: 'transparent', stroke: 'rgba(99, 102, 241, 0.2)',
-                strokeWidth: 2, strokeDashArray: [10, 10],
-                selectable: false, evented: false, excludeFromExport: true,
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
+                fill: 'transparent',
+                stroke: 'rgba(99, 102, 241, 0.3)',
+                strokeWidth: 2,
+                strokeDashArray: [10, 10],
+                selectable: false,
+                evented: false,
+                visible: true,
+                excludeFromExport: true, // Custom property
             });
             canvas.add(designZone);
             designZoneRef.current = designZone;
 
+            // 2. Create Clip Path
             const clipPath = new fabric.Rect({
-                left: currentDesignZone.left, top: currentDesignZone.top,
-                width: currentDesignZone.width, height: currentDesignZone.height,
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height,
                 absolutePositioned: true,
             });
             canvas.clipPath = clipPath;
+
+            // 3. Ensure Guide is on top
+            canvas.bringObjectToFront(designZone);
+            canvas.requestRenderAll();
         };
 
-        const setupEvents = () => {
-            const handleUpdate = () => {
-                if (!designZoneRef.current) return;
-                designZoneRef.current.set('visible', false);
-                const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 2, left: currentDesignZone.left, top: currentDesignZone.top, width: currentDesignZone.width, height: currentDesignZone.height });
-                const jsonState = (canvas as any).toJSON(['id', 'gradient', 'selectable']);
-                designZoneRef.current.set('visible', true);
-                if (isMounted) onUpdate({ dataUrl, jsonState });
-            };
-
-            const handleSelection = (e: any) => {
-                const selected = e.selected?.[0];
-                if (isMounted) setSelectedObject(selected || null);
-
-                // Lift state up
-                if (onSelectionChange) {
-                    if (selected) {
-                        onSelectionChange({
-                            type: selected.type,
-                            text: selected.text,
-                            fontFamily: selected.fontFamily,
-                            fill: selected.fill
-                        });
-                    } else {
-                        onSelectionChange(null);
-                    }
-                }
-
-                if (selected && selected instanceof fabric.IText) {
-                    setTextColor(selected.fill as string);
-                    setFontFamily(selected.fontFamily || 'Arial');
-                }
-            };
-            canvas.on('object:modified', handleUpdate);
-            canvas.on('object:added', handleUpdate);
-            canvas.on('object:removed', handleUpdate);
-            canvas.on('selection:created', handleSelection);
-            canvas.on('selection:updated', handleSelection);
-            canvas.on('selection:cleared', () => {
-                if (isMounted) {
-                    setSelectedObject(null);
-                    if (onSelectionChange) onSelectionChange(null);
-                }
-            });
-        };
-
+        // Initialize State
         const initializeCanvas = async () => {
             if (initialState) {
-                try { await canvas.loadFromJSON(initialState); } catch (e) { }
+                try {
+                    // Fabric v6: loadFromJSON is async and clears canvas
+                    await canvas.loadFromJSON(initialState);
+                } catch (err) {
+                    console.error("Failed to load design state:", err);
+                }
             }
-            if (isMounted) {
-                initOverlays();
-                setupEvents();
-                canvas.requestRenderAll();
-            }
+            // Always setup overlays AFTER loading (or fresh init)
+            initOverlays();
         };
 
         initializeCanvas();
+
         setFabricCanvas(canvas);
-        return () => { isMounted = false; try { canvas.dispose(); } catch (e) { } };
-    }, [product.id, activeViewId, onUpdate]);
 
-    // --- Expose API ---
-    useImperativeHandle(ref, () => ({
-        addText: () => {
-            if (!fabricCanvas) return;
-            const text = new fabric.IText('DESIGN', {
-                left: currentDesignZone.left + currentDesignZone.width / 2,
-                top: currentDesignZone.top + currentDesignZone.height / 2,
-                originX: 'center', originY: 'center',
-                fontFamily: 'Arial', fill: '#1e293b', fontSize: currentDesignZone.width * 0.15, fontWeight: 'bold',
+        const handleUpdate = () => {
+            if (!designZoneRef.current) return;
+            designZoneRef.current.set('visible', false);
+            const dataUrl = canvas.toDataURL({
+                format: 'png', multiplier: 2, quality: 1,
+                left: currentDesignZone.left, top: currentDesignZone.top,
+                width: currentDesignZone.width, height: currentDesignZone.height,
             });
-            fabricCanvas.add(text);
-            fabricCanvas.setActiveObject(text);
-            fabricCanvas.fire('object:added');
-        },
-        addImage: (url: string) => {
-            if (!fabricCanvas) return;
-            fabric.Image.fromURL(url, {}, { crossOrigin: 'anonymous' }).then((img) => {
-                img.scaleToWidth(currentDesignZone.width * 0.6);
-                img.set({
-                    left: currentDesignZone.left + currentDesignZone.width / 2,
-                    top: currentDesignZone.top + currentDesignZone.height / 2,
-                    originX: 'center', originY: 'center'
-                });
-                fabricCanvas.add(img);
-                fabricCanvas.setActiveObject(img);
+
+            // Generate JSON State (Serialize everything except the guide if configured)
+            // We use a custom property 'excludeFromExport' or just filter explicitly if needed
+            // But usually standard JSON is fine if we reconstruct the guide on load
+            const jsonState = canvas.toJSON(['id', 'gradient', 'selectable']);
+
+            designZoneRef.current.set('visible', true);
+            onUpdate({ dataUrl, jsonState });
+        };
+
+        const handleSelection = (e: any) => {
+            const selected = e.selected?.[0];
+            setSelectedObject(selected || null);
+            if (selected && selected instanceof fabric.IText) {
+                setTextColor(selected.fill as string);
+                setFontFamily(selected.fontFamily || 'Arial');
+            }
+        };
+
+        canvas.on('object:modified', handleUpdate);
+        canvas.on('object:added', handleUpdate);
+        canvas.on('object:removed', handleUpdate);
+        canvas.on('selection:created', handleSelection);
+        canvas.on('selection:updated', handleSelection);
+        canvas.on('selection:cleared', () => setSelectedObject(null));
+
+        return () => { canvas.dispose(); };
+    }, [product.id, activeViewId]);
+
+    // --- HELPER FUNCTIONS ---
+    const addText = () => {
+        if (!fabricCanvas) return;
+        const centerX = currentDesignZone.left + currentDesignZone.width / 2;
+        const centerY = currentDesignZone.top + currentDesignZone.height / 2;
+        const text = new fabric.IText('DESIGN', {
+            left: centerX, top: centerY, originX: 'center', originY: 'center',
+            fontFamily: 'Arial', fill: '#1e293b', fontSize: currentDesignZone.width * 0.15, fontWeight: 'bold',
+        });
+        fabricCanvas.add(text);
+        fabricCanvas.setActiveObject(text);
+        fabricCanvas.fire('object:added');
+    };
+
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!fabricCanvas || !e.target.files?.[0]) return;
+        const reader = new FileReader();
+        reader.onload = (f) => {
+            const imgObj = new Image();
+            imgObj.src = f.target?.result as string;
+            imgObj.onload = () => {
+                const imgInstance = new fabric.Image(imgObj);
+                imgInstance.scaleToWidth(currentDesignZone.width * 0.6);
+                const centerX = currentDesignZone.left + currentDesignZone.width / 2;
+                const centerY = currentDesignZone.top + currentDesignZone.height / 2;
+                imgInstance.set({ left: centerX, top: centerY, originX: 'center', originY: 'center' });
+                fabricCanvas.add(imgInstance);
+                fabricCanvas.setActiveObject(imgInstance);
                 fabricCanvas.fire('object:added');
-            });
-        },
-        updateObject: (key: string, value: any) => {
-            if (!fabricCanvas) return;
-            const active = fabricCanvas.getActiveObject();
-            if (!active) return;
+            };
+        };
+        reader.readAsDataURL(e.target.files[0]);
+        e.target.value = '';
+    };
 
-            if (key === 'fill') setTextColor(value);
-            if (key === 'fontFamily') setFontFamily(value);
+    const updateObject = (key: string, value: any) => {
+        if (!fabricCanvas || !selectedObject) return;
+        if (key === 'fill') setTextColor(value);
+        if (key === 'fontFamily') setFontFamily(value);
+        selectedObject.set(key as any, value);
+        fabricCanvas.requestRenderAll();
+        fabricCanvas.fire('object:modified');
+    };
 
-            active.set(key as any, value);
-            fabricCanvas.requestRenderAll();
-            fabricCanvas.fire('object:modified');
-        },
-        modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val: number = 0, y: number = 0) => {
-            if (!fabricCanvas) return;
-            const active = fabricCanvas.getActiveObject();
-            if (!active) return;
-
-            if (action === 'move') active.set({ left: (active.left || 0) + val, top: (active.top || 0) + y });
-            if (action === 'scale') active.scale((active.scaleX || 1) + val);
-            if (action === 'rotate') active.rotate((active.angle || 0) + val);
-            if (action === 'delete') { fabricCanvas.remove(active); fabricCanvas.discardActiveObject(); }
-
-            active.setCoords();
-            fabricCanvas.requestRenderAll();
-            fabricCanvas.fire(action === 'delete' ? 'object:removed' : 'object:modified');
-        },
-        deselect: () => {
-            fabricCanvas?.discardActiveObject();
-            fabricCanvas?.requestRenderAll();
-        }
-    }));
+    const modify = (action: 'move' | 'scale' | 'rotate' | 'delete', val: number = 0, y: number = 0) => {
+        if (!fabricCanvas || !selectedObject) return;
+        if (action === 'move') selectedObject.set({ left: (selectedObject.left || 0) + val, top: (selectedObject.top || 0) + y });
+        if (action === 'scale') selectedObject.scale((selectedObject.scaleX || 1) + val);
+        if (action === 'rotate') selectedObject.rotate((selectedObject.angle || 0) + val);
+        if (action === 'delete') { fabricCanvas.remove(selectedObject); fabricCanvas.discardActiveObject(); }
+        selectedObject.setCoords();
+        fabricCanvas.requestRenderAll();
+        fabricCanvas.fire(action === 'delete' ? 'object:removed' : 'object:modified');
+    };
 
     return (
-        <div className="w-full h-full flex font-sans select-none overflow-hidden bg-[#F8F9FB]">
-            {/* CANVAS STAGE (Dynamic Width) */}
-            <div ref={wrapperRef} className="flex-1 relative flex items-center justify-center overflow-hidden z-10 bg-[#F8F9FB]">
-                {/* Background Grid */}
-                <div className="absolute inset-0 z-0 opacity-30 bg-[radial-gradient(#94a3b8_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
+        <div className="w-full h-full relative bg-[#F8F9FB] overflow-hidden flex font-sans">
 
-                {/* Scaled Content */}
-                <div className="relative transition-transform duration-300 ease-out shadow-2xl origin-center bg-white ring-1 ring-slate-900/5"
-                    style={{ width: product.canvasSize, height: product.canvasSize, transform: `scale(${scale})` }}>
-                    <img src={activePreview.editorCutout || product.image} alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
+            {/* --- 1. TOOLBAR (Left) --- */}
+            <div className="absolute left-6 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-4">
+                <div className="bg-white/90 backdrop-blur-xl border border-white/50 shadow-xl rounded-2xl p-2 flex flex-col gap-2 ring-1 ring-black/5">
+                    <ToolButton icon={Type} label="Text" onClick={addText} tooltip="Add Text" />
+                    <label className="relative">
+                        <ToolButton icon={ImageIcon} label="Image" onClick={() => { }} tooltip="Upload Image" />
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                    </label>
+
+                </div>
+            </div>
+
+            {/* --- 2. MAIN STAGE --- */}
+            <div ref={wrapperRef} className="flex-1 relative flex items-center justify-center overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 z-0 opacity-40 bg-[radial-gradient(#cbd5e1_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
+
+                {/* THE MASTER FRAME */}
+                <div
+                    className="relative shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] origin-center bg-white"
+                    style={{
+                        width: product.canvasSize,
+                        height: product.canvasSize,
+                        // UX FIX: We translate X to the left when the panel opens so the shirt stays centered in the VISIBLE area
+                        transform: `
+                            translateX(${selectedObject ? '-160px' : '0px'}) 
+                            scale(${scale})
+                        `
+                    }}
+                >
+                    <img
+                        src={activePreview.editorCutout || product.image}
+                        alt="Product Base"
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none z-0"
+                    />
                     <canvas ref={canvasRef} className="absolute inset-0 z-10" />
                 </div>
 
-                {/* Empty State Hint */}
-                {!selectedObject && (
-                    <div className="absolute bottom-12 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur text-white px-5 py-2.5 rounded-full text-xs font-medium shadow-xl pointer-events-none animate-in fade-in slide-in-from-bottom-4 z-20 flex items-center gap-2">
-                        <MousePointer2 size={14} className="text-indigo-400" /> Select an element to edit properties
-                    </div>
-                )}
+                {/* Reset View Button */}
+                <div className="absolute top-8 right-8 z-20">
+                    <button
+                        onClick={() => {
+                            fabricCanvas?.getObjects().forEach((o) => {
+                                if (o !== designZoneRef.current) fabricCanvas.remove(o);
+                            });
+                            fabricCanvas?.fire('object:modified');
+                        }}
+                        className="p-3 bg-white/80 backdrop-blur border border-slate-100 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm"
+                    >
+                        <RotateCcw size={18} />
+                    </button>
+                </div>
             </div>
+
+            {/* --- 3. PROPERTIES PANEL (Right) --- */}
+            <div className={cn(
+                "absolute top-6 right-6 bottom-6 w-80 z-30 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                selectedObject ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"
+            )}>
+                <div className="h-full bg-white/85 backdrop-blur-2xl border border-white/60 shadow-2xl rounded-3xl p-6 flex flex-col gap-6 ring-1 ring-black/5 overflow-y-auto custom-scrollbar">
+                    {/* Panel Content (Same as before) */}
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100/50">
+                        <div className="flex items-center gap-2 text-slate-800 font-bold">
+                            {selectedObject instanceof fabric.IText ? <TypeIcon size={18} className="text-indigo-500" /> : <ImageIcon size={18} className="text-purple-500" />}
+                            <span className="text-sm tracking-tight">{selectedObject instanceof fabric.IText ? 'Text Layer' : 'Image Layer'}</span>
+                        </div>
+                        <div className="flex gap-1">
+                            <button onClick={() => modify('delete')} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={16} /></button>
+                            <button onClick={() => { fabricCanvas?.discardActiveObject(); fabricCanvas?.requestRenderAll(); }} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"><X size={16} /></button>
+                        </div>
+                    </div>
+
+                    {selectedObject instanceof fabric.IText && (
+                        <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Content</label>
+                                <input
+                                    type="text"
+                                    value={(selectedObject as fabric.IText).text}
+                                    onChange={(e) => updateObject('text', e.target.value)}
+                                    className="w-full px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Typography</label>
+                                <div className="relative">
+                                    <select
+                                        value={fontFamily}
+                                        onChange={(e) => updateObject('fontFamily', e.target.value)}
+                                        className="w-full appearance-none px-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white outline-none cursor-pointer"
+                                    >
+                                        {['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Impact', 'Monaco', 'Brush Script MT'].map(f => (
+                                            <option key={f} value={f}>{f}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                        <ChevronDown size={14} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Color</label>
+                                <div className="flex flex-wrap gap-2">
+                                    <label className="w-8 h-8 rounded-full shadow-inner ring-1 ring-black/5 overflow-hidden relative cursor-pointer hover:scale-110 transition-transform bg-gradient-to-tr from-blue-400 via-purple-400 to-pink-400 group">
+                                        <input type="color" value={textColor} onChange={(e) => updateObject('fill', e.target.value)} className="opacity-0 absolute inset-0 w-full h-full cursor-pointer" />
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><Palette size={12} className="text-white" /></div>
+                                    </label>
+                                    {['#1e293b', '#ffffff', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#6366f1'].map(c => (
+                                        <button
+                                            key={c}
+                                            onClick={() => updateObject('fill', c)}
+                                            className={cn(
+                                                "w-8 h-8 rounded-full shadow-sm border border-slate-100 transition-transform hover:scale-110",
+                                                textColor === c ? "ring-2 ring-indigo-500 ring-offset-1" : ""
+                                            )}
+                                            style={{ backgroundColor: c }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="space-y-4 pt-4 border-t border-slate-100/50">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                            <Maximize2 size={10} /> Transform
+                        </label>
+                        <div className="bg-slate-50/50 rounded-xl p-3 border border-slate-200/50">
+                            <div className="grid grid-cols-3 gap-2 w-28 mx-auto mb-4">
+                                <div />
+                                <NudgeBtn icon={ArrowUp} onClick={() => modify('move', 0, -5)} />
+                                <div />
+                                <NudgeBtn icon={ArrowLeft} onClick={() => modify('move', -5, 0)} />
+                                <div className="flex items-center justify-center"><div className="w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-sm" /></div>
+                                <NudgeBtn icon={ArrowRight} onClick={() => modify('move', 5, 0)} />
+                                <div />
+                                <NudgeBtn icon={ArrowDown} onClick={() => modify('move', 0, 5)} />
+                                <div />
+                            </div>
+                            <div className="flex gap-2">
+                                <div className="flex-1 flex bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                                    <button onClick={() => modify('scale', -0.1)} className="p-2 hover:bg-slate-50 text-slate-500"><Minus size={14} /></button>
+                                    <div className="flex-1 flex items-center justify-center text-[10px] font-bold text-slate-400 border-x border-slate-100">SCALE</div>
+                                    <button onClick={() => modify('scale', 0.1)} className="p-2 hover:bg-slate-50 text-slate-500"><Plus size={14} /></button>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 mt-2">
+                                <div className="flex-1 flex bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                                    <button onClick={() => modify('rotate', -90)} className="p-2 hover:bg-slate-50 text-slate-500"><RotateCcw size={14} /></button>
+                                    <div className="flex-1 flex items-center justify-center text-[10px] font-bold text-slate-400 border-x border-slate-100">ROTATE</div>
+                                    <button onClick={() => modify('rotate', 90)} className="p-2 hover:bg-slate-50 text-slate-500"><RotateCw size={14} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* D. EMPTY STATE HINT */}
+            {!selectedObject && (
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/40 shadow-sm text-xs font-medium text-slate-500 pointer-events-none animate-in fade-in slide-in-from-bottom-4 z-20">
+                    Click an element to edit or drag to move
+                </div>
+            )}
         </div>
     );
-});
+}
 
-DesignEditorDesktop.displayName = 'DesignEditorDesktop';
-export default DesignEditorDesktop;
+// Sub components
+function ToolButton({ icon: Icon, label, onClick, tooltip }: any) {
+    return (
+        <div className="group relative flex items-center">
+            <button onClick={onClick} className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-all active:scale-95 disabled:opacity-50">
+                <Icon size={20} strokeWidth={1.5} />
+            </button>
+            {tooltip && (
+                <span className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none translate-x-[-10px] group-hover:translate-x-0 duration-200 z-50">
+                    {tooltip}
+                </span>
+            )}
+        </div>
+    )
+}
+
+function NudgeBtn({ icon: Icon, onClick }: any) {
+    return (
+        <button onClick={onClick} className="w-full h-8 bg-white border border-slate-200 shadow-sm rounded-lg text-slate-500 hover:text-indigo-600 hover:border-indigo-200 active:scale-95 transition-all flex items-center justify-center">
+            <Icon size={14} />
+        </button>
+    )
+}
