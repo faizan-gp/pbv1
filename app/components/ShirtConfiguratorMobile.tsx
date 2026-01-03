@@ -9,9 +9,8 @@ import { useRouter } from 'next/navigation';
 import {
     ArrowLeft, Check, Palette, Type, Image as ImageIcon, Ruler,
     ChevronRight, ShoppingBag, Trash2, X, RefreshCw,
-    ArrowUp, ArrowDown, ArrowLeft as ArrowL, ArrowRight as ArrowR,
-    Minus, Plus, Eye, Edit3, Keyboard, Layers,
-    RefreshCcw
+    ArrowUp, ArrowDown, ArrowRight, ArrowLeft as ArrowL, ArrowRight as ArrowR, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RotateCcw,
+    Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Sliders, Eye, Edit3, Keyboard, Layers
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -221,6 +220,100 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
                                                     onFontSelect={(font) => updateProperty('fontFamily', font)}
                                                 />
                                             </div>
+                                        </div>
+                                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                                            {/* Style & Align Row */}
+                                            <div className="flex gap-2">
+                                                <div className="flex-1 flex justify-between bg-slate-50 p-1 rounded-lg border border-slate-200">
+                                                    <button
+                                                        onClick={() => updateProperty('fontWeight', selectedElement.fontWeight === 'bold' ? 'normal' : 'bold')}
+                                                        className={cn("flex-1 py-2 flex items-center justify-center rounded transition-colors", selectedElement.fontWeight === 'bold' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500")}
+                                                    >
+                                                        <Bold size={18} />
+                                                    </button>
+                                                    <div className="w-px bg-slate-200 my-1" />
+                                                    <button
+                                                        onClick={() => updateProperty('fontStyle', selectedElement.fontStyle === 'italic' ? 'normal' : 'italic')}
+                                                        className={cn("flex-1 py-2 flex items-center justify-center rounded transition-colors", selectedElement.fontStyle === 'italic' ? "bg-white shadow-sm text-indigo-600" : "text-slate-500")}
+                                                    >
+                                                        <Italic size={18} />
+                                                    </button>
+                                                    <div className="w-px bg-slate-200 my-1" />
+                                                    <button
+                                                        onClick={() => updateProperty('underline', !selectedElement.underline)}
+                                                        className={cn("flex-1 py-2 flex items-center justify-center rounded transition-colors", selectedElement.underline ? "bg-white shadow-sm text-indigo-600" : "text-slate-500")}
+                                                    >
+                                                        <Underline size={18} />
+                                                    </button>
+                                                </div>
+                                                <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
+                                                    {['left', 'center', 'right'].map((align) => (
+                                                        <button
+                                                            key={align}
+                                                            onClick={() => updateProperty('textAlign', align)}
+                                                            className={cn("p-2 rounded transition-colors", selectedElement.textAlign === align ? "bg-white shadow-sm text-indigo-600" : "text-slate-500")}
+                                                        >
+                                                            {align === 'left' && <AlignLeft size={18} />}
+                                                            {align === 'center' && <AlignCenter size={18} />}
+                                                            {align === 'right' && <AlignRight size={18} />}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Spacing & Opacity */}
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Letter Spacing</label>
+                                                        <span className="text-[10px] text-slate-500">{Math.round((selectedElement.charSpacing || 0))}</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="-50"
+                                                        max="300"
+                                                        step="10"
+                                                        value={selectedElement.charSpacing || 0}
+                                                        onChange={(e) => updateProperty('charSpacing', parseInt(e.target.value))}
+                                                        className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between">
+                                                        <label className="text-[10px] font-bold uppercase text-slate-400">Opacity</label>
+                                                        <span className="text-[10px] text-slate-500">{Math.round((selectedElement.opacity ?? 1) * 100)}%</span>
+                                                    </div>
+                                                    <input
+                                                        type="range"
+                                                        min="0"
+                                                        max="1"
+                                                        step="0.05"
+                                                        value={selectedElement.opacity ?? 1}
+                                                        onChange={(e) => updateProperty('opacity', parseFloat(e.target.value))}
+                                                        className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedElement.type === 'image' && (
+                                    <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Opacity</label>
+                                                <span className="text-[10px] text-slate-500">{Math.round((selectedElement.opacity ?? 1) * 100)}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.05"
+                                                value={selectedElement.opacity ?? 1}
+                                                onChange={(e) => updateProperty('opacity', parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
                                         </div>
                                     </div>
                                 )}
