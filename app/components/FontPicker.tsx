@@ -14,6 +14,53 @@ interface FontPickerProps {
     className?: string;
 }
 
+const FontOption = ({ font, isSelected, onClick, loadingSelected }: { font: GoogleFont, isSelected: boolean, onClick: (e: React.MouseEvent, font: GoogleFont) => void, loadingSelected: boolean }) => {
+    const [loaded, setLoaded] = useState(false);
+    const ref = useRef<HTMLButtonElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && !loaded) {
+                loadFont(font.family).then(() => setLoaded(true));
+                observer.disconnect();
+            }
+        }, { rootMargin: '50px' });
+
+        if (ref.current) {
+            observer.observe(ref.current);
+        }
+
+        return () => observer.disconnect();
+    }, [font.family, loaded]);
+
+    return (
+        <button
+            ref={ref}
+            onClick={(e) => onClick(e, font)}
+            className={cn(
+                "w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between transition-all group",
+                isSelected ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50 text-slate-700"
+            )}
+        >
+            <div className="flex flex-col">
+                <span
+                    className="text-base leading-tight transition-all duration-300"
+                    style={{ fontFamily: loaded ? font.family : 'inherit' }}
+                >
+                    {font.family}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium group-hover:text-slate-500 transition-colors uppercase tracking-wider">{font.category}</span>
+            </div>
+
+            {loadingSelected ? (
+                <Loader2 size={16} className="animate-spin text-indigo-500" />
+            ) : isSelected && (
+                <Check size={16} className="text-indigo-600" />
+            )}
+        </button>
+    );
+};
+
 export default function FontPicker({ currentFont, onFontSelect, onClose, className }: FontPickerProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [loadingFont, setLoadingFont] = useState<string | null>(null);
@@ -104,39 +151,15 @@ export default function FontPicker({ currentFont, onFontSelect, onClose, classNa
                         {filteredFonts.length === 0 ? (
                             <div className="py-8 text-center text-xs text-slate-400">No fonts found</div>
                         ) : (
-                            filteredFonts.map((font) => {
-                                const isSelected = currentFont === font.family;
-                                const isLoading = loadingFont === font.family;
-
-                                return (
-                                    <button
-                                        key={font.family}
-                                        onClick={(e) => handleSelect(e, font)}
-                                        className={cn(
-                                            "w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between transition-all group",
-                                            isSelected ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50 text-slate-700"
-                                        )}
-                                    >
-                                        <div className="flex flex-col">
-                                            <span
-                                                className="text-base leading-tight"
-                                            // Note: We don't load the font for the list preview to save performance.
-                                            // We rely on the system to fallback or load a few 'preview' fonts if desired. 
-                                            // For now, we just show the name. To show true preview, we'd need to load everything (heavy).
-                                            >
-                                                {font.family}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400 font-medium group-hover:text-slate-500 transition-colors uppercase tracking-wider">{font.category}</span>
-                                        </div>
-
-                                        {isLoading ? (
-                                            <Loader2 size={16} className="animate-spin text-indigo-500" />
-                                        ) : isSelected && (
-                                            <Check size={16} className="text-indigo-600" />
-                                        )}
-                                    </button>
-                                );
-                            })
+                            filteredFonts.map((font) => (
+                                <FontOption
+                                    key={font.family}
+                                    font={font}
+                                    isSelected={currentFont === font.family}
+                                    onClick={handleSelect}
+                                    loadingSelected={loadingFont === font.family}
+                                />
+                            ))
                         )}
                     </div>
 
