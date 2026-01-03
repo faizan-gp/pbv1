@@ -765,6 +765,75 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         setActiveViewId(newId);
     };
 
+    const handleBulkColorVariantUploadForView = async (e: React.ChangeEvent<HTMLInputElement>, targetViewId: string, targetViewName: string) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            const filesToUpload: { file: File, colorIndex: number }[] = [];
+            const foundColors: string[] = [];
+
+            // 1. Analyze files to find matches
+            Array.from(files).forEach(file => {
+                // Expected: Root/ColorName/ViewName.ext
+                const pathParts = file.webkitRelativePath.split('/');
+                if (pathParts.length < 3) return;
+
+                const colorNameFolder = pathParts[1].toLowerCase(); // e.g., "black"
+                const fileName = pathParts[pathParts.length - 1].toLowerCase(); // e.g., "front view.png"
+                const nameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.')); // e.g., "front view"
+
+                // Check 1: Does Color Match?
+                const matchedColorIndex = productColors.findIndex(c => c.name.toLowerCase() === colorNameFolder);
+                if (matchedColorIndex === -1) return;
+
+                // Check 2: Does View Name Match?
+                if (nameWithoutExt !== targetViewName.trim().toLowerCase()) return;
+
+                filesToUpload.push({ file, colorIndex: matchedColorIndex });
+                if (!foundColors.includes(productColors[matchedColorIndex].name)) {
+                    foundColors.push(productColors[matchedColorIndex].name);
+                }
+            });
+
+            if (filesToUpload.length === 0) {
+                showToast(`No matching images found for view: "${targetViewName}"`, 'error');
+                return;
+            }
+
+            // 2. Upload and Update
+            const uploadPromises = filesToUpload.map(({ file }) => uploadProductImage(file, 'views', productName));
+            const uploadedUrls = await Promise.all(uploadPromises);
+
+            // 3. Batch Update State
+            setProductColors(prev => {
+                const newColors = [...prev];
+                filesToUpload.forEach((item, idx) => {
+                    const url = uploadedUrls[idx];
+                    const color = newColors[item.colorIndex];
+
+                    newColors[item.colorIndex] = {
+                        ...color,
+                        images: {
+                            ...(color.images || {}),
+                            [targetViewId]: url
+                        }
+                    };
+                });
+                return newColors;
+            });
+
+            showToast(`Updated variants for: ${foundColors.join(', ')}`, 'success');
+
+        } catch (error) {
+            console.error("Bulk upload failed", error);
+            showToast('Failed to bulk upload color variants', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const activeView = views.find(v => v.id === activeViewId);
 
     // Render Steps
@@ -1002,7 +1071,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </button>
                                         ))}
                                     </div>
-                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload)}
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView)}
                                 </div>
                             </div>
 
@@ -1207,7 +1276,8 @@ function activeViewsConfig(
     setViews: Function,
     handleImageUpload: Function,
     productColors: ProductColor[],
-    handleColorImageUpload: Function
+    handleColorImageUpload: Function,
+    handleBulkColorVariantUploadForView: Function
 ) {
     const activeView = views.find(v => v.id === activeViewId);
     if (!activeView) return null;
@@ -1238,9 +1308,23 @@ function activeViewsConfig(
             {/* Color Variants Overrides */}
             {productColors && productColors.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center justify-between">
-                        Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                            Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
+                        </label>
+                        <label className="text-[10px] flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
+                            <FolderUp size={12} />
+                            Bulk Upload
+                            <input
+                                type="file"
+                                className="hidden"
+                                multiple
+                                // @ts-ignore
+                                webkitdirectory=""
+                                onChange={(e) => handleBulkColorVariantUploadForView(e, activeViewId, activeView.name)}
+                            />
+                        </label>
+                    </div>
                     <div className="space-y-2">
                         {productColors.map((color, idx) => (
                             <div key={idx} className="flex items-center gap-2">
