@@ -10,6 +10,7 @@ import {
     RefreshCcw, RefreshCw, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ProductColor } from '../data/products';
 
 export interface DesignEditorRef {
     addText: () => void;
@@ -26,9 +27,10 @@ interface DesignEditorProps {
     initialState?: any;
     hideToolbar?: boolean;
     onSelectionChange?: (selection: any | null) => void;
+    selectedColor?: ProductColor;
 }
 
-const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange }, ref) => {
+const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange, selectedColor }, ref) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null); // The Right-side container
@@ -174,20 +176,92 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
         };
 
         const initializeCanvas = async () => {
+            // Load state first
             if (initialState) {
                 try { await canvas.loadFromJSON(initialState); } catch (e) { }
             }
-            if (isMounted) {
-                initOverlays();
-                setupEvents();
-                canvas.requestRenderAll();
+
+            if (!isMounted) return;
+
+            // --- LOAD BACKGROUND IMAGE (PRODUCT VARIANT) ---
+            let imageUrl = product.image; // default fallback
+            if (selectedColor && selectedColor.images && selectedColor.images[activeViewId]) {
+                imageUrl = selectedColor.images[activeViewId];
+            } else if (activePreview && (activePreview as any).image) {
+                imageUrl = (activePreview as any).image;
             }
+
+            console.log("DEBUG: Loading Background Image Desktop", { activeViewId, color: selectedColor?.name, url: imageUrl });
+
+            const cleanUrl = imageUrl.split('?')[0].toLowerCase();
+            const isSvg = cleanUrl.endsWith('.svg');
+
+            try {
+                if (isSvg) {
+                    const { objects, options } = await fabric.loadSVGFromURL(imageUrl);
+                    if (!isMounted) return;
+
+                    const validObjects = objects.filter((o): o is fabric.FabricObject => o !== null);
+                    const svgGroup = fabric.util.groupSVGElements(validObjects, options) as fabric.Group;
+
+                    // Apply Dynamic Color
+                    if (selectedColor && selectedColor.hex) {
+                        // Apply to all children
+                        svgGroup.getObjects().forEach((obj: any) => {
+                            if (obj.fill && obj.fill !== 'none' && obj.fill !== 'transparent') {
+                                obj.set('fill', selectedColor.hex);
+                            }
+                        });
+                    }
+
+                    setupBackgroundObject(svgGroup);
+
+                } else {
+                    const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
+                    if (!isMounted) return;
+                    setupBackgroundObject(img);
+                }
+            } catch (err) {
+                console.warn("Failed to load background image:", err);
+            }
+
+            initOverlays();
+            setupEvents();
+            canvas.requestRenderAll();
+        };
+
+        const setupBackgroundObject = (obj: fabric.Object) => {
+            // Desktop dimensions are handled by the container size and scaling, but the canvas internal size is product.canvasSize (e.g. 1024)
+            // So we just need to place the object in the canvas.
+
+            // Remove existing background
+            const existingBg = canvas.getObjects().find(o => (o as any).id === 'product-bg');
+            if (existingBg) canvas.remove(existingBg);
+
+            // Scale to fit canvas if needed, but usually product images are pre-sized or we want them full size.
+            // We can use the logic from mobile: contain within canvasSize
+            const scaleX = product.canvasSize / obj.width!;
+            const scaleY = product.canvasSize / obj.height!;
+            const scale = Math.min(scaleX, scaleY);
+
+            obj.set({
+                id: 'product-bg',
+                left: (product.canvasSize - obj.width! * scale) / 2,
+                top: (product.canvasSize - obj.height! * scale) / 2,
+                scaleX: scale,
+                scaleY: scale,
+                selectable: false,
+                evented: false,
+                excludeFromExport: true
+            });
+
+            canvas.insertAt(0, obj);
         };
 
         initializeCanvas();
         setFabricCanvas(canvas);
         return () => { isMounted = false; try { canvas.dispose(); } catch (e) { } };
-    }, [product.id, activeViewId, onUpdate]);
+    }, [product.id, activeViewId, onUpdate, selectedColor]);
 
     // --- Expose API ---
     useImperativeHandle(ref, () => ({
@@ -259,7 +333,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 {/* Scaled Content */}
                 <div className="relative transition-transform duration-300 ease-out shadow-2xl origin-center bg-white ring-1 ring-slate-900/5"
                     style={{ width: product.canvasSize, height: product.canvasSize, transform: `scale(${scale})` }}>
-                    <img src={activePreview.editorCutout || product.image} alt="Base" className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0" />
+                    {/* Background Image managed inside canvas now for SVG support */}
                     <canvas ref={canvasRef} className="absolute inset-0 z-10" />
                 </div>
 

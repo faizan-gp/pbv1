@@ -296,7 +296,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                     <div className="relative w-full h-full max-w-[800px] max-h-[800px] transition-all duration-500 flex flex-col">
                         <div className="flex-1 relative">
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'editor' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
-                                <DesignEditor ref={editorRef} onUpdate={handleDesignUpdate} product={product} activeViewId={activeViewId} initialState={designStates[activeViewId]} hideToolbar={true} onSelectionChange={handleSelectionChange} />
+                                <DesignEditor ref={editorRef} onUpdate={handleDesignUpdate} product={product} activeViewId={activeViewId} initialState={designStates[activeViewId]} hideToolbar={true} onSelectionChange={handleSelectionChange} selectedColor={selectedColor} />
                             </div>
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                                 <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
@@ -310,7 +310,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                             {product.previews.map((view: any) => (
                                 <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("group flex flex-col items-center gap-2 transition-all opacity-70 hover:opacity-100", activeViewId === view.id ? "opacity-100 scale-105" : "")}>
                                     <div className={cn("w-14 h-14 rounded-xl border-2 overflow-hidden bg-white shadow-sm transition-colors", activeViewId === view.id ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-slate-200 group-hover:border-slate-300")}>
-                                        <img src={view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
+                                        <img src={selectedColor.images?.[view.id] || view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
                                     </div>
                                     <span className={cn("text-[10px] font-bold uppercase tracking-wider", activeViewId === view.id ? "text-indigo-600" : "text-slate-400")}>{view.name}</span>
                                 </button>
