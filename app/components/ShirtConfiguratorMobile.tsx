@@ -46,6 +46,15 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     // Selection
     const [selectedElement, setSelectedElement] = useState<any | null>(null);
 
+    // --- EFFECT: Auto-Switch View Mode ---
+    React.useEffect(() => {
+        if (activeTab === 'color' || activeTab === 'size') {
+            setViewMode('preview');
+        } else if (activeTab === 'text' || activeTab === 'image') {
+            setViewMode('editor');
+        }
+    }, [activeTab]);
+
     // --- HANDLERS ---
     const handleDesignUpdate = useCallback((data: { dataUrl: string; jsonState: any }) => {
         console.log("DEBUG: Parent Received Update", {
