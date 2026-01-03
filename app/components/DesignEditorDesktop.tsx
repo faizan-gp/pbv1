@@ -269,7 +269,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
         initializeCanvas();
         setFabricCanvas(canvas);
         return () => { isMounted = false; try { canvas.dispose(); } catch (e) { } };
-    }, [product.id, activeViewId, onUpdate, selectedColor]);
+    }, [product.id, activeViewId, onUpdate, selectedColor, onSelectionChange]);
 
     // --- Expose API ---
     useImperativeHandle(ref, () => ({

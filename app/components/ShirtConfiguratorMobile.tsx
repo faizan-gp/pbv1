@@ -158,7 +158,10 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
                         {product.previews.map((view: any) => (
                             <button
                                 key={view.id}
-                                onClick={() => setActiveViewId(view.id)}
+                                onClick={() => {
+                                    setActiveViewId(view.id);
+                                    setSelectedElement(null); // Clear properties on view change
+                                }}
                                 className={cn(
                                     "px-3 py-1.5 rounded-full border shadow-sm text-[10px] font-bold transition-all active:scale-95",
                                     activeViewId === view.id ? "bg-indigo-600 border-indigo-600 text-white" : "bg-white border-slate-200 text-slate-500"

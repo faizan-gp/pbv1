@@ -193,7 +193,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             resizeObserver.disconnect();
             try { canvas.dispose(); } catch (e) { }
         };
-    }, [onUpdate, product, activeViewId]);
+    }, [onUpdate, product, activeViewId, onSelectionChange]);
 
     // --- METHODS ---
     useImperativeHandle(ref, () => ({

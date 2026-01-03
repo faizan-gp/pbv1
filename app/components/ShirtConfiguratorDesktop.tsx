@@ -52,9 +52,9 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     // --- Selection & Properties Logic ---
     const [selectedElement, setSelectedElement] = useState<any | null>(null);
 
-    const handleSelectionChange = (selection: any | null) => {
+    const handleSelectionChange = React.useCallback((selection: any | null) => {
         setSelectedElement(selection);
-    };
+    }, []);
 
     const updateProperty = (key: string, value: any) => {
         editorRef.current?.updateObject(key, value);
