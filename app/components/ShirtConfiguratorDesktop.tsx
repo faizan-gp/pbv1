@@ -419,7 +419,10 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                         {/* --- VIEW THUMBNAIL STRIP (Replaces Dots) --- */}
                         <div className="h-28 flex items-center justify-center gap-4 py-6 z-20">
                             {product.previews.map((view: any) => (
-                                <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("group flex flex-col items-center gap-2 transition-all opacity-70 hover:opacity-100", activeViewId === view.id ? "opacity-100 scale-105" : "")}>
+                                <button key={view.id} onClick={() => {
+                                    setActiveViewId(view.id);
+                                    setSelectedElement(null);
+                                }} className={cn("group flex flex-col items-center gap-2 transition-all opacity-70 hover:opacity-100", activeViewId === view.id ? "opacity-100 scale-105" : "")}>
                                     <div className={cn("w-14 h-14 rounded-xl border-2 overflow-hidden bg-white shadow-sm transition-colors", activeViewId === view.id ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-slate-200 group-hover:border-slate-300")}>
                                         <img src={selectedColor.images?.[view.id] || view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
                                     </div>
