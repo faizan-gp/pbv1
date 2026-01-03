@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -950,33 +950,72 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="font-bold text-gray-900">Features</h4>
-                                        <button onClick={() => setFeatures([...features, { title: '', description: '', icon: 'check' }])} className="text-xs text-indigo-600 font-medium">+ Add</button>
+                                        <button onClick={() => setFeatures([...features, { title: '', description: '' }])} className="text-xs text-indigo-600 font-medium">+ Add</button>
                                     </div>
                                     <div className="space-y-3">
                                         {features.map((f, i) => (
                                             <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                                                <div className="flex gap-2">
-                                                    <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="flex-1 bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
-                                                    <select
-                                                        value={f.icon || 'check'}
-                                                        onChange={(e) => { const n = [...features]; n[i].icon = e.target.value; setFeatures(n) }}
-                                                        className="w-24 text-[10px] bg-white border border-gray-200 rounded px-1 outline-none uppercase font-bold text-gray-500"
-                                                    >
-                                                        <option value="check">Check</option>
-                                                        <option value="hexagon">Material</option>
-                                                        <option value="shirt">Fit</option>
-                                                        <option value="shield">Durable</option>
-                                                        <option value="zap">Fast Dry</option>
-                                                        <option value="wind">Breathable</option>
-                                                        <option value="sun">UV Protect</option>
-                                                        <option value="feather">Light</option>
-                                                        <option value="maximize">Stretch</option>
-                                                        <option value="droplets">Wicking</option>
-                                                        <option value="award">Quality</option>
-                                                    </select>
+                                                <div className="flex gap-2 items-start">
+                                                    {/* Feature Image Upload */}
+                                                    <div className="shrink-0">
+                                                        <label className="block w-10 h-10 border border-dashed border-gray-300 rounded overflow-hidden cursor-pointer hover:border-indigo-400 relative bg-white">
+                                                            {f.image ? (
+                                                                <img src={f.image} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="absolute inset-0 flex items-center justify-center text-gray-300">
+                                                                    <Plus size={14} />
+                                                                </div>
+                                                            )}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="hidden"
+                                                                onChange={async (e) => {
+                                                                    if (e.target.files?.[0]) {
+                                                                        const url = await uploadProductImage(e.target.files[0]);
+                                                                        const n = [...features];
+                                                                        n[i].image = url;
+                                                                        setFeatures(n);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    </div>
+
+                                                    <div className="flex-1 space-y-2">
+                                                        <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
+                                                        <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />
+                                                    </div>
+                                                    <div className="flex flex-col gap-1">
+                                                        <button
+                                                            onClick={() => {
+                                                                if (i === 0) return;
+                                                                const n = [...features];
+                                                                [n[i - 1], n[i]] = [n[i], n[i - 1]];
+                                                                setFeatures(n);
+                                                            }}
+                                                            disabled={i === 0}
+                                                            className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-30"
+                                                        >
+                                                            <ArrowUp size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (i === features.length - 1) return;
+                                                                const n = [...features];
+                                                                [n[i + 1], n[i]] = [n[i], n[i + 1]];
+                                                                setFeatures(n);
+                                                            }}
+                                                            disabled={i === features.length - 1}
+                                                            className="p-1 hover:bg-gray-200 rounded text-gray-500 disabled:opacity-30"
+                                                        >
+                                                            <ArrowDown size={14} />
+                                                        </button>
+                                                        <button onClick={() => setFeatures(prev => prev.filter((_, idx) => idx !== i))} className="p-1 hover:bg-red-50 rounded text-red-500 pt-1">
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                                <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />
-                                                <button onClick={() => setFeatures(prev => prev.filter((_, idx) => idx !== i))} className="text-[10px] text-red-500">Remove</button>
                                             </div>
                                         ))}
                                     </div>
