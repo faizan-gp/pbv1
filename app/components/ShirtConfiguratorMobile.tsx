@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import DesignEditor, { DesignEditorRef } from './DesignEditorMobile';
 import ProductPreview from './ProductPreview';
+import FontPicker from './FontPicker';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -214,10 +215,11 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
 
                                         <div className="space-y-1">
                                             <label className="text-[10px] font-bold text-slate-400 uppercase">Typography</label>
-                                            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                                                {['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia', 'Impact', 'Brush Script MT'].map(f => (
-                                                    <button key={f} onClick={() => updateProperty('fontFamily', f)} className={cn("px-3 py-1.5 rounded-md border text-xs whitespace-nowrap transition-colors", selectedElement.fontFamily === f ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-600 border-slate-200")}>{f}</button>
-                                                ))}
+                                            <div className="relative z-50">
+                                                <FontPicker
+                                                    currentFont={selectedElement.fontFamily || 'Arial'}
+                                                    onFontSelect={(font) => updateProperty('fontFamily', font)}
+                                                />
                                             </div>
                                         </div>
                                     </div>

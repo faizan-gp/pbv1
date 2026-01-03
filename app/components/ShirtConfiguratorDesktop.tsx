@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import DesignEditor, { DesignEditorRef } from './DesignEditorDesktop';
 import ProductPreview from './ProductPreview';
+import FontPicker from './FontPicker';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -111,16 +112,12 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold uppercase text-slate-400">Typography</label>
                                         <div className="relative">
-                                            <select
-                                                value={selectedElement.fontFamily || 'Arial'}
-                                                onChange={(e) => updateProperty('fontFamily', e.target.value)}
-                                                className="w-full appearance-none px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:bg-white outline-none cursor-pointer"
-                                            >
-                                                {['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Georgia', 'Verdana', 'Impact', 'Brush Script MT'].map(f => (
-                                                    <option key={f} value={f}>{f}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                            <div className="relative z-50">
+                                                <FontPicker
+                                                    currentFont={selectedElement.fontFamily || 'Arial'}
+                                                    onFontSelect={(font) => updateProperty('fontFamily', font)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="space-y-3">
