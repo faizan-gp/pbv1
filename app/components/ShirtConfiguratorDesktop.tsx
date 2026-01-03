@@ -170,21 +170,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                                             </div>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between">
-                                                <label className="text-[10px] font-bold uppercase text-slate-400">Curvature (Arch)</label>
-                                                <span className="text-[10px] text-slate-500">{selectedElement.curvature || 0}°</span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="-60"
-                                                max="60"
-                                                step="5"
-                                                value={selectedElement.curvature || 0}
-                                                onChange={(e) => updateProperty('curvature', parseInt(e.target.value))}
-                                                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                            />
-                                        </div>
+
 
                                         <div className="space-y-2">
                                             <div className="flex justify-between">
