@@ -175,7 +175,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             const scaleY = height / product.canvasSize;
 
             // "Contain" scaling
-            const scale = Math.min(scaleX, scaleY) * 0.92;
+            const scale = Math.min(scaleX, scaleY);
 
             // Center Viewport
             const vpt = [scale, 0, 0, scale, (width - product.canvasSize * scale) / 2, (height - product.canvasSize * scale) / 2];
