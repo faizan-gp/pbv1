@@ -229,6 +229,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             if (!active) return;
             active.set(key as any, value);
             fabricCanvas.requestRenderAll();
+            fabricCanvas.setActiveObject(active);
             fabricCanvas.fire('object:modified');
         },
         modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val: number = 0, y: number = 0) => {

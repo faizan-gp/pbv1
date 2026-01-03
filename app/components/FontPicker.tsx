@@ -28,7 +28,10 @@ export default function FontPicker({ currentFont, onFontSelect, onClose, classNa
     }, [searchQuery]);
 
     // Handle selection
-    const handleSelect = async (font: GoogleFont) => {
+    const handleSelect = async (e: React.MouseEvent, font: GoogleFont) => {
+        e.preventDefault();
+        e.stopPropagation();
+
         if (loadingFont) return; // Prevent multiple clicks
 
         setLoadingFont(font.family);
@@ -108,7 +111,7 @@ export default function FontPicker({ currentFont, onFontSelect, onClose, classNa
                                 return (
                                     <button
                                         key={font.family}
-                                        onClick={() => handleSelect(font)}
+                                        onClick={(e) => handleSelect(e, font)}
                                         className={cn(
                                             "w-full text-left px-3 py-2.5 rounded-lg flex items-center justify-between transition-all group",
                                             isSelected ? "bg-indigo-50 text-indigo-700" : "hover:bg-slate-50 text-slate-700"

@@ -35,8 +35,16 @@ export const loadFont = (fontFamily: string): Promise<void> => {
         link.rel = 'stylesheet';
 
         link.onload = () => {
-            loadedFonts.add(fontFamily);
-            resolve();
+            // Explicitly wait for the font to be loaded by the browser
+            // calculated 1rem just to trigger load with some text
+            document.fonts.load(`1em "${fontFamily}"`).then(() => {
+                loadedFonts.add(fontFamily);
+                resolve();
+            }).catch(() => {
+                // Fallback: resolve anyway if font loading fails, so UI doesn't hang
+                loadedFonts.add(fontFamily);
+                resolve();
+            });
         };
 
         link.onerror = () => {

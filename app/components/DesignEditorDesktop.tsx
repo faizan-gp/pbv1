@@ -321,6 +321,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             active.set(key as any, value);
             fabricCanvas.requestRenderAll();
+            fabricCanvas.setActiveObject(active); // Force keep selection
             fabricCanvas.fire('object:modified');
         },
         modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val: number = 0, y: number = 0) => {
