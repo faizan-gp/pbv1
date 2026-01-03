@@ -317,7 +317,14 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             if (!active) return;
 
             if (key === 'fill') setTextColor(value);
-            if (key === 'fontFamily') setFontFamily(value);
+            if (key === 'fontFamily') {
+                setFontFamily(value);
+                if (active instanceof fabric.IText || active instanceof fabric.Text) {
+                    active.set('fontFamily', value);
+                    active.set('dirty', true);
+                    fabricCanvas.requestRenderAll();
+                }
+            }
 
             // Handle Rounded Corners for Images
             if (key === 'cornerRadius' && active.type === 'image') {

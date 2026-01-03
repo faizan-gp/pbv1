@@ -227,7 +227,16 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             if (!fabricCanvas) return;
             const active = fabricCanvas.getActiveObject();
             if (!active) return;
+            // Handle Font Family explicitly to force redraw
+            if (key === 'fontFamily') {
+                if (active instanceof fabric.IText || active instanceof fabric.Text) {
+                    active.set('fontFamily', value);
+                    active.set('dirty', true);
+                    fabricCanvas.requestRenderAll();
+                }
+            }
 
+            // Handle Rounded Corners for Images
             // Handle Rounded Corners for Images
             if (key === 'cornerRadius' && active.type === 'image') {
                 const radius = value;
