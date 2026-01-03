@@ -121,12 +121,17 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             canvas.add(designZone);
             designZoneRef.current = designZone;
 
-            const clipPath = new fabric.Rect({
+            // Global clip path removed to allow background to be full size.
+            // We will apply clipping to individual user objects instead.
+        };
+
+        const createClipRect = () => {
+            return new fabric.Rect({
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
                 absolutePositioned: true,
+                originX: 'left', originY: 'top' // Ensure explicit origin
             });
-            canvas.clipPath = clipPath;
         };
 
         const setupEvents = () => {
@@ -196,6 +201,35 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             const cleanUrl = imageUrl.split('?')[0].toLowerCase();
             const isSvg = cleanUrl.endsWith('.svg');
 
+            const setupBackgroundObject = (obj: fabric.Object) => {
+                obj.set({
+                    selectable: false,
+                    evented: false,
+                    excludeFromExport: true,
+                    left: 0,
+                    top: 0,
+                    originX: 'left',
+                    originY: 'top'
+                });
+
+                // Scale to fit canvas
+                if (obj.width) {
+                    const scale = product.canvasSize / obj.width;
+                    obj.scale(scale);
+                }
+
+                canvas.add(obj);
+
+                // Safe handling for Z-index across fabric versions
+                if (typeof (canvas as any).moveObjectTo === 'function') {
+                    (canvas as any).moveObjectTo(obj, 0);
+                } else if (typeof (canvas as any).sendToBack === 'function') {
+                    (canvas as any).sendToBack(obj);
+                } else if (typeof (canvas as any).moveTo === 'function') {
+                    (canvas as any).moveTo(obj, 0);
+                }
+            };
+
             try {
                 if (isSvg) {
                     const { objects, options } = await fabric.loadSVGFromURL(imageUrl);
@@ -230,33 +264,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             canvas.requestRenderAll();
         };
 
-        const setupBackgroundObject = (obj: fabric.Object) => {
-            // Desktop dimensions are handled by the container size and scaling, but the canvas internal size is product.canvasSize (e.g. 1024)
-            // So we just need to place the object in the canvas.
 
-            // Remove existing background
-            const existingBg = canvas.getObjects().find(o => (o as any).id === 'product-bg');
-            if (existingBg) canvas.remove(existingBg);
-
-            // Scale to fit canvas if needed, but usually product images are pre-sized or we want them full size.
-            // We can use the logic from mobile: contain within canvasSize
-            const scaleX = product.canvasSize / obj.width!;
-            const scaleY = product.canvasSize / obj.height!;
-            const scale = Math.min(scaleX, scaleY);
-
-            obj.set({
-                id: 'product-bg',
-                left: (product.canvasSize - obj.width! * scale) / 2,
-                top: (product.canvasSize - obj.height! * scale) / 2,
-                scaleX: scale,
-                scaleY: scale,
-                selectable: false,
-                evented: false,
-                excludeFromExport: true
-            });
-
-            canvas.insertAt(0, obj);
-        };
 
         initializeCanvas();
         setFabricCanvas(canvas);
@@ -272,6 +280,12 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 top: currentDesignZone.top + currentDesignZone.height / 2,
                 originX: 'center', originY: 'center',
                 fontFamily: 'Arial', fill: '#1e293b', fontSize: currentDesignZone.width * 0.15, fontWeight: 'bold',
+                clipPath: new fabric.Rect({
+                    left: currentDesignZone.left, top: currentDesignZone.top,
+                    width: currentDesignZone.width, height: currentDesignZone.height,
+                    absolutePositioned: true,
+                    originX: 'left', originY: 'top'
+                })
             });
             fabricCanvas.add(text);
             fabricCanvas.setActiveObject(text);
@@ -284,7 +298,13 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 img.set({
                     left: currentDesignZone.left + currentDesignZone.width / 2,
                     top: currentDesignZone.top + currentDesignZone.height / 2,
-                    originX: 'center', originY: 'center'
+                    originX: 'center', originY: 'center',
+                    clipPath: new fabric.Rect({
+                        left: currentDesignZone.left, top: currentDesignZone.top,
+                        width: currentDesignZone.width, height: currentDesignZone.height,
+                        absolutePositioned: true,
+                        originX: 'left', originY: 'top'
+                    })
                 });
                 fabricCanvas.add(img);
                 fabricCanvas.setActiveObject(img);
@@ -333,7 +353,12 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 {/* Scaled Content */}
                 <div className="relative transition-transform duration-300 ease-out shadow-2xl origin-center bg-white ring-1 ring-slate-900/5"
                     style={{ width: product.canvasSize, height: product.canvasSize, transform: `scale(${scale})` }}>
-                    {/* Background Image managed inside canvas now for SVG support */}
+                    {/* Background Image managed via img tag for reliability */}
+                    <img
+                        src={activePreview.editorCutout || product.image}
+                        alt="Editor Background"
+                        className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 select-none"
+                    />
                     <canvas ref={canvasRef} className="absolute inset-0 z-10" />
                 </div>
 
