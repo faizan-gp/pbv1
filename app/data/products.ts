@@ -43,6 +43,10 @@ export interface Product {
         height: number;
     };
     previews: PreviewConfig[];
+    sizeGuide?: {
+        imperial: { size: string; width: number; length: number }[];
+        metric: any[];
+    };
 }
 
 export const products: Product[] = [
@@ -59,6 +63,22 @@ export const products: Product[] = [
             { name: 'Navy', hex: '#1a237e', images: { front: '/products/tshirt-navy.png', back: '/products/tshirt-navy-back.png' } },
             { name: 'Heather Grey', hex: '#9e9e9e', images: { front: '/products/tshirt-heather.png', back: '/products/tshirt-heather-back.png' } },
         ],
+        sizeGuide: {
+            imperial: [
+                { size: 'S', width: 18, length: 28 },
+                { size: 'M', width: 20, length: 29 },
+                { size: 'L', width: 22, length: 30 },
+                { size: 'XL', width: 24, length: 31 },
+                { size: '2XL', width: 26, length: 32 },
+            ],
+            metric: [
+                { size: 'S', width: 46, length: 71 },
+                { size: 'M', width: 51, length: 74 },
+                { size: 'L', width: 56, length: 76 },
+                { size: 'XL', width: 61, length: 79 },
+                { size: '2XL', width: 66, length: 81 },
+            ]
+        },
         designZone: { left: 312, top: 262, width: 400, height: 500 },
         previews: [
             {

@@ -35,6 +35,7 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
     const [activeTab, setActiveTab] = useState('color');
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'White', hex: '#fff', images: {} });
     const [selectedSize, setSelectedSize] = useState<string>('');
+    const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [isAdding, setIsAdding] = useState(false);
 
     // Canvas & View
@@ -430,10 +431,25 @@ export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorPr
                             )}
 
                             {activeTab === 'size' && (
-                                <div className="grid grid-cols-4 gap-3 animate-in fade-in slide-in-from-bottom-2">
-                                    {product.sizeGuide?.imperial?.map((s: any) => (
-                                        <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("h-12 border rounded-lg font-bold text-sm transition-all active:scale-95", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600")}>{s.size}</button>
-                                    ))}
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                    {/* Unit Toggle */}
+                                    <div className="flex justify-center">
+                                        <div className="bg-slate-100 p-1 rounded-lg inline-flex">
+                                            <button onClick={() => setMeasurementUnit('imperial')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'imperial' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Imperial</button>
+                                            <button onClick={() => setMeasurementUnit('metric')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'metric' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Metric</button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
+                                            <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("h-auto py-3 border rounded-lg flex flex-col items-center justify-center transition-all active:scale-95", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600")}>
+                                                <span className="font-bold text-sm">{s.size}</span>
+                                                <span className={cn("text-[10px]", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
+                                                    {s.width}{measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length}{measurementUnit === 'imperial' ? '"' : 'cm'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>

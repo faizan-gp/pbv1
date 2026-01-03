@@ -37,6 +37,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
     const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'White', hex: '#fff', images: {} });
     const [selectedSize, setSelectedSize] = useState<string>('');
+    const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [currentStep, setCurrentStep] = useState(0);
     const [isAdding, setIsAdding] = useState(false);
@@ -348,11 +349,21 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
 
                                 {currentStep === 3 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+                                        {/* Unit Toggle */}
+                                        <div className="flex justify-end mb-2">
+                                            <div className="bg-slate-100 p-1 rounded-lg inline-flex">
+                                                <button onClick={() => setMeasurementUnit('imperial')} className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", measurementUnit === 'imperial' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Imperial (in)</button>
+                                                <button onClick={() => setMeasurementUnit('metric')} className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", measurementUnit === 'metric' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Metric (cm)</button>
+                                            </div>
+                                        </div>
+
                                         <div className="grid grid-cols-2 gap-3">
-                                            {product.sizeGuide?.imperial?.map((s: any) => (
+                                            {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
                                                 <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-left transition-all", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}>
                                                     <div className="text-lg font-bold">{s.size}</div>
-                                                    <div className={cn("text-xs opacity-80", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>{s.width}" x {s.length}"</div>
+                                                    <div className={cn("text-xs opacity-80", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
+                                                        {s.width} {measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length} {measurementUnit === 'imperial' ? '"' : 'cm'}
+                                                    </div>
                                                 </button>
                                             ))}
                                         </div>
