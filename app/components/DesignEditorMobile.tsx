@@ -227,6 +227,63 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             if (!fabricCanvas) return;
             const active = fabricCanvas.getActiveObject();
             if (!active) return;
+
+            // Handle Rounded Corners for Images
+            if (key === 'cornerRadius' && active.type === 'image') {
+                const radius = value;
+                if (radius > 0) {
+                    active.set('clipPath', new fabric.Rect({
+                        left: 0,
+                        top: 0,
+                        width: active.width,
+                        height: active.height,
+                        rx: radius,
+                        ry: radius,
+                        originX: 'center',
+                        originY: 'center'
+                    }));
+                } else {
+                    active.set('clipPath', undefined);
+                }
+            }
+
+            // Handle Curved Text (Arch)
+            if (key === 'curvature' && (active.type === 'i-text' || active.type === 'text')) {
+                const angle = value; // Degrees -180 to 180
+                active.set('curvature', angle);
+
+                if (angle === 0) {
+                    active.set('path', undefined);
+                } else {
+                    const len = active.width || 200;
+                    const theta = (Math.abs(angle) * Math.PI) / 180;
+                    const r = len / Math.abs(theta); // approximate radius
+
+                    const largeArc = 0;
+                    const sweepFlag = angle > 0 ? 1 : 0;
+
+                    const chord = 2 * r * Math.sin(theta / 2);
+                    const sx = -chord / 2;
+                    const ex = chord / 2;
+                    const sy = 0;
+                    const ey = 0;
+
+                    const pathData = `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${ex} ${ey}`;
+
+                    const path = new fabric.Path(pathData, {
+                        visible: false,
+                        fill: '',
+                        stroke: ''
+                    });
+
+                    active.set('path', path);
+                    active.set({
+                        pathSide: 'center',
+                        pathAlign: 'center'
+                    } as any);
+                }
+            }
+
             active.set(key as any, value);
             fabricCanvas.requestRenderAll();
             fabricCanvas.setActiveObject(active);

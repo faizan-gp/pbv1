@@ -319,6 +319,130 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             if (key === 'fill') setTextColor(value);
             if (key === 'fontFamily') setFontFamily(value);
 
+            // Handle Rounded Corners for Images
+            if (key === 'cornerRadius' && active.type === 'image') {
+                const radius = value;
+                if (radius > 0) {
+                    active.set('clipPath', new fabric.Rect({
+                        left: 0,
+                        top: 0,
+                        width: active.width,
+                        height: active.height,
+                        rx: radius,
+                        ry: radius,
+                        originX: 'center',
+                        originY: 'center'
+                    }));
+                } else {
+                    active.set('clipPath', undefined);
+                }
+            }
+
+            // Handle Curved Text (Arch)
+            if (key === 'curvature' && (active.type === 'i-text' || active.type === 'text')) {
+                const angle = value; // Degrees -180 to 180
+                // We store the curvature value itself as a custom property so the UI can read it back
+                active.set('curvature', angle);
+
+                if (angle === 0) {
+                    active.set('path', undefined);
+                } else {
+                    // Calculate Path
+                    const len = active.width || 200;
+                    const radius = len / (Math.abs(angle) * Math.PI / 180);
+
+                    // Construct a simple arc path
+                    // M startX startY A radius radius 0 0 1 endX endY
+                    // We need to determine start/end points of an arc centered at (0, R)
+                    // For simplicity, let's use a quadratic Bezier or just a calculated Arc
+
+                    // Actually, let's just make an Arc.
+                    // If angle > 0 (frown/smile), we assume "frown" for positive? Or curve UP?
+                    // Let's assume positive = curve UP (smile-like) if we place center below?? 
+                    // Usually "Arch" means Arch UP (Rainbow) for positive?
+                    // Let's implement generic arc logic.
+
+                    const theta = (Math.abs(angle) * Math.PI) / 180;
+                    const r = len / Math.abs(theta); // approximate radius
+
+                    // Chord length calculation
+                    // We want the text to sit on the arc.
+                    // Start point: (-len/2, something). End: (len/2, something).
+                    // Actually, if we use a Path, Fabric places text along it.
+                    // To center it, we can create a path from -len/2 to len/2.
+
+                    // Arc Height (Sagitta)
+                    const h = r * (1 - Math.cos(theta / 2));
+
+                    // Path Data
+                    // M -x 0 Q 0 -y x 0  (Quadratic approx)
+                    // M startX startY A r r 0 0 sweepFlag endX endY
+
+                    const sweep = angle < 0 ? 0 : 1; // 1 for clockwise?
+                    // If angle > 0, we want it to curve DOWN (Frown)? Or UP?
+                    // Let's try: angle > 0 => Frown (Rainbow).
+                    // In SVG, Y grows down.
+                    // Frown: Start left-down, go up-mid, end right-down.
+                    // Center of curvature is BELOW text. So sweep = 1?
+                    // Let's try Standard SVG Arc.
+
+                    // Start relative:
+                    const startX = -len / 2;
+                    const startY = 0;
+                    const endX = len / 2;
+                    const endY = 0;
+
+                    // For a proper arc of length 'len' on radius 'r':
+                    // We need points on circle.
+                    // Chord length c = 2 * r * sin(theta/2)
+
+                    // Let's just do a simple Quadratic curve for approximation which is stable?
+                    // Q controlX controlY endX endY
+                    // controlY determines height.
+                    // h_quad approx 0.5 * h_arc?
+                    // Let's stick to 'A' for precision.
+
+                    const largeArc = 0; // we limit to 180 deg
+                    const sweepFlag = angle > 0 ? 1 : 0; // Toggle based on sign
+
+                    // We need to adjust Start/End to match chord width?
+                    // If we keep fixed width 'len', the arc length > len.
+                    // That spreads letters.
+                    // Ideally arc length = len.
+                    // So we shouldn't use 'len' as chord.
+                    // We know ArcLength S = len.
+                    // Radius R = S / theta.
+                    // Chord C = 2 * R * sin(theta/2).
+                    // Start X = -C/2, End X = C/2.
+
+                    const chord = 2 * r * Math.sin(theta / 2);
+                    const sx = -chord / 2;
+                    const ex = chord / 2;
+                    const sy = 0;
+                    const ey = 0;
+
+                    // We also need to offset Y so the path passes through (0,0) or similar?
+                    // Actually Fabric aligns text to path.
+
+                    // SVG Path
+                    const pathData = `M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${ex} ${ey}`;
+
+                    const path = new fabric.Path(pathData, {
+                        visible: false, // Hide the path itself
+                        fill: '',
+                        stroke: ''
+                    });
+
+                    active.set('path', path);
+                    // align center
+                    // We might need to set 'pathSide' or 'pathAlign'
+                    active.set({
+                        pathSide: 'center',
+                        pathAlign: 'center'
+                    } as any);
+                }
+            }
+
             active.set(key as any, value);
             fabricCanvas.requestRenderAll();
             fabricCanvas.setActiveObject(active); // Force keep selection

@@ -8,9 +8,9 @@ import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import {
     ShoppingBag, ArrowLeft, Check, Sparkles, Share2,
-    Palette, Type, Image as ImageIcon, Ruler, ChevronRight, Eye, Edit3,
-    Trash2, ArrowUp, ArrowDown, ArrowRight, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RefreshCw, X,
-    Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, Sliders
+    Palette, Type, Image as ImageIcon, Ruler, ChevronRight, Eye, Edit3, Trash2,
+    ArrowUp, ArrowDown, ArrowRight, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RefreshCw, X,
+    Bold, Italic, Underline, Sliders
 } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
@@ -146,6 +146,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                                     </div>
 
                                     <div className="space-y-4 pt-4 border-t border-slate-100">
+                                        {/* ... (existing bold/italic/align controls) ... */}
                                         <div className="flex justify-between gap-2">
                                             <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
                                                 <button
@@ -167,19 +168,22 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
                                                     <Underline size={16} />
                                                 </button>
                                             </div>
-                                            <div className="flex bg-slate-50 p-1 rounded-lg border border-slate-200">
-                                                {['left', 'center', 'right'].map((align) => (
-                                                    <button
-                                                        key={align}
-                                                        onClick={() => updateProperty('textAlign', align)}
-                                                        className={cn("p-1.5 rounded transition-colors", selectedElement.textAlign === align ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-800")}
-                                                    >
-                                                        {align === 'left' && <AlignLeft size={16} />}
-                                                        {align === 'center' && <AlignCenter size={16} />}
-                                                        {align === 'right' && <AlignRight size={16} />}
-                                                    </button>
-                                                ))}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Curvature (Arch)</label>
+                                                <span className="text-[10px] text-slate-500">{selectedElement.curvature || 0}°</span>
                                             </div>
+                                            <input
+                                                type="range"
+                                                min="-60"
+                                                max="60"
+                                                step="5"
+                                                value={selectedElement.curvature || 0}
+                                                onChange={(e) => updateProperty('curvature', parseInt(e.target.value))}
+                                                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
@@ -220,21 +224,38 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
 
                             {selectedElement.type === 'image' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
-                                    {/* Opacity Control for Images */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                            <label className="text-[10px] font-bold uppercase text-slate-400">Opacity</label>
-                                            <span className="text-[10px] text-slate-500">{Math.round((selectedElement.opacity ?? 1) * 100)}%</span>
+                                    {/* Opacity & Radius Control for Images */}
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Corner Radius</label>
+                                                <span className="text-[10px] text-slate-500">{selectedElement.cornerRadius || 0}px</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                step="1"
+                                                value={selectedElement.cornerRadius || 0}
+                                                onChange={(e) => updateProperty('cornerRadius', parseInt(e.target.value))}
+                                                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
                                         </div>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="1"
-                                            step="0.05"
-                                            value={selectedElement.opacity ?? 1}
-                                            onChange={(e) => updateProperty('opacity', parseFloat(e.target.value))}
-                                            className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                        />
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between">
+                                                <label className="text-[10px] font-bold uppercase text-slate-400">Opacity</label>
+                                                <span className="text-[10px] text-slate-500">{Math.round((selectedElement.opacity ?? 1) * 100)}%</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="1"
+                                                step="0.05"
+                                                value={selectedElement.opacity ?? 1}
+                                                onChange={(e) => updateProperty('opacity', parseFloat(e.target.value))}
+                                                className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
