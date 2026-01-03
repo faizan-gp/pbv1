@@ -5,7 +5,7 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyDm_tXAVt3Ge8hbuyz8MI8nYoTIde6ihA0",
+    apiKey: "AIzaSyD2Deg8LnlhtZ0u3J1JEtkcNr5Sm6DZCAo",
     authDomain: "printbrawl.firebaseapp.com",
     projectId: "printbrawl",
     storageBucket: "printbrawl.firebasestorage.app",

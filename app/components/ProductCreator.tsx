@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -417,7 +417,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
         setIsUploading(true);
         try {
-            const uploadPromises = Array.from(files).map(file => uploadProductImage(file, 'listings'));
+            const uploadPromises = Array.from(files).map(file => uploadProductImage(file, 'listings', productName));
             const urls = await Promise.all(uploadPromises);
 
             setListingImages(prev => [
@@ -430,6 +430,123 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             ]);
         } catch (error) {
             console.error("Upload failed", error);
+            showToast('Failed to upload images', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleBulkFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            // Group files by Color Folder
+            const filesByColor: Record<string, File[]> = {};
+            const colors = productColors.map(c => c.name.toLowerCase()); // Normalize for comparison
+
+            Array.from(files).forEach(file => {
+                // webkitRelativePath format: "RootFolder/ColorFolder/Image.jpg"
+                const pathParts = file.webkitRelativePath.split('/');
+                if (pathParts.length < 3) return; // Needs at least Root/Color/Image
+
+                // Specifically look for the folder that matches a color
+                // IMPORTANT: The structure is Root/Color/Image. 
+                // Color folder is at index [1] (0-indexed).
+                const colorFolder = pathParts[1].toLowerCase();
+
+                // Check if this folder matches a product color (or "All")
+                const matchingColor = productColors.find(c => c.name.toLowerCase() === colorFolder);
+                const targetColor = matchingColor ? matchingColor.name : (colorFolder === 'all' ? 'All' : null);
+
+                if (targetColor) {
+                    if (!filesByColor[targetColor]) filesByColor[targetColor] = [];
+                    filesByColor[targetColor].push(file);
+                }
+            });
+
+            // Process each color group
+            const newImages: ListingImage[] = [];
+
+            for (const [colorName, colorFiles] of Object.entries(filesByColor)) {
+                // Upload images in batches
+                const uploadedUrls = await Promise.all(
+                    colorFiles.map(file => uploadProductImage(file, 'listings', productName))
+                );
+
+                // Map files to URLs to identifying thumbnail candidates
+                colorFiles.forEach((file, index) => {
+                    const url = uploadedUrls[index];
+                    const filename = file.name.toLowerCase();
+                    const isListingImage = filename.includes('listing');
+
+                    newImages.push({
+                        url,
+                        color: colorName,
+                        isThumbnail: isListingImage // Temporary flag, resolved later
+                    });
+                });
+            }
+
+            setListingImages(prev => {
+                const combined = [...prev, ...newImages];
+
+                // Refine Thumbnail Logic:
+                // For each color group added, if there's an image flagged as 'isListingImage', make it the thumbnail? 
+                // Or user said "the image with the name listing should be used for thumbnail. If not exist, then use the first image found."
+                // Wait, "Thumbnail" usually refers to the MAIN product thumbnail (one per product). 
+                // OR does it mean "Main image for this color"?
+                // The current data model has `isThumbnail` boolean on `ListingImage`.
+                // Usually only ONE image in the ENTIRE list is `isThumbnail`. 
+                // IF that's the case, we should only set `isThumbnail` if no thumbnail exists yet.
+
+                // Let's assume GLOBAL thumbnail.
+                let hasGlobalThumbnail = prev.some(img => img.isThumbnail);
+
+                if (!hasGlobalThumbnail && combined.length > 0) {
+                    // Try to find one named "listing"
+                    const priorityThumbnail = newImages.find(img => img.isThumbnail); // isThumbnail was set based on filename above
+
+                    if (priorityThumbnail) {
+                        // Unset others just in case (though newImages logic didn't enforce uniqueness)
+                        return combined.map(img => ({
+                            ...img,
+                            isThumbnail: img.url === priorityThumbnail.url
+                        }));
+                    } else if (prev.length === 0 && newImages.length > 0) {
+                        // Fallback: First image
+                        combined[0].isThumbnail = true;
+                    }
+                } else {
+                    // Ensure we don't accidentally set multiple thumbnails if we already had one
+                    // The `newImages` might have `isThumbnail: true` from the filename check. 
+                    // If we already have a thumbnail, force these to false.
+                    if (hasGlobalThumbnail) {
+                        return combined.map(img => ({
+                            ...img,
+                            isThumbnail: prev.some(p => p.url === img.url && p.isThumbnail)
+                        }));
+                    } else {
+                        // We don't have a thumbnail, and maybe multiple new images have "listing" in name. 
+                        // Pick the first "listing" one.
+                        const firstListing = combined.find(img => img.isThumbnail);
+                        if (firstListing) {
+                            return combined.map(img => ({ ...img, isThumbnail: img === firstListing }));
+                        } else {
+                            // No listing images, pick absolute first
+                            return combined.map((img, i) => ({ ...img, isThumbnail: i === 0 }));
+                        }
+                    }
+                }
+
+                return combined;
+            });
+
+            showToast(`Uploaded ${newImages.length} images`, 'success');
+
+        } catch (error) {
+            console.error("Bulk upload failed", error);
             showToast('Failed to upload images', 'error');
         } finally {
             setIsUploading(false);
@@ -605,7 +722,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
         setIsUploading(true);
         try {
-            const url = await uploadProductImage(file, 'views');
+            const url = await uploadProductImage(file, 'views', productName);
             setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, [type === 'editor' ? 'editorImage' : 'image']: url } : v));
         } catch (error) {
             console.error("Upload failed", error);
@@ -621,7 +738,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
         setIsUploading(true);
         try {
-            const url = await uploadProductImage(file, 'views');
+            const url = await uploadProductImage(file, 'views', productName);
             setProductColors(prev => prev.map((c, i) => {
                 if (i === colorIndex) {
                     return {
@@ -788,8 +905,22 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             onDragEnd={handleDragEnd}
                         >
                             <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
-                                <h4 className="font-bold text-gray-900">Listing Images</h4>
-                                <p className="text-sm text-gray-500">Upload shots for specific colors. Drag to reorder.</p>
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h4 className="font-bold text-gray-900">Listing Images</h4>
+                                        <p className="text-sm text-gray-500">Upload shots for specific colors. Drag to reorder.</p>
+                                    </div>
+                                    <label className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-xs font-bold text-indigo-700 cursor-pointer transition-colors border border-indigo-200">
+                                        <FolderUp size={14} />
+                                        <span>Bulk Upload</span>
+                                        <input
+                                            type="file"
+                                            {...{ webkitdirectory: "", directory: "" } as any}
+                                            className="hidden"
+                                            onChange={handleBulkFolderUpload}
+                                        />
+                                    </label>
+                                </div>
 
                                 {/* General / All Colors Section */}
                                 <div className="space-y-3">
@@ -972,7 +1103,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                                                 className="hidden"
                                                                 onChange={async (e) => {
                                                                     if (e.target.files?.[0]) {
-                                                                        const url = await uploadProductImage(e.target.files[0]);
+                                                                        const url = await uploadProductImage(e.target.files[0], 'features', productName);
                                                                         const n = [...features];
                                                                         n[i].image = url;
                                                                         setFeatures(n);
@@ -1064,8 +1195,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     )
                 }
 
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }
 
