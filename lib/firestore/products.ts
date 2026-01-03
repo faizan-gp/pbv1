@@ -48,6 +48,7 @@ export interface Product {
     subcategory?: string;
     shortDescription?: string;
     fullDescription?: string;
+    bulletPoints?: string[];
     features?: IProductFeature[];
     careInstructions?: string[];
     sizeGuide?: {

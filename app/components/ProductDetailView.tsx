@@ -4,7 +4,8 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Product as IProduct } from '@/lib/firestore/products';
 import { Star, ArrowRight, ShieldCheck, Zap, Package, Heart } from 'lucide-react';
-import ProductInfoTabs from './ProductInfoTabs';
+
+import ProductInfoStacked from './ProductInfoStacked';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
@@ -90,9 +91,11 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                     </div>
                 )}
 
-                {/* Desktop Tabs */}
+                {/* Desktop Details (Stacked) */}
                 <div className="hidden lg:block pt-8 border-t border-slate-100 mt-2">
-                    <ProductInfoTabs
+                    <ProductInfoStacked
+                        shortDescription={product.shortDescription}
+                        bulletPoints={product.bulletPoints}
                         description={product.fullDescription}
                         features={product.features}
                         careInstructions={product.careInstructions}
@@ -116,11 +119,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                         <h1 className="text-3xl lg:text-5xl font-black text-slate-900 leading-[1.1] tracking-tight break-words">
                             {product.name}
                         </h1>
-                        {product.shortDescription && (
-                            <p className="text-base md:text-lg text-slate-600 font-medium leading-relaxed max-w-xl">
-                                {product.shortDescription}
-                            </p>
-                        )}
+
 
                         <div className="flex flex-wrap items-center gap-4 lg:gap-6">
                             <div className="flex items-baseline gap-3">
@@ -194,9 +193,11 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                         </div>
                     </div>
 
-                    {/* Mobile Tabs */}
+                    {/* Mobile Stacked View */}
                     <div className="lg:hidden pt-8 border-t border-slate-100">
-                        <ProductInfoTabs
+                        <ProductInfoStacked
+                            shortDescription={product.shortDescription}
+                            bulletPoints={product.bulletPoints}
                             description={product.fullDescription}
                             features={product.features}
                             careInstructions={product.careInstructions}

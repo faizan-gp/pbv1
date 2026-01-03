@@ -164,6 +164,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [shortDescription, setShortDescription] = useState(initialData?.shortDescription || '');
     const [fullDescription, setFullDescription] = useState(initialData?.fullDescription || '');
     const [features, setFeatures] = useState<IProductFeature[]>(initialData?.features || []);
+    const [bulletPoints, setBulletPoints] = useState<string[]>(initialData?.bulletPoints || []);
     const [careInstructions, setCareInstructions] = useState<string[]>(initialData?.careInstructions || []);
     const [sizeGuide, setSizeGuide] = useState(initialData?.sizeGuide || {
         metric: [
@@ -341,6 +342,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             shortDescription,
             fullDescription,
             features,
+            bulletPoints,
             careInstructions,
             sizeGuide,
             canvasSize: 1024,
@@ -365,7 +367,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, trending, listingImages, shortDescription, fullDescription, features, careInstructions, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, trending, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
 
 
     const handleSave = async () => {
@@ -920,6 +922,27 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Full Story</label>
                                     <textarea value={fullDescription} onChange={(e) => setFullDescription(e.target.value)} className="w-full h-48 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none" placeholder="Detailed description..." />
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-gray-900">Key Benefits (Bullet Points)</h4>
+                                    <button onClick={() => setBulletPoints([...bulletPoints, ''])} className="text-xs text-indigo-600 font-medium">+ Add</button>
+                                </div>
+                                <div className="space-y-3">
+                                    {bulletPoints.map((bp, i) => (
+                                        <div key={i} className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={bp}
+                                                onChange={(e) => { const n = [...bulletPoints]; n[i] = e.target.value; setBulletPoints(n) }}
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none"
+                                                placeholder="e.g. Made from 100% Cotton"
+                                            />
+                                            <button onClick={() => setBulletPoints(prev => prev.filter((_, idx) => idx !== i))} className="text-red-400 p-2"><Trash2 size={16} /></button>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 
