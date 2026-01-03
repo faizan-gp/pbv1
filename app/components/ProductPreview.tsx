@@ -89,7 +89,7 @@ export default function ProductPreview({
                             <img
                                 src={designTextureUrl}
                                 alt="Design"
-                                className="w-full h-full object-fill"
+                                className="w-full h-full object-contain"
                                 style={{ mixBlendMode: 'multiply', opacity: 0.95 }}
                             />
                         </div>
