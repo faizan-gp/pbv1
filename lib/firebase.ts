@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyD2Deg8LnlhtZ0u3J1JEtkcNr5Sm6DZCAo",
-    authDomain: "printbrawl.firebaseapp.com",
-    projectId: "printbrawl",
-    storageBucket: "printbrawl.firebasestorage.app",
-    messagingSenderId: "550337620836",
-    appId: "1:550337620836:web:64b9c4b29a60177532a871",
-    measurementId: "G-WFEL1PLWME"
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
 import { getStorage } from "firebase/storage";
