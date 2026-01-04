@@ -27,13 +27,23 @@ export default function CartPage() {
                         <div className="border-t border-gray-200 dark:border-gray-700">
                             {items.map((item) => (
                                 <div key={item.id} className="flex py-6 border-b border-gray-200 dark:border-gray-700">
-                                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-muted dark:border-gray-700">
-                                        {/* Ensure we handle both local paths and potential external URLs cleanly */}
+                                    <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 bg-muted dark:border-gray-700 relative">
+                                        {/* Base Product Image */}
                                         <img
                                             src={item.image}
                                             alt={item.name}
                                             className="h-full w-full object-contain"
                                         />
+
+                                        {/* Design Overlay (Result of CSS Composition) */}
+                                        {item.previews && Object.values(item.previews).map((overlay, i) => (
+                                            <img
+                                                key={i}
+                                                src={overlay}
+                                                alt="Design Overlay"
+                                                className="absolute inset-0 h-full w-full object-contain pointer-events-none mix-blend-multiply opacity-90"
+                                            />
+                                        ))}
                                     </div>
 
                                     <div className="ml-4 flex flex-1 flex-col">

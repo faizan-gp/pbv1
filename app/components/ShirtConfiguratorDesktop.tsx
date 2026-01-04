@@ -46,6 +46,7 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
     const activeViewMode = viewModeOverride ?? (currentStep === 0 || currentStep === 3 ? 'preview' : 'editor');
 
     const handleDesignUpdate = React.useCallback((data: { dataUrl: string; jsonState: any }) => {
+        console.log("DEBUG: handleDesignUpdate in ShirtConfigurator", { viewId: activeViewId, dataUrlLength: data.dataUrl?.length });
         setDesignPreviews(prev => ({ ...prev, [activeViewId]: data.dataUrl }));
         setDesignStates(prev => ({ ...prev, [activeViewId]: data.jsonState }));
     }, [activeViewId]);
@@ -68,17 +69,63 @@ export default function ShirtConfiguratorDesktop({ product }: ShirtConfiguratorP
         if (action === 'delete') setSelectedElement(null);
     };
 
-    const handleAddToCart = () => {
+    const generateDesignOverlay = async (viewId: string) => {
+        const designUrl = designPreviews[viewId];
+        if (!designUrl) return null;
+
+        return new Promise<string | null>((resolve) => {
+            const canvas = document.createElement('canvas');
+            const size = 600; // Reduced size for Cart storage efficiency
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(null); return; }
+
+            const imgDesign = new Image();
+            imgDesign.crossOrigin = 'anonymous';
+            imgDesign.onload = () => {
+                const activePreview = product.previews.find((p: any) => p.id === viewId) || product.previews[0];
+                const zone = activePreview.previewZone || product.designZone;
+
+                // Scale Logic: Map design zone coordinates to our new canvas size
+                const scaleFactor = size / product.canvasSize;
+
+                const targetLeft = zone.left * scaleFactor;
+                const targetTop = zone.top * scaleFactor;
+                const targetWidth = zone.width * scaleFactor;
+                const targetHeight = zone.height * scaleFactor;
+
+                ctx.drawImage(imgDesign, targetLeft, targetTop, targetWidth, targetHeight);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            imgDesign.onerror = () => resolve(null);
+            imgDesign.src = designUrl;
+        });
+    };
+
+    const handleAddToCart = async () => {
         if (!selectedSize) { showToast('Please select a size', 'error'); return; }
         setIsAdding(true);
-        setTimeout(() => {
+
+        try {
+            // 1. Get Base Image (Secure HTTP URL)
+            const baseImage = selectedColor.images[activeViewId] || selectedColor.images['front'] || product.image;
+
+            // 2. Generate Design Overlay (Data URL)
+            const designOverlay = await generateDesignOverlay(activeViewId);
+
             addToCart({
                 productId: product.id, name: product.name, price: 29.99, quantity: 1,
-                image: designPreviews['front'] || selectedColor.images['front'],
+                image: baseImage,
+                previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 options: { color: selectedColor.name, size: selectedSize }
             });
             router.push("/cart");
-        }, 800);
+        } catch (error) {
+            console.error("Error adding to cart:", error);
+            showToast("Failed to add to cart", "error");
+            setIsAdding(false);
+        }
     };
 
     return (
