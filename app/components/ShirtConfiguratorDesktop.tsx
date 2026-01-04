@@ -482,10 +482,6 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
                                                         >
                                                             <div className="aspect-[4/5] relative bg-slate-50">
                                                                 <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
-                                                                {/* Design Overlay Preview */}
-                                                                {designPreviews[activeViewId] && (
-                                                                    <img src={designPreviews[activeViewId]} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 pointer-events-none" />
-                                                                )}
                                                             </div>
                                                             <div className="p-2 bg-white text-xs font-bold text-center truncate">{c.name}</div>
                                                             {isSelected && <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={12} strokeWidth={3} /></div>}

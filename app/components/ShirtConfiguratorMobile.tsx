@@ -558,9 +558,6 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
                                                     >
                                                         <div className="aspect-[4/5] relative bg-slate-50">
                                                             <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
-                                                            {designPreviews[activeViewId] && (
-                                                                <img src={designPreviews[activeViewId]} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 pointer-events-none" />
-                                                            )}
                                                         </div>
                                                         <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
                                                         {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
