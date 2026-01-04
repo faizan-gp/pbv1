@@ -134,51 +134,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             });
         };
 
-        const setupEvents = () => {
-            const handleUpdate = () => {
-                if (!designZoneRef.current) return;
-                designZoneRef.current.set('visible', false);
-                const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 2, left: currentDesignZone.left, top: currentDesignZone.top, width: currentDesignZone.width, height: currentDesignZone.height });
-                const jsonState = (canvas as any).toJSON(['id', 'gradient', 'selectable']);
-                designZoneRef.current.set('visible', true);
-                if (isMounted) onUpdate({ dataUrl, jsonState });
-            };
 
-            const handleSelection = (e: any) => {
-                const selected = e.selected?.[0];
-                if (isMounted) setSelectedObject(selected || null);
-
-                // Lift state up
-                if (onSelectionChange) {
-                    if (selected) {
-                        onSelectionChange({
-                            type: selected.type,
-                            text: selected.text,
-                            fontFamily: selected.fontFamily,
-                            fill: selected.fill
-                        });
-                    } else {
-                        onSelectionChange(null);
-                    }
-                }
-
-                if (selected && selected instanceof fabric.IText) {
-                    setTextColor(selected.fill as string);
-                    setFontFamily(selected.fontFamily || 'Arial');
-                }
-            };
-            canvas.on('object:modified', handleUpdate);
-            canvas.on('object:added', handleUpdate);
-            canvas.on('object:removed', handleUpdate);
-            canvas.on('selection:created', handleSelection);
-            canvas.on('selection:updated', handleSelection);
-            canvas.on('selection:cleared', () => {
-                if (isMounted) {
-                    setSelectedObject(null);
-                    if (onSelectionChange) onSelectionChange(null);
-                }
-            });
-        };
 
         const initializeCanvas = async () => {
             // Load state first
@@ -260,8 +216,70 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             }
 
             initOverlays();
-            setupEvents();
+
+            // Define handleUpdate here so we can call it initially
+            const handleUpdate = () => {
+                if (!designZoneRef.current) return;
+
+                // Hide design zone border for the screenshot
+                designZoneRef.current.set('visible', false);
+
+                // Generate Data URL focusing on the Design Zone area
+                const dataUrl = canvas.toDataURL({
+                    format: 'png',
+                    multiplier: 2,
+                    left: currentDesignZone.left,
+                    top: currentDesignZone.top,
+                    width: currentDesignZone.width,
+                    height: currentDesignZone.height
+                });
+
+                const jsonState = (canvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
+
+                designZoneRef.current.set('visible', true);
+                if (isMounted) onUpdate({ dataUrl, jsonState });
+            };
+
+            const handleSelection = (e: any) => {
+                const selected = e.selected?.[0];
+                if (isMounted) setSelectedObject(selected || null);
+
+                // Lift state up
+                if (onSelectionChange) {
+                    if (selected) {
+                        onSelectionChange({
+                            type: selected.type,
+                            text: selected.text,
+                            fontFamily: selected.fontFamily,
+                            fill: selected.fill
+                        });
+                    } else {
+                        onSelectionChange(null);
+                    }
+                }
+
+                if (selected && selected instanceof fabric.IText) {
+                    setTextColor(selected.fill as string);
+                    setFontFamily(selected.fontFamily || 'Arial');
+                }
+            };
+
+            canvas.on('object:modified', handleUpdate);
+            canvas.on('object:added', handleUpdate);
+            canvas.on('object:removed', handleUpdate);
+            canvas.on('selection:created', handleSelection);
+            canvas.on('selection:updated', handleSelection);
+            canvas.on('selection:cleared', () => {
+                if (isMounted) {
+                    setSelectedObject(null);
+                    if (onSelectionChange) onSelectionChange(null);
+                }
+            });
+
             canvas.requestRenderAll();
+
+            // Initial Preview Generation
+            setTimeout(handleUpdate, 100);
         };
 
 

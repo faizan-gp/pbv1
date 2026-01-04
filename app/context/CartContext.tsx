@@ -63,8 +63,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             // Here generating a unique ID based on simple properties + random to allow multiples
             // Or we can check for deep equality of options.
 
-            // Let's assume every customization is unique for now to be safe
-            const id = `${newItem.productId}-${Date.now()}`;
+            // Ensure unique ID even if added in same millisecond
+            const uniqueSuffix = Math.random().toString(36).substring(2, 9);
+            const id = `${newItem.productId}-${Date.now()}-${uniqueSuffix}`;
             return [...prev, { ...newItem, id, quantity: newItem.quantity }];
         });
     };

@@ -81,17 +81,24 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             canvas.clipPath = clipPath;
         };
 
-        const setupEvents = () => {
-            const handleUpdate = () => {
-                if (!designZoneRef.current) return;
 
-                // 1. Hide Overlay (so it doesn't appear in preview)
+
+        const initializeCanvas = async () => {
+            if (initialState) {
+                try { await canvas.loadFromJSON(initialState); } catch (e) { }
+            }
+            if (!isMounted) return;
+
+            initOverlays();
+
+            // --- SETUP EVENTS INLINED ---
+            const handleUpdate = () => {
+                if (!isMounted || !designZoneRef.current) return;
+
+                // 1. Hide Overlay
                 designZoneRef.current.set('visible', false);
 
                 // 2. RESIZE CANVAS AND RESET VIEWPORT (Critical Force Capture)
-                // We must resize the physical canvas to match the product size (1024x1024)
-                // temporarily, otherwise objects located outside the small mobile viewfinder
-                // will be clipped and not rendered by toDataURL.
                 const originalVpt = canvas.viewportTransform;
                 const originalWidth = canvas.width;
                 const originalHeight = canvas.height;
@@ -100,21 +107,13 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
                 canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
                 canvas.renderAll();
 
-                console.log("DEBUG: Generating Preview", {
-                    zone: currentDesignZone,
-                    objects: canvas.getObjects().length,
-                    canvasSize: { w: canvas.width, h: canvas.height }
-                });
-
                 // 3. Capture State
-                const jsonState = (canvas as any).toJSON(['id', 'gradient', 'selectable']);
+                const jsonState = (canvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
                 const dataUrl = canvas.toDataURL({
                     format: 'png', multiplier: 2,
                     left: currentDesignZone.left, top: currentDesignZone.top,
                     width: currentDesignZone.width, height: currentDesignZone.height
                 });
-
-                console.log("DEBUG: Generated DataURL", { length: dataUrl.length });
 
                 // 4. Restore Overlay, Viewport & Dimensions
                 canvas.setDimensions({ width: originalWidth, height: originalHeight });
@@ -149,17 +148,11 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             canvas.on('selection:created', handleSelection);
             canvas.on('selection:updated', handleSelection);
             canvas.on('selection:cleared', () => { if (isMounted && onSelectionChange) onSelectionChange(null); });
-        };
 
-        const initializeCanvas = async () => {
-            if (initialState) {
-                try { await canvas.loadFromJSON(initialState); } catch (e) { }
-            }
-            if (isMounted) {
-                initOverlays();
-                setupEvents();
-                canvas.requestRenderAll();
-            }
+            canvas.requestRenderAll();
+
+            // Initial Trigger
+            setTimeout(handleUpdate, 100);
         };
 
         initializeCanvas();

@@ -47,6 +47,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
     );
 
     const [selectedSize, setSelectedSize] = useState<string>(initialCartItem?.options.size || '');
+    const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add
     const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [isAdding, setIsAdding] = useState(false);
 
@@ -528,18 +529,49 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-4 gap-3">
+                                    <div className="grid grid-cols-2 gap-3">
                                         {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
-                                            <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("h-auto py-3 border rounded-lg flex flex-col items-center justify-center transition-all active:scale-95", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600")}>
-                                                <span className="font-bold text-sm">{s.size}</span>
-                                                <span className={cn("text-[10px]", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
-                                                    {s.width}{measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length}{measurementUnit === 'imperial' ? '"' : 'cm'}
-                                                </span>
+                                            <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-left transition-all", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}>
+                                                <div className="text-lg font-bold">{s.size}</div>
+                                                <div className={cn("text-xs opacity-80", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
+                                                    {s.width} {measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length} {measurementUnit === 'imperial' ? '"' : 'cm'}
+                                                </div>
                                             </button>
                                         ))}
                                     </div>
+
+                                    {/* Multi-Color Variants */}
+                                    <div className="mt-8 pt-6 border-t border-slate-200">
+                                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Also add in these colors?</h3>
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {product.colors.filter((c: any) => c.name !== selectedColor.name).map((c: any) => {
+                                                const isSelected = extraColors.includes(c.name);
+                                                return (
+                                                    <button
+                                                        key={c.name}
+                                                        onClick={() => setExtraColors(prev =>
+                                                            prev.includes(c.name)
+                                                                ? prev.filter(x => x !== c.name)
+                                                                : [...prev, c.name]
+                                                        )}
+                                                        className={cn("relative rounded-lg overflow-hidden border transition-all group", isSelected ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-slate-200")}
+                                                    >
+                                                        <div className="aspect-[4/5] relative bg-slate-50">
+                                                            <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
+                                                            {designPreviews[activeViewId] && (
+                                                                <img src={designPreviews[activeViewId]} className="absolute inset-0 w-full h-full object-contain mix-blend-multiply opacity-90 pointer-events-none" />
+                                                            )}
+                                                        </div>
+                                                        <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
+                                                        {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
+
                         </div>
 
                         {/* 3. Bottom Tab Bar (Sticky) */}
