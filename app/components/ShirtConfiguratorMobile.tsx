@@ -205,7 +205,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
     };
 
     return (
-        <div className="flex flex-col h-[100dvh] bg-white overflow-hidden font-sans">
+        <div className="fixed inset-0 flex flex-col bg-white overflow-hidden font-sans overscroll-none touch-none z-[100]">
 
             {/* ====================================================================
                 TOP SECTION: CANVAS (60% Height)
