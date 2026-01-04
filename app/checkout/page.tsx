@@ -114,6 +114,16 @@ export default function CheckoutPage() {
         if (!formData.postalCode) newErrors.postalCode = 'ZIP code is required';
 
         setErrors(newErrors);
+
+        const firstErrorKey = Object.keys(newErrors)[0];
+        if (firstErrorKey) {
+            const element = document.getElementsByName(firstErrorKey)[0];
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.focus();
+            }
+        }
+
         return Object.keys(newErrors).length === 0;
     };
 
@@ -253,7 +263,14 @@ export default function CheckoutPage() {
 
                                     {/* PayPal Buttons Integration */}
                                     <div className="relative z-0">
-                                        <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test", currency: "USD" }}>
+                                        <PayPalScriptProvider options={{
+                                            clientId: process.env.NEXT_PUBLIC_PAYPAL_ENV === 'production'
+                                                ? process.env.NEXT_PUBLIC_PAYPAL_LIVE_CLIENT_ID!
+                                                : process.env.NEXT_PUBLIC_PAYPAL_SANDBOX_CLIENT_ID || "test",
+                                            currency: "USD",
+                                            intent: "capture",
+                                            locale: "en_US" // Force US English locale
+                                        }}>
                                             <PayPalButtons
                                                 style={{ layout: "vertical", shape: "rect", color: "blue", label: "pay" }}
                                                 onClick={(data, actions) => {
@@ -265,13 +282,45 @@ export default function CheckoutPage() {
                                                 createOrder={(data, actions) => {
                                                     return actions.order.create({
                                                         intent: "CAPTURE",
+                                                        payer: {
+                                                            name: {
+                                                                given_name: formData.firstName,
+                                                                surname: formData.lastName
+                                                            },
+                                                            email_address: formData.email,
+                                                            address: {
+                                                                address_line_1: formData.address,
+                                                                admin_area_2: formData.city,
+                                                                admin_area_1: formData.state,
+                                                                postal_code: formData.postalCode,
+                                                                country_code: "US"
+                                                            }
+                                                        },
                                                         purchase_units: [{
                                                             amount: {
                                                                 currency_code: "USD",
                                                                 value: total.toFixed(2),
                                                             },
-                                                            description: "PrintBrawl Custom Order"
+                                                            description: "PrintBrawl Custom Order",
+                                                            shipping: {
+                                                                name: {
+                                                                    full_name: `${formData.firstName} ${formData.lastName}`
+                                                                },
+                                                                address: {
+                                                                    address_line_1: formData.address,
+                                                                    admin_area_2: formData.city,
+                                                                    admin_area_1: formData.state,
+                                                                    postal_code: formData.postalCode,
+                                                                    country_code: "US"
+                                                                }
+                                                            }
                                                         }],
+                                                        application_context: {
+                                                            shipping_preference: 'SET_PROVIDED_ADDRESS',
+                                                            locale: 'en-US',
+                                                            landing_page: 'BILLING',
+                                                            user_action: 'PAY_NOW'
+                                                        }
                                                     });
                                                 }}
                                                 onApprove={async (data, actions) => {
