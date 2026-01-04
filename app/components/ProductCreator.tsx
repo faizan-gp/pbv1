@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2 } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -629,6 +629,30 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    const assignListingImageToView = (img: ListingImage, viewId: string) => {
+        const targetColorName = img.color;
+        if (!targetColorName || targetColorName === 'All') {
+            showToast('Please set a specific color for this image first', 'error');
+            return;
+        }
+
+        setProductColors(prev => prev.map(c => {
+            if (c.name === targetColorName) {
+                return {
+                    ...c,
+                    images: {
+                        ...(c.images || {}),
+                        [viewId]: img.url
+                    }
+                };
+            }
+            return c;
+        }));
+
+        const viewName = views.find(v => v.id === viewId)?.name || 'View';
+        showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+    };
+
     const SortableListingImage = ({ img, index, colorGroup }: { img: ListingImage, index: number, colorGroup: string }) => {
         const {
             attributes,
@@ -638,56 +662,130 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             transition,
         } = useSortable({ id: img.url });
 
+        const [isMenuOpen, setIsMenuOpen] = useState(false);
+        const menuRef = useRef<HTMLDivElement>(null);
+
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                    setIsMenuOpen(false);
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }, []);
+
         const style = {
             transform: CSS.Transform.toString(transform),
             transition,
         };
 
         return (
-            <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative group aspect-square bg-gray-50 rounded-lg border border-gray-200 overflow-hidden touch-none">
-                {/* Reusing the card content but we need to ensure buttons (delete/move) don't trigger drag? 
-                     Actually standard listeners on the parent div make the whole card draggable. 
-                     We might want a specific handle or use `PointerSensor` activation constraints. 
-                     Or just let it be. Buttons usually capture their own clicks. */}
-                <img src={img.url} className="w-full h-full object-cover" />
+            <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="relative group aspect-square touch-none">
+                {/* Image Container */}
+                <div className="absolute inset-0 bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                    <img src={img.url} className="w-full h-full object-cover" />
 
-                {/* Overlay Actions */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                    <div className="flex justify-between">
-                        {/* Move buttons are redundant with DnD but good for accessibility/precision */}
-                        <button
-                            onPointerDown={e => e.stopPropagation()} // Prevent drag start
-                            onClick={() => moveListingImage(img, 'left')}
-                            className="p-1 bg-white/90 rounded text-gray-700 hover:text-indigo-600 hover:bg-white transition-colors"
-                        >
-                            <ChevronLeft size={12} />
-                        </button>
-                        <button
-                            onPointerDown={e => e.stopPropagation()}
-                            onClick={() => setListingImages(prev => prev.filter(item => item !== img))}
-                            className="p-1 bg-white/90 rounded text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
-                        >
-                            <Trash2 size={12} />
-                        </button>
-                        <button
-                            onPointerDown={e => e.stopPropagation()}
-                            onClick={() => moveListingImage(img, 'right')}
-                            className="p-1 bg-white/90 rounded text-gray-700 hover:text-indigo-600 hover:bg-white transition-colors"
-                        >
-                            <ChevronRight size={12} />
-                        </button>
-                    </div>
+                    {/* Default Overlay Actions (Visible when menu closed) */}
+                    {!isMenuOpen && (
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-between">
+                            {/* Top Row: Reorder + Actions */}
+                            <div className="flex justify-between items-center bg-black/50 rounded-lg p-1 backdrop-blur-sm">
+                                <button
+                                    onPointerDown={e => e.stopPropagation()}
+                                    onClick={() => moveListingImage(img, 'left')}
+                                    className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors"
+                                    title="Move Left"
+                                >
+                                    <ChevronLeft size={14} />
+                                </button>
 
-                    <div
-                        onPointerDown={e => e.stopPropagation()}
-                        onClick={() => toggleThumbnail(listingImages.indexOf(img))}
-                        className={cn(
-                            "py-1 text-[10px] text-center rounded-md font-bold cursor-pointer transition-colors backdrop-blur-sm select-none",
-                            img.isThumbnail ? "bg-indigo-600 text-white" : "bg-white text-gray-600 hover:bg-gray-100"
-                        )}
-                    >
-                        {img.isThumbnail ? 'Thumbnail' : 'Set Main'}
-                    </div>
+                                <div className="h-4 w-px bg-white/20 mx-1" />
+
+                                {views.length > 0 && img.color !== 'All' && (
+                                    <button
+                                        onPointerDown={e => e.stopPropagation()}
+                                        onClick={() => setIsMenuOpen(true)}
+                                        className="p-1.5 text-white/70 hover:text-blue-400 hover:bg-white/20 rounded transition-colors"
+                                        title="Assign to View"
+                                    >
+                                        <Link2 size={14} />
+                                    </button>
+                                )}
+
+                                <button
+                                    onPointerDown={e => e.stopPropagation()}
+                                    onClick={() => setListingImages(prev => prev.filter(item => item !== img))}
+                                    className="p-1.5 text-white/70 hover:text-red-400 hover:bg-white/20 rounded transition-colors"
+                                    title="Delete"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+
+                                <div className="h-4 w-px bg-white/20 mx-1" />
+
+                                <button
+                                    onPointerDown={e => e.stopPropagation()}
+                                    onClick={() => moveListingImage(img, 'right')}
+                                    className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors"
+                                    title="Move Right"
+                                >
+                                    <ChevronRight size={14} />
+                                </button>
+                            </div>
+
+                            {/* Bottom Row: Set Main */}
+                            <div
+                                onPointerDown={e => e.stopPropagation()}
+                                onClick={() => toggleThumbnail(listingImages.indexOf(img))}
+                                className={cn(
+                                    "py-1.5 text-[10px] text-center rounded-md font-bold cursor-pointer transition-colors backdrop-blur-md select-none border shadow-sm",
+                                    img.isThumbnail
+                                        ? "bg-indigo-600 border-indigo-500 text-white"
+                                        : "bg-white/90 border-transparent text-gray-800 hover:bg-white"
+                                )}
+                            >
+                                {img.isThumbnail ? 'Thumbnail' : 'Set as Main'}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* View Assignment Overlay Menu (Covers Image) */}
+                    {isMenuOpen && (
+                        <div
+                            className="absolute inset-0 bg-white z-50 flex flex-col animate-in fade-in duration-200"
+                            onPointerDown={e => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Assign to View</span>
+                                <button
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded p-0.5 transition-colors"
+                                >
+                                    <X size={14} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
+                                {views.map(v => (
+                                    <button
+                                        key={v.id}
+                                        onClick={() => {
+                                            assignListingImageToView(img, v.id);
+                                            setIsMenuOpen(false);
+                                        }}
+                                        className="w-full text-left px-2 py-1.5 mb-1 rounded text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center justify-between group/item"
+                                    >
+                                        <span className="truncate">{v.name}</span>
+                                        {/* Optional: Show checkmark if already assigned? (Would need efficient lookup) */}
+                                        <ArrowUp size={12} className="opacity-0 group-hover/item:opacity-100 -rotate-45" />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -1004,7 +1102,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         items={listingImages.filter(img => img.color === 'All').map(img => img.url)}
                                         strategy={rectSortingStrategy}
                                     >
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                             {listingImages.filter(img => img.color === 'All').map((img, i) => (
                                                 <SortableListingImage key={img.url} img={img} index={i} colorGroup="All" />
                                             ))}
@@ -1034,7 +1132,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             items={listingImages.filter(img => img.color === color.name).map(img => img.url)}
                                             strategy={rectSortingStrategy}
                                         >
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                                 {listingImages.filter(img => img.color === color.name).map((img, i) => (
                                                     <SortableListingImage key={img.url} img={img} index={i} colorGroup={color.name} />
                                                 ))}
