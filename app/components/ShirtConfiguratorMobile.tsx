@@ -197,6 +197,30 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
             } else {
                 addToCart(cartPayload);
             }
+
+            // 4. Process Extra Colors
+            if (extraColors.length > 0) {
+                const extraPromises = extraColors.map(async (colorName) => {
+                    const colorObj = product.colors.find((c: any) => c.name === colorName);
+                    if (!colorObj) return;
+
+                    const extraBaseImage = colorObj.images[activeViewId] || colorObj.images['front'] || product.image;
+                    const extraComposite = await generateCompositePreview(extraBaseImage, designOverlay);
+
+                    addToCart({
+                        productId: product.id,
+                        name: product.name,
+                        price: 29.99,
+                        quantity: 1,
+                        image: extraComposite || extraBaseImage,
+                        previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
+                        designState: designStates,
+                        options: { color: colorName, size: selectedSize }
+                    });
+                });
+                await Promise.all(extraPromises);
+            }
+
             router.push("/cart");
         } catch (error) {
             console.error("Mobile Add/Update Failed", error);
