@@ -22,31 +22,31 @@ import WebSiteSchema from "./components/seo/WebSiteSchema";
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.printbrawl.com'),
   title: {
-    default: "Print Brawl - Custom Apparel Design & Print on Demand",
+    default: "Print Brawl - Design Your Own Custom Apparel & Gifts",
     template: "%s | Print Brawl"
   },
-  description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio. Print-on-demand with no minimums, premium quality, and fast shipping worldwide.",
-  keywords: ["custom t-shirts", "print on demand", "custom apparel", "t-shirt design", "custom hoodies", "DTG printing"],
+  description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories. Perfect for personal use, gifts, and special occasions.",
+  keywords: ["custom t-shirts", "design your own", "personalized gifts", "custom hoodies", "create your own shirt", "custom apparel"],
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://www.printbrawl.com",
     siteName: "Print Brawl",
-    title: "Print Brawl - Custom Apparel Design & Print on Demand",
-    description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio.",
+    title: "Print Brawl - Design Your Own Custom Apparel & Gifts",
+    description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories.",
     images: [
       {
         url: "/logov2.png", // Using logo as fallback OG image
         width: 800,
         height: 600,
-        alt: "Print Brawl",
+        alt: "Print Brawl - Design Your Own",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Print Brawl - Custom Apparel Design & Print on Demand",
-    description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio.",
+    title: "Print Brawl - Design Your Own Custom Apparel & Gifts",
+    description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories.",
     images: ["/logov2.png"],
   },
   robots: {

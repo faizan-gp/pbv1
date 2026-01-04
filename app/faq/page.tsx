@@ -3,10 +3,10 @@ import { Metadata } from 'next';
 import FAQSchema from '@/app/components/seo/FAQSchema';
 
 export const metadata: Metadata = {
-    title: "Frequently Asked Questions | Print Brawl",
-    description: "Common questions about our custom apparel printing, shipping times, returns, and design process.",
+    title: "FAQ | Common Questions - Print Brawl",
+    description: "Get answers to common questions about shipping, returns, and how to create your own custom products.",
     openGraph: {
-        title: "Frequently Asked Questions | Print Brawl",
+        title: "Frequently Asked Questions",
         description: "Everything you need to know about creating custom apparel with Print Brawl.",
     }
 };
@@ -14,28 +14,28 @@ export const metadata: Metadata = {
 export default function FAQPage() {
     const faqs = [
         {
-            question: "How long does shipping take?",
-            answer: "Since every product is custom-made to order, production typically takes 2-7 business days. Once shipped, standard domestic delivery takes 2-5 business days, while international shipping can take 10-30 business days depending on the destination."
+            question: "How long until I get my order?",
+            answer: "Since you designed it, we make it just for you! Production typically takes 2-5 business days. After that, standard shipping is usually 3-5 days. You'll get a tracking number as soon as it leaves our facility."
         },
         {
-            question: "What is your return policy?",
-            answer: "Each item is uniquely printed just for you. As such, we cannot accept returns for buyer's remorse (e.g., wrong size or color). However, if your product arrives damaged or with a manufacturing defect, please contact us within 30 days for a free replacement or refund."
+            question: "Can I return my custom item?",
+            answer: "Because your item is unique to you, we can't accept returns for changing your mind. However, if there's any print issue or defect, we'll absolutely replace it for free. Your happiness with your creation is our priority."
         },
         {
-            question: "Can I cancel or change my order?",
-            answer: "We send orders to production almost immediately to ensure fast delivery. You have a very short window (usually 1 hour) to request changes. Once production begins, we cannot cancel or modify the order."
+            question: "I made a mistake in my design! Can I change it?",
+            answer: "We start working on your creation almost immediately to get it to you fast. Please verify your design carefully before checking out, as we usually cannot modify orders once placed."
         },
         {
-            question: "How do I care for my custom printed apparel?",
-            answer: "For Direct-to-Garment (DTG) prints, machine wash cold, inside-out, on a gentle cycle with mild detergent and like colors. Tumble dry low or hang-dry for longest life. Do not iron directly on the print, and avoid dry cleaning."
+            question: "How do I keep my print looking great?",
+            answer: "To keep your custom gear looking fresh, machine wash cold, inside-out. Tumble dry on low. It's built to last, but a little care goes a long way."
         },
         {
-            question: "Do you offer bulk discounts?",
-            answer: "Yes! If you're looking to order 50+ items for a team or event, please reach out to our support team for a custom quote."
+            question: "Do you offer discounts for group orders?",
+            answer: "Absolutely! If you're planning a family reunion, bachelorette party, or team event and need 10+ items, let us know. We love helping you celebrate together."
         },
         {
-            question: "What file formats do you accept for custom designs?",
-            answer: "High-resolution transparent PNGs (300 DPI) are recommended for the best print quality. SVGs are also supported for vector graphics."
+            question: "What's the best image quality to upload?",
+            answer: "For the crispest print, use a high-quality PNG or JPEG. If it looks blurry on your screen, it might look blurry on the shirt. Our studio tool will warn you if the quality seems too low!"
         }
     ];
 

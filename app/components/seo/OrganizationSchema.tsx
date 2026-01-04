@@ -5,7 +5,7 @@ export default function OrganizationSchema() {
         "name": "Print Brawl",
         "url": "https://www.printbrawl.com",
         "logo": "https://www.printbrawl.com/logov2.png",
-        "description": "Custom apparel design and print-on-demand platform",
+        "description": "Premium custom apparel and personalized gifts for everyone. Design your own t-shirts, hoodies, and more.",
         "contactPoint": {
             "@type": "ContactPoint",
             "telephone": "+1-555-234-5678",

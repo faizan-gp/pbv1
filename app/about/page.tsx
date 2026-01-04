@@ -24,29 +24,29 @@ export default function AboutPage() {
                     <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
                         <div className="flex items-center gap-x-3 mb-6">
                             <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-indigo-500/50"></div>
-                            <span className="text-sm font-mono tracking-widest text-indigo-600 uppercase">Premium Print-on-Demand</span>
+                            <span className="text-sm font-mono tracking-widest text-indigo-600 uppercase">Design Your Own Style</span>
                             <div className="h-px flex-1 bg-gradient-to-l from-gray-200 to-indigo-500/50"></div>
                         </div>
 
                         <h1 className="mt-2 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:leading-tight">
-                            We empower creators to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">bring their visions to life.</span>
+                            Wear your imagination. <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Create something uniquely yours.</span>
                         </h1>
 
                         <div className="mt-10 grid max-w-xl grid-cols-1 gap-8 text-base leading-7 text-gray-600 lg:max-w-none lg:grid-cols-2">
                             <div>
                                 <p className="text-gray-600">
-                                    PrintBrawl isn't just a store; it's a platform for expression. We've partnered with a global network of industry-leading print providers to deliver high-quality custom apparel and products directly to your doorstep.
+                                    PrintBrawl is your creative playground. We believe that everyone deserves to wear clothes that truly represent who they are. Whether it's an inside joke, a family photo, or a piece of art you created, we help you turn your ideas into high-quality apparel.
                                 </p>
                                 <p className="mt-8">
-                                    By utilizing a smart print-on-demand model, we eliminate waste and overproduction. Every item is created only when you order it, ensuring sustainable practices without compromising on premium quality.
+                                    Forget generic store-bought designs. With our easy-to-use design studio, you can make one-of-a-kind t-shirts, hoodies, and gifts in minutes. It's not about bulk orders or business—it's about expressing yourself.
                                 </p>
                             </div>
                             <div>
                                 <p>
-                                    Our technology ensures that what you design is what you get. From the digital canvas to the final stitch, we use state-of-the-art Direct-to-Garment (DTG) printing and premium base materials like Bella+Canvas to guarantee retail-ready results.
+                                    We use the same premium materials and printing technology as top retail brands, ensuring your custom creation looks and feels amazing. From the first click to the final unboxing, we're dedicated to delivering a product you'll love to wear or proud to give.
                                 </p>
                                 <p className="mt-8 text-gray-900 font-medium">
-                                    No inventory. No waste. Just pure creativity.
+                                    No minimums. No limits. Just your creativity, brought to life.
                                 </p>
                             </div>
                         </div>
@@ -59,31 +59,31 @@ export default function AboutPage() {
                 <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
                     <div className="p-8 bg-gray-50 border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
                         <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center mb-4">
-                            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Details</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Uniquely You</h3>
                         <p className="text-sm text-gray-600 leading-relaxed">
-                            Trusted by 100+ production partners worldwide to ensure fast local shipping and reduced carbon footprint.
+                            Express your personality with custom designs that you won't find on any rack. Perfect for making a statement or preserving a memory.
                         </p>
                     </div>
 
                     <div className="p-8 bg-gray-50 border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
                         <div className="w-10 h-10 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-4">
-                            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"></path></svg>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Quality First</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Perfect Gifts</h3>
                         <p className="text-sm text-gray-600 leading-relaxed">
-                            We rigorously vet our providers. Only the best specialized printing facilities make the cut to handle your designs.
+                            Create thoughtful, personalized gifts for birthdays, holidays, or special occasions. Give something that shows you care.
                         </p>
                     </div>
 
                     <div className="p-8 bg-gray-50 border border-gray-200 rounded-2xl hover:bg-gray-100 transition-colors">
                         <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center mb-4">
-                            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                         </div>
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">Speed & Scale</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">Premium Quality</h3>
                         <p className="text-sm text-gray-600 leading-relaxed">
-                            From single custom pieces to bulk orders, our infrastructure scales with you. Production typically takes just 2-5 days.
+                            We don't compromise on quality. We use soft, durable fabrics and high-definition printing to ensure your design looks perfect.
                         </p>
                     </div>
                 </div>
@@ -92,16 +92,16 @@ export default function AboutPage() {
                 <div className="mt-20 pt-10 border-t border-gray-200">
                     <dl className="grid grid-cols-1 gap-x-8 gap-y-16 text-center lg:grid-cols-3">
                         <div className="mx-auto flex max-w-xs flex-col gap-y-2">
-                            <dt className="text-xs tracking-widest uppercase text-gray-500">Products Shipped</dt>
+                            <dt className="text-xs tracking-widest uppercase text-gray-500">Unique Designs Created</dt>
                             <dd className="order-first text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl font-mono">100k+</dd>
                         </div>
                         <div className="mx-auto flex max-w-xs flex-col gap-y-2">
-                            <dt className="text-xs tracking-widest uppercase text-gray-500">Happy Creators</dt>
+                            <dt className="text-xs tracking-widest uppercase text-gray-500">Happy Customers</dt>
                             <dd className="order-first text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl font-mono">50k+</dd>
                         </div>
                         <div className="mx-auto flex max-w-xs flex-col gap-y-2">
-                            <dt className="text-xs tracking-widest uppercase text-gray-500">Provider Network</dt>
-                            <dd className="order-first text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl font-mono">90+</dd>
+                            <dt className="text-xs tracking-widest uppercase text-gray-500">Star Rating</dt>
+                            <dd className="order-first text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl font-mono">4.9/5</dd>
                         </div>
                     </dl>
                 </div>

@@ -31,22 +31,19 @@ export async function generateMetadata({ searchParams }: {
 }): Promise<Metadata> {
     const params = await searchParams;
     const category = params.category || "All Products";
-    const title = category === "All Products"
-        ? "Custom Apparel Products - T-Shirts, Hoodies & More | Print Brawl"
-        : `Custom ${category} - Premium Quality | Print Brawl`;
+    // The original 'title' and 'description' variables are no longer needed as the new return block defines them directly.
 
     return {
-        title,
-        description: `Browse our premium collection of ${category.toLowerCase()}. Custom design your perfect ${category.toLowerCase()} with our online design studio.`,
+        title: `Design Custom ${params.category ? params.category : 'Apparel'} | Print Brawl`,
+        description: `Browse our collection of premium quality ${params.category ? params.category.toLowerCase() : 't-shirts, hoodies, and accessories'}. Ready for your unique designs. Perfect for gifts or personal style.`,
         openGraph: {
-            title,
-            description: `Browse our premium collection of ${category.toLowerCase()}.`,
-            images: ["/logov2.png"],
+            title: `Design Custom ${params.category ? params.category : 'Apparel'} - Print Brawl`,
+            description: `Start with our premium ${params.category ? params.category.toLowerCase() : 'products'} and add your own flair. High-quality printing, no minimums.`,
+            images: ["/logov2.png"], // Keep the image from the original metadata
         },
         alternates: {
-            // Reconstruct canonical URL with search params if present
             canonical: `https://www.printbrawl.com/products${params.category ? `?category=${encodeURIComponent(params.category)}` : ''}`,
-        },
+        }
     };
 }
 

@@ -38,8 +38,8 @@ import { Palette as PaletteIcon } from "lucide-react";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create Custom Apparel - T-Shirts, Hoodies & More | Print Brawl",
-  description: "The easiest way to design your own clothes. Pick a product, upload your photo or logo, and we'll print and ship it to your door.",
+  title: "Design Your Own Custom Apparel | Print Brawl",
+  description: "Create unique custom t-shirts, hoodies, and gifts. Upload your photos or use our design tools to make something special.",
   alternates: {
     canonical: "https://www.printbrawl.com",
   },

@@ -7,11 +7,11 @@ import { useToast } from '../components/Toast';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "Contact Us | Print Brawl Support",
-    description: "Get in touch with the Print Brawl team. We're here to help with your orders, custom inquiries, and support questions.",
+    title: "Contact Support | Print Brawl",
+    description: "Need help with your custom order? Contact our friendly support team for assistance with designing, shipping, or returns.",
     openGraph: {
-        title: "Contact Print Brawl Support",
-        description: "Have questions? Reach out to our dedicated support team for assistance.",
+        title: "Contact Print Brawl",
+        description: "We're here to help. Reach out to us for any questions about your custom apparel.",
     }
 };
 

@@ -9,11 +9,11 @@ import {
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: "How It Works | Print Brawl - Create Custom Apparel",
-    description: "Learn how to use Print Brawl's design studio to create and sell custom products in 3 simple steps. Pick a product, design it, and we handle the rest.",
+    title: "How It Works | Create Your Own Custom Apparel",
+    description: "Design your own custom t-shirts and gifts in 3 easy steps. Select a product, add your design, and we print and ship it to you.",
     openGraph: {
-        title: "How Print Brawl Works",
-        description: "From idea to doorstep in 3 simple steps. See how easy it is to start your own brand.",
+        title: "How It Works - Design Your Own Apparel",
+        description: "From idea to your doorstep. See how easy it is to create unique custom products for yourself or as gifts.",
     }
 };
 
@@ -30,17 +30,16 @@ export default function HowItWorksPage() {
             {/* --- HEADER --- */}
             <div className="container-width text-center max-w-4xl mx-auto mb-32 px-4 relative z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-6">
-                    The Process
+                    Simple Process
                 </div>
                 <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-slate-900 mb-8">
-                    From Idea to Doorstep<br />
+                    From Idea to Reality<br />
                     <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                         in 3 Simple Steps.
                     </span>
                 </h1>
                 <p className="text-xl text-slate-600 leading-relaxed text-balance max-w-2xl mx-auto">
-                    We've simplified custom printing so you can focus on creativity.
-                    No minimums, no setup fees, and premium quality guaranteed.
+                    Creating something unique shouldn't be complicated. We've made it easy for you to design custom apparel that you'll love to wear.
                 </p>
             </div>
 
@@ -64,16 +63,16 @@ export default function HowItWorksPage() {
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-700 text-sm font-bold mb-6 border border-blue-100">
                                 <ShoppingBag className="w-4 h-4" /> Step 01
                             </div>
-                            <h2 className="text-4xl font-black text-slate-900 mb-6">Select Your Canvas</h2>
+                            <h2 className="text-4xl font-black text-slate-900 mb-6">Find Your Perfect Fit</h2>
                             <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                                Choose from our curated catalog of premium blanks. We've tested hundreds of brands to ensure you get retail-quality fabric.
+                                Choose from our collection of high-quality tees, hoodies, and accessories. We've hand-picked products that feel great and hold prints perfectly.
                             </p>
                             <ul className="flex flex-col gap-3 lg:items-end">
                                 <li className="flex items-center gap-3 text-slate-700 font-medium bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 w-fit">
-                                    <CheckCircle2 className="w-5 h-5 text-blue-500" /> 50+ Premium Products
+                                    <CheckCircle2 className="w-5 h-5 text-blue-500" /> Premium Brands
                                 </li>
                                 <li className="flex items-center gap-3 text-slate-700 font-medium bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 w-fit">
-                                    <CheckCircle2 className="w-5 h-5 text-blue-500" /> Real-time Inventory
+                                    <CheckCircle2 className="w-5 h-5 text-blue-500" /> Super Soft Fabrics
                                 </li>
                             </ul>
                         </div>
@@ -99,7 +98,7 @@ export default function HowItWorksPage() {
 
                                     {/* Tag */}
                                     <div className="absolute top-4 right-4 bg-blue-100 text-blue-600 text-[10px] font-bold px-2 py-1 rounded">
-                                        BEST SELLER
+                                        POPULAR
                                     </div>
                                 </div>
                             </div>
@@ -177,15 +176,15 @@ export default function HowItWorksPage() {
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-50 text-purple-700 text-sm font-bold mb-6 border border-purple-100">
                                 <Palette className="w-4 h-4" /> Step 02
                             </div>
-                            <h2 className="text-4xl font-black text-slate-900 mb-6">Create Your Masterpiece</h2>
+                            <h2 className="text-4xl font-black text-slate-900 mb-6">Make It Yours</h2>
                             <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                                Our studio tool is powerful yet simple. Drag and drop assets, use AI generation, or stick to simple text. What you see is exactly what we print.
+                                Upload your favorite photo, add text, or create a unique design using our studio tools. Whether it's for yourself or a gift, you're the artist.
                             </p>
                             <Link
                                 href="/products"
                                 className="group inline-flex items-center text-indigo-600 font-bold hover:text-indigo-700 text-lg"
                             >
-                                <span className="border-b-2 border-indigo-100 group-hover:border-indigo-600 transition-colors">Open Design Studio</span>
+                                <span className="border-b-2 border-indigo-100 group-hover:border-indigo-600 transition-colors">Start Designing</span>
                                 <ArrowRight className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </div>
@@ -217,10 +216,10 @@ export default function HowItWorksPage() {
                             </div>
                             <h2 className="text-4xl font-black text-slate-900 mb-6">We Print & Ship</h2>
                             <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                                No inventory headaches for you. We print your item using state-of-the-art DTG technology and ship it anywhere in the world with full tracking.
+                                Sit back and relax. We'll professionally print your custom design and ship it directly to you (or your lucky recipient) with care.
                             </p>
                             <div className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-slate-900/20">
-                                <Clock className="w-4 h-4 text-green-400" /> Avg. Ship Time: 3 Days
+                                <Clock className="w-4 h-4 text-green-400" /> Fast Production
                             </div>
                         </div>
 
