@@ -120,9 +120,9 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
     const [productColors, setProductColors] = useState<ProductColor[]>(() => {
         if (initialData?.colors && initialData.colors.length > 0) {
-            return initialData.colors.map((c: any) => ({ name: c.name, hex: c.hex }));
+            return initialData.colors.map((c: any) => ({ name: c.name, hex: c.hex, images: c.images || {} }));
         }
-        return [{ name: 'Default', hex: '#ffffff' }];
+        return [{ name: 'Default', hex: '#ffffff', images: {} }];
     });
 
     // VIEW STATE
