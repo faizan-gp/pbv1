@@ -20,7 +20,7 @@ export function LoginForm() {
 
         try {
             const result = await signIn('credentials', {
-                email,
+                email: email.toLowerCase(),
                 password,
                 redirect: false,
             });
@@ -104,7 +104,7 @@ export function SignupForm() {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
+                body: JSON.stringify({ name, email: email.toLowerCase(), password }),
             });
 
             const data = await res.json();
@@ -115,7 +115,7 @@ export function SignupForm() {
 
             // Auto login after signup
             await signIn('credentials', {
-                email,
+                email: email.toLowerCase(),
                 password,
                 redirect: false,
             });

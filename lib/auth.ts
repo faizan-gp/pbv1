@@ -17,7 +17,7 @@ export const authOptions: NextAuthOptions = {
                 }
 
 
-                const user = await getUserByEmail(credentials.email);
+                const user = await getUserByEmail(credentials.email.toLowerCase());
 
                 if (!user || !user.password) {
                     throw new Error("Invalid credentials");

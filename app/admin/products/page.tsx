@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAllProducts } from '@/lib/firestore/products';
 import { Edit, Plus, ExternalLink } from 'lucide-react';
+import ProductActions from './ProductActions';
 
 async function getProducts() {
     return await getAllProducts();
@@ -86,7 +87,8 @@ export default async function AdminProductsPage() {
                                                         )}
                                                     </td>
                                                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                                                        <div className="flex justify-end gap-4">
+                                                        <div className="flex justify-end gap-3 items-center">
+                                                            <ProductActions product={product} />
                                                             <Link href={`/admin/products/${product.id}`} className="text-indigo-600 hover:text-indigo-900 flex items-center gap-1">
                                                                 <Edit className="h-3 w-3" /> Edit
                                                             </Link>
