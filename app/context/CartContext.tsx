@@ -10,6 +10,7 @@ export interface CartItem {
     quantity: number;
     image: string;
     previews?: Record<string, string>; // Map of viewId -> base64/url
+    designState?: Record<string, any>; // Map of viewId -> Fabric JSON
     options: {
         color?: string;
         size?: string;

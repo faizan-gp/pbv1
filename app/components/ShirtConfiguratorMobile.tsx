@@ -17,6 +17,7 @@ import Link from 'next/link';
 
 interface ShirtConfiguratorProps {
     product: any;
+    editCartId?: string | null;
 }
 
 const TABS = [
@@ -26,20 +27,31 @@ const TABS = [
     { id: 'size', label: 'Size', icon: Ruler },
 ];
 
-export default function ShirtConfiguratorMobile({ product }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtConfiguratorProps) {
     const router = useRouter();
-    const { addToCart } = useCart();
+    const { addToCart, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
 
+    // --- STATE RESTORATION ---
+    const initialCartItem = React.useMemo(() => {
+        if (!editCartId) return null;
+        return cartItems.find(item => item.id === editCartId);
+    }, [editCartId, cartItems]);
+
     // --- STATE ---
-    const [activeTab, setActiveTab] = useState('color');
-    const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || { name: 'White', hex: '#fff', images: {} });
-    const [selectedSize, setSelectedSize] = useState<string>('');
+    const [activeTab, setActiveTab] = useState(initialCartItem ? 'text' : 'color'); // If editing, go to edit mode
+    const [selectedColor, setSelectedColor] = useState(
+        initialCartItem?.options.color
+            ? (product.colors.find((c: any) => c.name === initialCartItem.options.color) || product.colors[0])
+            : (product.colors?.[0] || { name: 'White', hex: '#fff', images: {} })
+    );
+
+    const [selectedSize, setSelectedSize] = useState<string>(initialCartItem?.options.size || '');
     const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [isAdding, setIsAdding] = useState(false);
 
     // Canvas & View
-    const [designStates, setDesignStates] = useState<Record<string, any>>({});
+    const [designStates, setDesignStates] = useState<Record<string, any>>(initialCartItem?.designState || {});
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');

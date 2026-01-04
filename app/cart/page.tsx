@@ -60,13 +60,23 @@ export default function CartPage() {
                                         <div className="flex flex-1 items-end justify-between text-sm">
                                             <p className="text-muted-foreground">Qty {item.quantity}</p>
 
-                                            <button
-                                                type="button"
-                                                onClick={() => removeFromCart(item.id)}
-                                                className="font-medium text-red-600 hover:text-red-500 flex items-center gap-1"
-                                            >
-                                                <Trash2 className="h-4 w-4" /> Remove
-                                            </button>
+                                            <div className="flex items-center gap-4">
+                                                {item.designState && (
+                                                    <Link
+                                                        href={`/customize/${item.productId}?editCartId=${item.id}`}
+                                                        className="font-medium text-indigo-600 hover:text-indigo-500"
+                                                    >
+                                                        Edit Design
+                                                    </Link>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeFromCart(item.id)}
+                                                    className="font-medium text-red-600 hover:text-red-500 flex items-center gap-1"
+                                                >
+                                                    <Trash2 className="h-4 w-4" /> Remove
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
