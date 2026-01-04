@@ -58,12 +58,11 @@ export default function Navbar() {
 
                     {/* LOGO */}
                     <Link href="/" className="flex items-center gap-1 group z-50">
-                        <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-600 text-white shadow-indigo-500/20 shadow-lg group-hover:scale-105 transition-transform">
-                            <span className="font-bold text-lg">P</span>
-                        </div>
-                        <span className="ml-2 text-xl font-bold tracking-tight text-slate-900 group-hover:opacity-80 transition-opacity">
-                            Print<span className="text-indigo-600">Brawl</span>
-                        </span>
+                        <img
+                            src="/logov2.png"
+                            alt="PrintBrawl"
+                            className="h-12 w-auto object-contain group-hover:opacity-90 transition-opacity"
+                        />
                     </Link>
 
                     {/* DESKTOP NAVIGATION */}

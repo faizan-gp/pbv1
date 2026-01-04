@@ -1,40 +1,16 @@
-"use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
-  ArrowRight, Palette, Truck, ShieldCheck, MousePointerClick,
-  Upload, ShoppingBag, Zap, CheckCircle2, Wand2, Layers,
-  Image as ImageIcon, HelpCircle, ChevronDown, ChevronUp, Star,
-  Sparkles, Users, Gift, PartyPopper, Briefcase, Mail, Leaf, Recycle
+  ArrowRight, Truck, ShieldCheck,
+  ShoppingBag, Zap, Wand2, Layers,
+  Image as ImageIcon, Leaf, Recycle, CheckCircle2, Star, Mail
 } from "lucide-react";
 import ProductCard from "./components/ProductCard";
-import TestimonialCard from "./components/TestimonialCard";
-import ProcessCard from "./components/ProcessCard";
-import { products } from "./data/products";
+import HeroSection from "./components/landing/HeroSection";
+import FaqSection from "./components/landing/FaqSection";
+import { getAllProducts } from "@/lib/firestore/products";
 
-// --- MOCK DATA ---
-const HERO_COLORS = [
-  { name: "Midnight Black", class: "bg-slate-900", filter: "brightness(0.8)" },
-  { name: "Royal Blue", class: "bg-blue-600", filter: "hue-rotate(200deg) brightness(1.2)" },
-  { name: "Forest Green", class: "bg-green-700", filter: "hue-rotate(90deg) brightness(0.9)" },
-  { name: "Heather Grey", class: "bg-gray-400", filter: "grayscale(100%) brightness(1.5)" },
-];
-
-const FAQS = [
-  { question: "Is there a minimum order quantity?", answer: "No! You can order just one custom t-shirt or a thousand. We are built for individuals and bulk buyers alike." },
-  { question: "How does the sizing work?", answer: "Our products run true to size. We include a detailed size chart on every product page with measurements in inches and cm." },
-  { question: "Can I upload my own images?", answer: "Absolutely. Our design studio supports PNG, JPG, and SVG uploads. We also offer AI tools to help generate art if you're stuck." },
-  { question: "How long does shipping take?", answer: "Production takes 1-2 business days. Shipping depends on your location, but typically takes 3-5 business days for domestic orders." },
-];
-
-const GALLERY_IMAGES = [
-  { src: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&q=80&w=800", alt: "Custom Graphic Tee", user: "@alex_creates" },
-  { src: "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&q=80&w=800", alt: "Streetwear Hoodie", user: "@studio.noise" },
-  { src: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&q=80&w=800", alt: "Minimalist Design", user: "@jess_designs" },
-  { src: "https://images.unsplash.com/photo-1554568218-0f1715e72254?auto=format&fit=crop&q=80&w=800", alt: "Typography Shirt", user: "@type_matters" },
-];
-
+// --- STATIC DATA ---
 const steps = [
   {
     id: "01",
@@ -46,7 +22,7 @@ const steps = [
     id: "02",
     title: "Add Your Design",
     description: "Upload photos, use our AI generator, or combine text and shapes in the studio.",
-    icon: <Palette className="w-6 h-6 text-white" />,
+    icon: <PaletteIcon className="w-6 h-6 text-white" />,
   },
   {
     id: "03",
@@ -56,20 +32,25 @@ const steps = [
   },
 ];
 
-export default function Home() {
-  const [activeColor, setActiveColor] = useState(HERO_COLORS[0]);
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+// Re-export PaletteIcon locally if needed, or import from lucide-react. 
+// Note: In original file Palette was imported. I should import it too.
+import { Palette as PaletteIcon } from "lucide-react";
 
-  // Mock featured products (Blanks)
-  const featuredProducts = products
-    .filter(p => p.trending)
-    .slice(0, 3)
-    .map(p => ({
-      id: p.id,
-      name: p.name,
-      price: 29.99,
-      image: p.image
-    }));
+async function getTrendingProducts() {
+  try {
+    const allProducts = await getAllProducts();
+    // Filter for trending and take top 6 (grid fits 3, so 3 or 6 is good)
+    return allProducts.filter(p => p.trending === true).slice(0, 6);
+  } catch (error) {
+    console.error("Failed to fetch trending products", error);
+    return [];
+  }
+}
+
+export const dynamic = 'force-dynamic'; // Ensure fresh data on each request
+
+export default async function Home() {
+  const featuredProducts = await getTrendingProducts();
 
   return (
     <div className="flex flex-col gap-0 bg-white min-h-screen selection:bg-indigo-500 selection:text-white font-sans overflow-x-hidden">
@@ -81,152 +62,14 @@ export default function Home() {
       </div>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-32 pb-24 lg:pt-10 lg:pb-32 z-10 overflow-hidden">
-        <div className="container-width grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-
-          {/* Left Content */}
-          <div className="lg:col-span-6 text-center lg:text-left z-10">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-green-200 bg-green-50 px-4 py-1.5 text-sm font-bold text-green-700 shadow-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>No Minimums &bull; Buy 1 or 1,000</span>
-            </div>
-
-            <h1 className="text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl lg:text-7xl leading-[0.95] mb-6">
-              Create Custom <br />
-              Apparel in <span className="text-indigo-600">Minutes.</span>
-            </h1>
-
-            <p className="text-xl text-slate-600 leading-relaxed mb-10 text-balance font-medium">
-              The easiest way to design your own clothes. Pick a product, upload your photo or logo, and we'll print and ship it to your door.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <Link
-                href="/products"
-                className="inline-flex h-14 items-center justify-center rounded-full bg-slate-900 px-8 font-bold text-white shadow-xl hover:bg-indigo-600 hover:scale-105 transition-all"
-              >
-                Start Designing Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-              <Link
-                href="#how-it-works"
-                className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                See Products
-              </Link>
-            </div>
-
-            <p className="mt-6 text-sm text-slate-500 font-medium">
-              Trusted by 10,000+ happy customers
-            </p>
-          </div>
-
-          {/* Right Interactive Visual */}
-          <div className="lg:col-span-6 relative perspective-[2000px] flex flex-col items-center">
-
-            {/* --- FLOATING ANIMATED STEPS --- */}
-
-            {/* Step 1: Upload (Top Right) */}
-            <div className="absolute top-12 -right-4 lg:-right-12 bg-white p-3 rounded-xl shadow-xl border border-slate-100 z-30 animate-bounce [animation-duration:4s]">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
-                  <Upload size={18} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 1</p>
-                  <p className="text-xs font-bold text-slate-900">Add Text or Image</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 2: Drag (Middle Left) */}
-            {/* Removed 'hidden sm:block' so it shows on mobile now */}
-            <div className="absolute top-1/2 -left-2 lg:-left-12 -translate-y-1/2 bg-white p-3 rounded-xl shadow-xl border border-slate-100 z-30 animate-pulse [animation-duration:3s]">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
-                  <MousePointerClick size={18} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 2</p>
-                  <p className="text-xs font-bold text-slate-900">Drag & Drop</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3: Style (Bottom Right) */}
-            <div className="absolute bottom-32 -right-4 lg:-right-8 bg-white p-3 rounded-xl shadow-xl border border-slate-100 z-30 animate-bounce [animation-delay:1s] [animation-duration:4.5s]">
-              <div className="flex items-center gap-3">
-                <div className="bg-pink-100 p-2 rounded-lg text-pink-600">
-                  <Sparkles size={18} />
-                </div>
-                <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 3</p>
-                  <p className="text-xs font-bold text-slate-900">Style It</p>
-                </div>
-              </div>
-            </div>
-
-            {/* --- MAIN CARD --- */}
-            <div className="relative z-20 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 transform transition-transform duration-500 hover:rotate-y-[-2deg]">
-              {/* Visual Header */}
-              <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-4">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                </div>
-                <div className="text-xs font-mono text-slate-400">PREVIEW MODE</div>
-              </div>
-
-              {/* The Product Image */}
-              <div className="aspect-[4/5] bg-slate-50 rounded-lg mb-6 relative overflow-hidden group">
-                <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: activeColor.class === 'bg-white' ? '#f8fafc' : '' }}></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img
-                    src="/products/shirt/colors/shirt_sand_dune.png"
-                    alt="Custom Hoodie"
-                    className="w-full h-full object-cover mix-blend-multiply transition-all duration-500"
-                  // style={{ filter: activeColor.filter }}
-                  />
-                </div>
-                {/* Design Zone Overlay */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-48 border-2 border-dashed border-indigo-500/50 rounded bg-indigo-500/5 flex flex-col items-center justify-center text-indigo-600 animate-pulse">
-                  <Upload className="w-8 h-8 mb-2 opacity-50" />
-                  <span className="text-xs font-bold uppercase tracking-wider opacity-70">Your Design Here</span>
-                </div>
-              </div>
-
-              {/* Controls */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-700">Select Color</span>
-                  <span className="text-xs text-slate-500">{activeColor.name}</span>
-                </div>
-                <div className="flex gap-3">
-                  {HERO_COLORS.map((color) => (
-                    <button
-                      key={color.name}
-                      onClick={() => setActiveColor(color)}
-                      className={`w-10 h-10 rounded-full border-2 shadow-sm transition-all ${color.class} ${activeColor.name === color.name ? 'border-indigo-600 scale-110 ring-2 ring-indigo-200' : 'border-slate-200 hover:scale-105'}`}
-                      aria-label={`Select ${color.name}`}
-                    />
-                  ))}
-                </div>
-                <button className="w-full py-3 mt-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-                  <Palette className="w-4 h-4" /> Customize This Product
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      <HeroSection />
 
       {/* --- VALUE PROPS --- */}
       <div className="border-y border-slate-100 bg-slate-50 py-12">
         <div className="container-width grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
             { icon: ShoppingBag, title: "No Minimums", sub: "Buy 1 or 100" },
-            { icon: Palette, title: "Free Editor", sub: "Design online instantly" },
+            { icon: PaletteIcon, title: "Free Editor", sub: "Design online instantly" },
             { icon: ShieldCheck, title: "High Quality", sub: "Premium printing" },
             { icon: Truck, title: "Global Shipping", sub: "Tracked delivery" }
           ].map((item, i) => (
@@ -239,7 +82,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- FEATURE DEEP DIVE (NEW) --- */}
+      {/* --- FEATURE DEEP DIVE --- */}
       <section className="py-24 bg-white z-10 overflow-hidden">
         <div className="container-width mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-16 items-center">
@@ -287,7 +130,6 @@ export default function Home() {
               <div className="relative bg-slate-900 rounded-3xl p-2 shadow-2xl border border-slate-800 rotate-[-1deg] transition-transform hover:rotate-0 duration-500">
 
                 {/* --- DESKTOP IMAGE (Hidden on Mobile) --- */}
-                {/* Ensure your desktop image is roughly 16:9 or landscape */}
                 <img
                   src="/design_editor.png"
                   alt="Desktop Editor Interface"
@@ -295,7 +137,6 @@ export default function Home() {
                 />
 
                 {/* --- MOBILE IMAGE (Hidden on Desktop) --- */}
-                {/* Ensure your mobile image is portrait or square */}
                 <img
                   src="/design_editor_mobile.png"
                   alt="Mobile Editor Interface"
@@ -321,10 +162,17 @@ export default function Home() {
               View All Blanks <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
+
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {featuredProducts.length > 0 ? (
+              featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-xl border border-slate-100">
+                No trending products found. Check back soon!
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -397,7 +245,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- MATERIAL QUALITY (NEW) --- */}
+      {/* --- MATERIAL QUALITY --- */}
       <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
         <div className="container-width relative z-10">
@@ -487,32 +335,8 @@ export default function Home() {
       </section>
 
 
-      {/* --- FAQ ACCORDION (NEW) --- */}
-      <section className="py-24 bg-slate-50">
-        <div className="container-width max-w-3xl">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-black text-slate-900">Frequently Asked Questions</h2>
-          </div>
-          <div className="space-y-4">
-            {FAQS.map((faq, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between p-6 text-left"
-                >
-                  <span className="font-bold text-slate-900">{faq.question}</span>
-                  {openFaq === i ? <ChevronUp className="text-indigo-600" /> : <ChevronDown className="text-slate-400" />}
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-slate-100 pt-4">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* --- FAQ ACCORDION --- */}
+      <FaqSection />
 
       {/* --- NEWSLETTER SECTION --- */}
       <section className="py-24 bg-white">
