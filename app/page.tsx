@@ -76,6 +76,7 @@ export default async function Home() {
       {/* --- VALUE PROPS --- */}
       <div className="border-y border-slate-100 bg-slate-50 py-12">
         <div className="container-width grid grid-cols-2 md:grid-cols-4 gap-8">
+          <h2 className="sr-only">Why Choose Print Brawl</h2>
           {[
             { icon: ShoppingBag, title: "No Minimums", sub: "Buy 1 or 100" },
             { icon: PaletteIcon, title: "Free Editor", sub: "Design online instantly" },
@@ -109,22 +110,22 @@ export default async function Home() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-purple-200">
                   <Wand2 className="w-8 h-8 text-purple-600 mb-3" />
-                  <h4 className="font-bold text-slate-900 mb-1">AI Generator</h4>
+                  <h3 className="font-bold text-slate-900 mb-1">AI Generator</h3>
                   <p className="text-sm text-slate-500">Describe an image and our AI will create unique art for you.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-blue-200">
                   <Layers className="w-8 h-8 text-blue-600 mb-3" />
-                  <h4 className="font-bold text-slate-900 mb-1">Smart Layers</h4>
+                  <h3 className="font-bold text-slate-900 mb-1">Smart Layers</h3>
                   <p className="text-sm text-slate-500">Easily combine text, shapes, and uploaded images.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-indigo-200">
                   <ImageIcon className="w-8 h-8 text-indigo-600 mb-3" />
-                  <h4 className="font-bold text-slate-900 mb-1">Instant Preview</h4>
+                  <h3 className="font-bold text-slate-900 mb-1">Instant Preview</h3>
                   <p className="text-sm text-slate-500">See exactly how your design looks on the fabric before buying.</p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 transition-colors hover:border-yellow-200">
                   <Zap className="w-8 h-8 text-yellow-600 mb-3" />
-                  <h4 className="font-bold text-slate-900 mb-1">One-Click Print</h4>
+                  <h3 className="font-bold text-slate-900 mb-1">One-Click Print</h3>
                   <p className="text-sm text-slate-500">Done designing? Add to cart and we handle production.</p>
                 </div>
               </div>

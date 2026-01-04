@@ -116,6 +116,7 @@ export default function Navbar() {
                         <Link
                             href="/cart"
                             className="relative group p-2 rounded-full hover:bg-slate-100 transition-colors"
+                            aria-label="View shopping cart"
                         >
                             <ShoppingBag className="w-5 h-5 text-slate-700 group-hover:text-indigo-600 transition-colors" />
                             {cartCount > 0 && (
@@ -132,6 +133,7 @@ export default function Navbar() {
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+                            aria-label="Toggle mobile menu"
                         >
                             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                         </button>

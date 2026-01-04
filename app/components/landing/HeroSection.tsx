@@ -67,7 +67,7 @@ export default function HeroSection() {
                                 <Upload size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 1</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Step 1</p>
                                 <p className="text-xs font-bold text-slate-900">Add Text or Image</p>
                             </div>
                         </div>
@@ -80,7 +80,7 @@ export default function HeroSection() {
                                 <MousePointerClick size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 2</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Step 2</p>
                                 <p className="text-xs font-bold text-slate-900">Drag & Drop</p>
                             </div>
                         </div>
@@ -93,7 +93,7 @@ export default function HeroSection() {
                                 <Sparkles size={18} />
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Step 3</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Step 3</p>
                                 <p className="text-xs font-bold text-slate-900">Style It</p>
                             </div>
                         </div>
@@ -108,7 +108,7 @@ export default function HeroSection() {
                                 <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
                                 <div className="w-3 h-3 rounded-full bg-green-400"></div>
                             </div>
-                            <div className="text-xs font-mono text-slate-400">PREVIEW MODE</div>
+                            <div className="text-xs font-mono text-slate-500">PREVIEW MODE</div>
                         </div>
 
                         {/* The Product Image */}
