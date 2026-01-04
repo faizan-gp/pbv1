@@ -24,6 +24,7 @@ interface CartContextType {
     addToCart: (item: Omit<CartItem, "id">) => void;
     removeFromCart: (id: string) => void;
     updateQuantity: (id: string, delta: number) => void;
+    updateItem: (id: string, updates: Partial<CartItem>) => void;
     clearCart: () => void;
     cartTotal: number;
     cartCount: number;
@@ -98,6 +99,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
                 addToCart,
                 removeFromCart,
                 updateQuantity,
+                updateItem: (id: string, updates: Partial<CartItem>) => {
+                    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)));
+                },
                 clearCart,
                 cartTotal,
                 cartCount,

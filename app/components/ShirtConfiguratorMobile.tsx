@@ -29,7 +29,7 @@ const TABS = [
 
 export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtConfiguratorProps) {
     const router = useRouter();
-    const { addToCart, items: cartItems } = useCart();
+    const { addToCart, updateItem, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
 
     // --- STATE RESTORATION ---
@@ -94,20 +94,72 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
         if (action === 'delete') setSelectedElement(null);
     };
 
-    const handleAddToCart = () => {
+    const generateDesignOverlay = async (viewId: string) => {
+        const designUrl = designPreviews[viewId];
+        if (!designUrl) return null;
+
+        return new Promise<string | null>((resolve) => {
+            const canvas = document.createElement('canvas');
+            const size = 600; // Reduced size for Cart storage efficiency
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(null); return; }
+
+            const imgDesign = new Image();
+            imgDesign.crossOrigin = 'anonymous';
+            imgDesign.onload = () => {
+                const activePreview = product.previews.find((p: any) => p.id === viewId) || product.previews[0];
+                const zone = activePreview.previewZone || product.designZone;
+
+                // Scale Logic: Map design zone coordinates to our new canvas size
+                const scaleFactor = size / product.canvasSize;
+
+                const targetLeft = zone.left * scaleFactor;
+                const targetTop = zone.top * scaleFactor;
+                const targetWidth = zone.width * scaleFactor;
+                const targetHeight = zone.height * scaleFactor;
+
+                ctx.drawImage(imgDesign, targetLeft, targetTop, targetWidth, targetHeight);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            imgDesign.onerror = () => resolve(null);
+            imgDesign.src = designUrl;
+        });
+    };
+
+    const handleAddToCart = async (isUpdate: boolean = false) => {
         if (!selectedSize) {
             setActiveTab('size');
             return;
         }
         setIsAdding(true);
-        setTimeout(() => {
-            addToCart({
+
+        try {
+            // 1. Get Base Image
+            const baseImage = selectedColor.images[activeViewId] || selectedColor.images['front'] || product.image;
+
+            // 2. Generate Design Overlay
+            const designOverlay = await generateDesignOverlay(activeViewId);
+
+            const cartPayload = {
                 productId: product.id, name: product.name, price: 29.99, quantity: 1,
-                image: designPreviews['front'] || selectedColor.images['front'],
+                image: baseImage,
+                previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
+                designState: designStates, // Save full design state
                 options: { color: selectedColor.name, size: selectedSize }
-            });
+            };
+
+            if (isUpdate && editCartId) {
+                updateItem(editCartId, cartPayload);
+            } else {
+                addToCart(cartPayload);
+            }
             router.push("/cart");
-        }, 800);
+        } catch (error) {
+            console.error("Mobile Add/Update Failed", error);
+            setIsAdding(false);
+        }
     };
 
     return (
@@ -383,13 +435,37 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
                             </div>
 
                             {/* Primary Action (Add To Cart) - Always visible in Nav Mode */}
-                            <button
-                                onClick={handleAddToCart}
-                                disabled={isAdding}
-                                className="h-8 px-4 bg-slate-900 text-white rounded-full flex items-center gap-2 shadow-md active:scale-95 transition-all"
-                            >
-                                {isAdding ? <span className="text-[10px] font-bold">...</span> : <><ShoppingBag size={12} /><span className="text-[10px] font-bold">Add to Cart</span></>}
-                            </button>
+                            {/* Primary Action (Add To Cart) - Always visible in Nav Mode */}
+                            <div className="flex gap-2">
+                                {editCartId ? (
+                                    <>
+                                        <button
+                                            onClick={() => handleAddToCart(true)}
+                                            disabled={isAdding}
+                                            className="h-8 px-3 bg-indigo-600 text-white rounded-full flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                                            title="Update Cart"
+                                        >
+                                            {isAdding ? <span className="text-[10px] font-bold">...</span> : <RefreshCw size={14} />}
+                                        </button>
+                                        <button
+                                            onClick={() => handleAddToCart(false)}
+                                            disabled={isAdding}
+                                            className="h-8 px-3 bg-slate-900 text-white rounded-full flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                                            title="Save as New"
+                                        >
+                                            {isAdding ? <span className="text-[10px] font-bold">...</span> : <ShoppingBag size={14} />}
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => handleAddToCart(false)}
+                                        disabled={isAdding}
+                                        className="h-8 px-4 bg-slate-900 text-white rounded-full flex items-center gap-2 shadow-md active:scale-95 transition-all"
+                                    >
+                                        {isAdding ? <span className="text-[10px] font-bold">...</span> : <><ShoppingBag size={12} /><span className="text-[10px] font-bold">Add to Cart</span></>}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* 2. Scrollable Content Area */}

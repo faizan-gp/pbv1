@@ -32,7 +32,7 @@ const STEPS = [
 
 export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtConfiguratorProps) {
     const router = useRouter();
-    const { addToCart, items: cartItems } = useCart();
+    const { addToCart, updateItem, items: cartItems } = useCart();
     const { showToast } = useToast();
     const editorRef = useRef<DesignEditorRef>(null);
 
@@ -120,7 +120,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
         });
     };
 
-    const handleAddToCart = async () => {
+    const handleAddToCart = async (isUpdate: boolean = false) => {
         if (!selectedSize) { showToast('Please select a size', 'error'); return; }
         setIsAdding(true);
 
@@ -131,13 +131,23 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
             // 2. Generate Design Overlay (Data URL)
             const designOverlay = await generateDesignOverlay(activeViewId);
 
-            addToCart({
+            const cartPayload = {
                 productId: product.id, name: product.name, price: 29.99, quantity: 1,
                 image: baseImage,
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates, // Save full design state
                 options: { color: selectedColor.name, size: selectedSize }
-            });
+            };
+
+            if (isUpdate && editCartId) {
+                // We destructured updateItem from useCart() already
+                updateItem(editCartId, cartPayload);
+                showToast("Cart updated!", "success");
+            } else {
+                addToCart(cartPayload);
+                showToast("Added to cart!", "success");
+            }
+
             router.push("/cart");
         } catch (error) {
             console.error("Error adding to cart:", error);
@@ -440,9 +450,22 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
                         <div className="p-8 border-t border-slate-100 bg-white">
                             <div className="flex gap-4">
                                 {currentStep === STEPS.length - 1 ? (
-                                    <button onClick={handleAddToCart} disabled={isAdding} className="flex-1 h-14 rounded-xl bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
-                                        {isAdding ? <span className="animate-pulse">Processing...</span> : <><ShoppingBag size={20} /> Add to Cart</>}
-                                    </button>
+                                    <div className="flex-1 flex gap-3">
+                                        {editCartId ? (
+                                            <>
+                                                <button onClick={() => handleAddToCart(true)} disabled={isAdding} className="flex-1 h-14 rounded-xl bg-indigo-600 text-white font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-200">
+                                                    {isAdding ? <span className="animate-pulse">Updating...</span> : <><RefreshCw size={20} /> Update Cart</>}
+                                                </button>
+                                                <button onClick={() => handleAddToCart(false)} disabled={isAdding} className="flex-1 h-14 rounded-xl bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+                                                    {isAdding ? <span className="animate-pulse">...</span> : <><ShoppingBag size={20} /> Save as New</>}
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button onClick={() => handleAddToCart(false)} disabled={isAdding} className="flex-1 h-14 rounded-xl bg-slate-900 text-white font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200">
+                                                {isAdding ? <span className="animate-pulse">Processing...</span> : <><ShoppingBag size={20} /> Add to Cart</>}
+                                            </button>
+                                        )}
+                                    </div>
                                 ) : (
                                     <button onClick={() => setCurrentStep(prev => prev + 1)} className="flex-1 h-14 rounded-xl bg-indigo-600 text-white font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-200">Next Step <ChevronRight size={20} /></button>
                                 )}
