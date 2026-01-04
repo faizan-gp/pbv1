@@ -87,6 +87,39 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
         if (action === 'delete') setSelectedElement(null);
     };
 
+    // Helper: Generate Composite Preview
+    const generateCompositePreview = async (baseImageUrl: string, designOverlayUrl: string) => {
+        if (!designOverlayUrl) return baseImageUrl;
+
+        return new Promise<string>((resolve) => {
+            const canvas = document.createElement('canvas');
+            const size = 600;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(baseImageUrl); return; }
+
+            const imgBase = new Image();
+            imgBase.crossOrigin = 'anonymous';
+            imgBase.onload = () => {
+                // Draw Base
+                ctx.drawImage(imgBase, 0, 0, size, size);
+
+                // Draw Design Overlay
+                const imgOverlay = new Image();
+                imgOverlay.crossOrigin = 'anonymous';
+                imgOverlay.onload = () => {
+                    ctx.drawImage(imgOverlay, 0, 0, size, size);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8)); // Use JPEG for smaller size
+                };
+                imgOverlay.onerror = () => resolve(baseImageUrl); // Fallback
+                imgOverlay.src = designOverlayUrl;
+            };
+            imgBase.onerror = () => resolve(baseImageUrl); // Fallback
+            imgBase.src = baseImageUrl;
+        });
+    };
+
     const generateDesignOverlay = async (viewId: string) => {
         const designUrl = designPreviews[viewId];
         if (!designUrl) return null;
@@ -129,12 +162,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
             // 1. Get Base Image (Secure HTTP URL)
             const baseImage = selectedColor.images[activeViewId] || selectedColor.images['front'] || product.image;
 
-            // 2. Generate Design Overlay (Data URL)
+            // 2. Generate Design Overlay (Data URL) - Keep this for restoration
             const designOverlay = await generateDesignOverlay(activeViewId);
+            console.log("DEBUG: Generated Design Overlay", { length: designOverlay?.length, activeViewId, previewsAvailable: Object.keys(designPreviews) });
+
+            // 3. Generate Composite Preview (for Cart Thumbnail)
+            const compositePreview = await generateCompositePreview(baseImage, designOverlay || '');
+            console.log("DEBUG: Generated Composite Preview", { length: compositePreview?.length, isBase: compositePreview === baseImage });
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: 29.99, quantity: 1,
-                image: baseImage,
+                image: compositePreview || baseImage, // Use composite if available
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates, // Save full design state
                 options: { color: selectedColor.name, size: selectedSize }

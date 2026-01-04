@@ -129,6 +129,44 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
         });
     };
 
+    // Helper: Generate Composite Preview
+    const generateCompositePreview = async (baseImageUrl: string, designOverlayUrl: string | null) => {
+        if (!designOverlayUrl) return baseImageUrl;
+
+        return new Promise<string>((resolve) => {
+            const canvas = document.createElement('canvas');
+            const size = 600;
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(baseImageUrl); return; }
+
+            const imgBase = new Image();
+            imgBase.crossOrigin = 'anonymous';
+            imgBase.onload = () => {
+                // Draw Base (Contain)
+                const scale = Math.min(size / imgBase.width, size / imgBase.height);
+                const w = imgBase.width * scale;
+                const h = imgBase.height * scale;
+                const x = (size - w) / 2;
+                const y = (size - h) / 2;
+                ctx.drawImage(imgBase, x, y, w, h);
+
+                // Draw Design Overlay
+                const imgOverlay = new Image();
+                imgOverlay.crossOrigin = 'anonymous';
+                imgOverlay.onload = () => {
+                    ctx.drawImage(imgOverlay, 0, 0, size, size);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                imgOverlay.onerror = () => resolve(baseImageUrl);
+                imgOverlay.src = designOverlayUrl;
+            };
+            imgBase.onerror = () => resolve(baseImageUrl);
+            imgBase.src = baseImageUrl;
+        });
+    };
+
     const handleAddToCart = async (isUpdate: boolean = false) => {
         if (!selectedSize) {
             setActiveTab('size');
@@ -143,11 +181,14 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
             // 2. Generate Design Overlay
             const designOverlay = await generateDesignOverlay(activeViewId);
 
+            // 3. Generate Composite
+            const compositePreview = await generateCompositePreview(baseImage, designOverlay);
+
             const cartPayload = {
                 productId: product.id, name: product.name, price: 29.99, quantity: 1,
-                image: baseImage,
+                image: compositePreview || baseImage,
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
-                designState: designStates, // Save full design state
+                designState: designStates,
                 options: { color: selectedColor.name, size: selectedSize }
             };
 
