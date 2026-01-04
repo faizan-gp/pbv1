@@ -19,18 +19,9 @@ import UserMenu from "./UserMenu";
 
 export default function Navbar() {
     const { cartCount } = useCart();
-    const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
-    // Handle Scroll Effect
-    useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
 
     // Categories Data for Mega Menu
     // Categories Data for Mega Menu
@@ -48,11 +39,7 @@ export default function Navbar() {
         - Dynamic positioning based on scroll state
       */}
             <nav
-                className={`fixed z-50 transition-all duration-500 ease-in-out border-gray-200/50
-        ${isScrolled
-                        ? "top-0 left-0 right-0 w-full rounded-none border-b bg-white/90 backdrop-blur-xl shadow-sm py-3"
-                        : "top-4 left-0 right-0 w-[95%] max-w-7xl mx-auto rounded-full border bg-white/70 backdrop-blur-lg shadow-lg shadow-black/[0.03] py-4"
-                    }`}
+                className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200/50 bg-white/90 backdrop-blur-xl shadow-sm py-4"
             >
                 <div className="px-6 md:px-8 flex items-center justify-between">
 
@@ -105,6 +92,12 @@ export default function Navbar() {
 
                         <Link href="/how-it-works" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
                             How it Works
+                        </Link>
+                        <Link href="/about" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
+                            About Us
+                        </Link>
+                        <Link href="/contact" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
+                            Contact
                         </Link>
                     </div>
 
@@ -183,7 +176,10 @@ export default function Navbar() {
 
                     <div className="flex flex-col gap-4 text-sm text-slate-500">
                         <Link href="/track-order" onClick={() => setMobileMenuOpen(false)}>Track Order</Link>
-                        <Link href="/help" onClick={() => setMobileMenuOpen(false)}>Help Center</Link>
+                        <Link href="/how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</Link>
+                        <Link href="/about" onClick={() => setMobileMenuOpen(false)}>About Us</Link>
+                        <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+                        <Link href="/faq" onClick={() => setMobileMenuOpen(false)}>Help Center</Link>
                     </div>
                 </div>
             </div>
