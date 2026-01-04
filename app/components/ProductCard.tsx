@@ -15,7 +15,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <Link href={`/products/${id}`} className="relative h-full w-full bg-gray-100 block">
                     <Image
                         src={image}
-                        alt={name}
+                        alt={`${name} - Custom ${product.category || 'Apparel'}`}
                         fill
                         className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
                     />

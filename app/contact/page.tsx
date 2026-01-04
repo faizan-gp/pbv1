@@ -4,6 +4,17 @@ import React, { useState } from 'react';
 import { Mail, MapPin, Phone, Send } from 'lucide-react';
 import { useToast } from '../components/Toast';
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "Contact Us | Print Brawl Support",
+    description: "Get in touch with the Print Brawl team. We're here to help with your orders, custom inquiries, and support questions.",
+    openGraph: {
+        title: "Contact Print Brawl Support",
+        description: "Have questions? Reach out to our dedicated support team for assistance.",
+    }
+};
+
 export default function ContactPage() {
     const { showToast } = useToast();
     const [formData, setFormData] = useState({

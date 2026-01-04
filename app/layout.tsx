@@ -17,6 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 import OrganizationSchema from "./components/seo/OrganizationSchema";
+import WebSiteSchema from "./components/seo/WebSiteSchema";
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.printbrawl.com'),
@@ -65,6 +66,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <OrganizationSchema />
+        <WebSiteSchema />
         <AuthProvider>
           <CartProvider>
             <ToastProvider>

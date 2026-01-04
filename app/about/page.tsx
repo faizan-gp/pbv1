@@ -1,6 +1,17 @@
 import React from 'react';
 import Image from 'next/image';
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "About Us | Print Brawl - Premium Print on Demand",
+    description: "Learn about Print Brawl's mission to empower creators with high-quality, sustainable custom apparel printing. No inventory, retail-ready quality.",
+    openGraph: {
+        title: "About Print Brawl | Empowering Creators",
+        description: "We partner with global print providers to deliver high-quality custom products. Zero waste, premium materials.",
+    }
+};
+
 export default function AboutPage() {
     return (
         <div className="bg-white min-h-screen text-gray-900 font-sans">

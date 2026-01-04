@@ -6,6 +6,17 @@ import {
     Layers, MousePointerClick, MapPin, Package, Clock
 } from "lucide-react";
 
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: "How It Works | Print Brawl - Create Custom Apparel",
+    description: "Learn how to use Print Brawl's design studio to create and sell custom products in 3 simple steps. Pick a product, design it, and we handle the rest.",
+    openGraph: {
+        title: "How Print Brawl Works",
+        description: "From idea to doorstep in 3 simple steps. See how easy it is to start your own brand.",
+    }
+};
+
 export default function HowItWorksPage() {
     return (
         <div className="relative bg-white min-h-screen pt-32 pb-24 overflow-hidden selection:bg-indigo-500 selection:text-white">

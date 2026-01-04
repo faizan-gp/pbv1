@@ -12,11 +12,22 @@ async function getProduct(id: string) {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
     const { id } = await params;
     const product = await getProduct(id);
-    if (!product) return { title: 'Product Not Found' };
+    if (!product) return { title: 'Product Not Found | Print Brawl' };
+
+    const title = `Customize ${product.name} - Design Your Own | Print Brawl`;
+    const description = `Create your custom ${product.name} with our easy-to-use design studio. Add text, upload images, and visualization your unique design in real-time.`;
 
     return {
-        title: `Studio: Customize ${product.name} | PrintBrawl`,
-        description: `Create your custom ${product.name} design.`,
+        title,
+        description,
+        openGraph: {
+            title,
+            description,
+            images: [product.image || '/logov2.png'],
+        },
+        alternates: {
+            canonical: `https://www.printbrawl.com/customize/${id}`,
+        }
     };
 }
 
