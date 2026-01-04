@@ -35,6 +35,15 @@ const steps = [
 // Re-export PaletteIcon locally if needed, or import from lucide-react. 
 // Note: In original file Palette was imported. I should import it too.
 import { Palette as PaletteIcon } from "lucide-react";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Create Custom Apparel - T-Shirts, Hoodies & More | Print Brawl",
+  description: "The easiest way to design your own clothes. Pick a product, upload your photo or logo, and we'll print and ship it to your door.",
+  alternates: {
+    canonical: "https://www.printbrawl.com",
+  },
+};
 
 async function getTrendingProducts() {
   try {

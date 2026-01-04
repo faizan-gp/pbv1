@@ -26,10 +26,29 @@ async function getProducts(category?: string, subcategory?: string) {
     });
 }
 
-export const metadata: Metadata = {
-    title: "Select Your Canvas | PrintBrawl",
-    description: "Browse our collection of premium custom apparel bases. T-shirts, hoodies, mugs, and more ready for your designs.",
-};
+export async function generateMetadata({ searchParams }: {
+    searchParams: Promise<{ category?: string; subcategory?: string }>
+}): Promise<Metadata> {
+    const params = await searchParams;
+    const category = params.category || "All Products";
+    const title = category === "All Products"
+        ? "Custom Apparel Products - T-Shirts, Hoodies & More | Print Brawl"
+        : `Custom ${category} - Premium Quality | Print Brawl`;
+
+    return {
+        title,
+        description: `Browse our premium collection of ${category.toLowerCase()}. Custom design your perfect ${category.toLowerCase()} with our online design studio.`,
+        openGraph: {
+            title,
+            description: `Browse our premium collection of ${category.toLowerCase()}.`,
+            images: ["/logov2.png"],
+        },
+        alternates: {
+            // Reconstruct canonical URL with search params if present
+            canonical: `https://www.printbrawl.com/products${params.category ? `?category=${encodeURIComponent(params.category)}` : ''}`,
+        },
+    };
+}
 
 export default async function ProductsPage({
     searchParams,

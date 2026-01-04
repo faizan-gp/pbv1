@@ -1,4 +1,15 @@
 import React from 'react';
+import { Metadata } from 'next';
+import FAQSchema from '@/app/components/seo/FAQSchema';
+
+export const metadata: Metadata = {
+    title: "Frequently Asked Questions | Print Brawl",
+    description: "Common questions about our custom apparel printing, shipping times, returns, and design process.",
+    openGraph: {
+        title: "Frequently Asked Questions | Print Brawl",
+        description: "Everything you need to know about creating custom apparel with Print Brawl.",
+    }
+};
 
 export default function FAQPage() {
     const faqs = [
@@ -30,6 +41,7 @@ export default function FAQPage() {
 
     return (
         <div className="bg-white min-h-screen py-24 sm:py-32">
+            <FAQSchema items={faqs} />
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto max-w-2xl lg:text-center">
                     <h2 className="text-base font-semibold leading-7 text-indigo-600">Frequently Asked Questions</h2>

@@ -1,0 +1,71 @@
+import { Product } from "@/lib/firestore/products";
+
+export default function ProductSchema({ product }: { product: Product }) {
+    const schema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": product.name,
+        "image": [
+            product.image,
+            ...(product.listingImages?.map(img => img.url) || [])
+        ],
+        "description": product.shortDescription || product.fullDescription || `Custom ${product.name}`,
+        "brand": {
+            "@type": "Brand",
+            "name": "Print Brawl"
+        },
+        "category": product.category,
+        "offers": {
+            "@type": "Offer",
+            "url": `https://www.printbrawl.com/products/${product.id}`,
+            "priceCurrency": "USD",
+            "price": "29.99", // Dynamic price if available
+            "priceValidUntil": "2026-12-31",
+            "availability": "https://schema.org/InStock",
+            "itemCondition": "https://schema.org/NewCondition",
+            "seller": {
+                "@type": "Organization",
+                "name": "Print Brawl"
+            },
+            "shippingDetails": {
+                "@type": "OfferShippingDetails",
+                "shippingRate": {
+                    "@type": "MonetaryAmount",
+                    "value": "5.99",
+                    "currency": "USD"
+                },
+                "shippingDestination": {
+                    "@type": "DefinedRegion",
+                    "addressCountry": "US"
+                },
+                "deliveryTime": {
+                    "@type": "ShippingDeliveryTime",
+                    "businessDays": {
+                        "@type": "OpeningHoursSpecification",
+                        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                    },
+                    "cutoffTime": "14:00",
+                    "handlingTime": {
+                        "@type": "QuantitativeValue",
+                        "minValue": 2,
+                        "maxValue": 7,
+                        "unitCode": "DAY"
+                    },
+                    "transitTime": {
+                        "@type": "QuantitativeValue",
+                        "minValue": 2,
+                        "maxValue": 5,
+                        "unitCode": "DAY"
+                    }
+                }
+            }
+        }
+    };
+
+    return (
+        <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+    );
+}

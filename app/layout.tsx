@@ -16,9 +16,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import OrganizationSchema from "./components/seo/OrganizationSchema";
+
 export const metadata: Metadata = {
-  title: "Print Brawl",
-  description: "Custom Apparel Design",
+  metadataBase: new URL('https://www.printbrawl.com'),
+  title: {
+    default: "Print Brawl - Custom Apparel Design & Print on Demand",
+    template: "%s | Print Brawl"
+  },
+  description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio. Print-on-demand with no minimums, premium quality, and fast shipping worldwide.",
+  keywords: ["custom t-shirts", "print on demand", "custom apparel", "t-shirt design", "custom hoodies", "DTG printing"],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://www.printbrawl.com",
+    siteName: "Print Brawl",
+    title: "Print Brawl - Custom Apparel Design & Print on Demand",
+    description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio.",
+    images: [
+      {
+        url: "/logov2.png", // Using logo as fallback OG image
+        width: 800,
+        height: 600,
+        alt: "Print Brawl",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Print Brawl - Custom Apparel Design & Print on Demand",
+    description: "Create custom t-shirts, hoodies, and apparel with Print Brawl's online design studio.",
+    images: ["/logov2.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -31,6 +64,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
+        <OrganizationSchema />
         <AuthProvider>
           <CartProvider>
             <ToastProvider>

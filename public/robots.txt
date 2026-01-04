@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /customize/
+Disallow: /checkout/
+Disallow: /cart/
+Disallow: /profile/
+Disallow: /order-success/
+
+Sitemap: https://www.printbrawl.com/sitemap.xml
