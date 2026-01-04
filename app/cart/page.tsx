@@ -100,6 +100,11 @@ export default function CartPage() {
                         >
                             Checkout <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
+                        <div className="mt-4 text-center">
+                            <Link href="/products" className="text-sm text-indigo-600 hover:text-indigo-500 font-medium">
+                                Continue Shopping
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
