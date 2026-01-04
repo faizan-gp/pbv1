@@ -40,6 +40,7 @@ function AdminOrderItem({ item, product, orderId }: { item: any, product: any, o
                         selectedColor={selectedColor}
                         activeViewId={activeViewId}
                         onViewChange={setActiveViewId}
+                        isOverlay={true}
                     />
                 </div>
             </div>

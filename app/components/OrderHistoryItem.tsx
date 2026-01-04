@@ -43,6 +43,7 @@ export default function OrderHistoryItem({ item, product }: OrderHistoryItemProp
                             activeViewId={activeViewId}
                             onViewChange={setActiveViewId}
                             minimal={true}
+                            isOverlay={true}
                         />
                     </div>
                 </div>

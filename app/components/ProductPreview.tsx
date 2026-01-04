@@ -12,11 +12,12 @@ interface ProductPreviewProps {
     activeViewId: string;
     onViewChange: (id: string) => void;
     minimal?: boolean;
+    isOverlay?: boolean; // If true, rendering full canvas overlay instead of design zone content
     className?: string;
 }
 
 export default function ProductPreview({
-    designTextureUrl, product, selectedColor, activeViewId, onViewChange, minimal = false, className = ''
+    designTextureUrl, product, selectedColor, activeViewId, onViewChange, minimal = false, isOverlay = false, className = ''
 }: ProductPreviewProps) {
 
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
@@ -78,21 +79,31 @@ export default function ProductPreview({
 
                     {/* 3. THE DESIGN (Realistic Blend) */}
                     {designTextureUrl && (
-                        <div
-                            className="absolute z-20 pointer-events-none"
-                            style={{
-                                ...zoneStyle,
-                                transform: activePreview.cssTransform || 'none', // Handle 3D perspective if needed
-                            }}
-                        >
-                            {/* Inner img applies the blend mode to look like ink on fabric */}
+                        isOverlay ? (
+                            // Full Canvas Overlay (for Saved Cart/Admin views where image is already positioned)
                             <img
                                 src={designTextureUrl}
-                                alt="Design"
-                                className="w-full h-full object-contain"
+                                alt="Design Overlay"
+                                className="absolute inset-0 w-full h-full object-contain pointer-events-none z-20"
                                 style={{ mixBlendMode: 'multiply', opacity: 0.95 }}
                             />
-                        </div>
+                        ) : (
+                            // Design Zone Only (for Editor/Preview where image is just the content)
+                            <div
+                                className="absolute z-20 pointer-events-none"
+                                style={{
+                                    ...zoneStyle,
+                                    transform: activePreview.cssTransform || 'none',
+                                }}
+                            >
+                                <img
+                                    src={designTextureUrl}
+                                    alt="Design"
+                                    className="w-full h-full object-contain"
+                                    style={{ mixBlendMode: 'multiply', opacity: 0.95 }}
+                                />
+                            </div>
+                        )
                     )}
                 </div>
             </div>
