@@ -26,6 +26,14 @@ export default function SitemapPage() {
                 { name: "About Us", href: "/about" },
                 { name: "Contact", href: "/contact" },
                 { name: "FAQ", href: "/faq" },
+                { name: "Sitemap", href: "/site-map" },
+            ]
+        },
+        {
+            title: "Legal",
+            links: [
+                { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Terms of Service", href: "/terms-of-service" },
             ]
         }
     ];

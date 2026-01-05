@@ -24,6 +24,13 @@ export default function Footer() {
                     <a href="/site-map" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
                         Sitemap
                     </a>
+                    <div className="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
+                    <a href="/privacy-policy" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
+                        Privacy
+                    </a>
+                    <a href="/terms-of-service" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
+                        Terms
+                    </a>
                 </div>
             </div>
         </footer>
