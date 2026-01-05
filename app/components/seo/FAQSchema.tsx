@@ -4,7 +4,7 @@ interface FAQItem {
 }
 
 export default function FAQSchema({ items }: { items: FAQItem[] }) {
-    const schema = {
+    const jsonLd = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": items.map(item => ({
@@ -19,8 +19,9 @@ export default function FAQSchema({ items }: { items: FAQItem[] }) {
 
     return (
         <script
+            id="faq-schema"
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
     );
 }

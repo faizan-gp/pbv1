@@ -32,6 +32,7 @@ export default function SiteNavigationSchema() {
 
     return (
         <script
+            id="site-nav-schema"
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
