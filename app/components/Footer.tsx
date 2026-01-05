@@ -1,3 +1,5 @@
+import { ShieldCheck } from "lucide-react";
+
 export default function Footer() {
     return (
         <footer className="border-t border-gray-200 bg-gray-50 py-16 backdrop-blur-sm">
@@ -9,6 +11,10 @@ export default function Footer() {
                     <p className="text-xs text-gray-500">
                         Premium Custom Apparel
                     </p>
+                    <a href="/dmca" className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-[10px] font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all">
+                        <ShieldCheck size={12} className="text-indigo-500" />
+                        DMCA Protected
+                    </a>
                 </div>
 
                 <div className="flex items-center gap-8">
