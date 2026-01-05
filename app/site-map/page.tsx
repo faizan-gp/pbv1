@@ -34,6 +34,7 @@ export default function SitemapPage() {
             links: [
                 { name: "Privacy Policy", href: "/privacy-policy" },
                 { name: "Terms of Service", href: "/terms-of-service" },
+                { name: "DMCA Policy", href: "/dmca" },
             ]
         }
     ];
