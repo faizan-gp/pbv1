@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
+import ScrollToTop from './ScrollToTop';
 import Footer from './Footer';
 
 export default function ClientShell({ children }: { children: React.ReactNode }) {
@@ -17,7 +18,12 @@ export default function ClientShell({ children }: { children: React.ReactNode })
             <main className={`flex-1 ${showNav ? 'pt-16' : ''}`}>
                 {children}
             </main>
-            {showNav && <Footer />}
+            {showNav && (
+                <>
+                    <ScrollToTop />
+                    <Footer />
+                </>
+            )}
         </>
     );
 }
