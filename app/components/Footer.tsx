@@ -21,6 +21,9 @@ export default function Footer() {
                     <a href="/contact" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
                         Contact
                     </a>
+                    <a href="/site-map" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
+                        Sitemap
+                    </a>
                 </div>
             </div>
         </footer>
