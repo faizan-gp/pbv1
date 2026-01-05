@@ -8,6 +8,7 @@ import {
 import ProductCard from "./components/ProductCard";
 import HeroSection from "./components/landing/HeroSection";
 import FaqSection from "./components/landing/FaqSection";
+import FAQSchema from "./components/seo/FAQSchema";
 import { getAllProducts } from "@/lib/firestore/products";
 
 // --- STATIC DATA ---
@@ -28,8 +29,14 @@ const steps = [
     id: "03",
     title: "We Print & Ship",
     description: "We handle the printing, quality checks, and shipping directly to your doorstep.",
-    icon: <Truck className="w-6 h-6 text-white" />,
   },
+];
+
+const FAQS = [
+  { question: "Is there a minimum order quantity?", answer: "No! You can order just one custom t-shirt or a thousand. We are built for individuals and bulk buyers alike." },
+  { question: "How does the sizing work?", answer: "Our products run true to size. We include a detailed size chart on every product page with measurements in inches and cm." },
+  { question: "Can I upload my own images?", answer: "Absolutely. Our design studio supports PNG, JPG, and SVG uploads. We also offer AI tools to help generate art if you're stuck." },
+  { question: "How long does shipping take?", answer: "Production takes 1-2 business days. Shipping depends on your location, but typically takes 3-5 business days for domestic orders." },
 ];
 
 // Re-export PaletteIcon locally if needed, or import from lucide-react. 
@@ -346,7 +353,7 @@ export default async function Home() {
 
 
       {/* --- FAQ ACCORDION --- */}
-      <FaqSection />
+      <FaqSection items={FAQS} />
 
       {/* --- NEWSLETTER SECTION --- */}
       <section className="py-24 bg-white">
