@@ -24,6 +24,7 @@ export default function SitemapPage() {
             links: [
                 { name: "Home", href: "/" },
                 { name: "About Us", href: "/about" },
+                { name: "Meet the Team", href: "/team" },
                 { name: "Contact", href: "/contact" },
                 { name: "FAQ", href: "/faq" },
                 { name: "Sitemap", href: "/site-map" },
