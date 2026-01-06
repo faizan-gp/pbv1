@@ -8,7 +8,7 @@ import {
 import ProductCard from "./components/ProductCard";
 import HeroSection from "./components/landing/HeroSection";
 import FaqSection from "./components/landing/FaqSection";
-import FAQSchema from "./components/seo/FAQSchema";
+
 import { getAllProducts } from "@/lib/firestore/products";
 
 // --- STATIC DATA ---
@@ -68,6 +68,19 @@ export const dynamic = 'force-dynamic'; // Ensure fresh data on each request
 export default async function Home() {
   const featuredProducts = await getTrendingProducts();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": FAQS.map(item => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer
+      }
+    }))
+  };
+
   return (
     <div className="flex flex-col gap-0 bg-white min-h-screen selection:bg-indigo-500 selection:text-white font-sans overflow-x-hidden">
 
@@ -79,6 +92,12 @@ export default async function Home() {
 
       {/* --- HERO SECTION --- */}
       <HeroSection />
+
+      <script
+        id="faq-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* --- VALUE PROPS --- */}
       <div className="border-y border-slate-100 bg-slate-50 py-12">
