@@ -171,11 +171,12 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
             console.log("DEBUG: Generated Composite Preview", { length: compositePreview?.length, isBase: compositePreview === baseImage });
 
             const cartPayload = {
-                productId: product.id, name: product.name, price: 29.99, quantity: 1,
+                productId: product.id, name: product.name, price: product.price, quantity: 1,
                 image: compositePreview || baseImage, // Use composite if available
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates, // Save full design state
-                options: { color: selectedColor.name, size: selectedSize }
+                options: { color: selectedColor.name, size: selectedSize },
+                shippingCost: product.shippingCost
             };
 
             // Main Item Add/Update
@@ -197,11 +198,12 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
                     // Unless the user wants to customize per-color? No, assumption is "Same Design, Different Color"
 
                     addToCart({
-                        productId: product.id, name: product.name, price: 29.99, quantity: 1,
+                        productId: product.id, name: product.name, price: product.price, quantity: 1,
                         image: extraBaseImage,
                         previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                         designState: designStates,
-                        options: { color: colorName, size: selectedSize }
+                        options: { color: colorName, size: selectedSize },
+                        shippingCost: product.shippingCost
                     });
                 }
             }

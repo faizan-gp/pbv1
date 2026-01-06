@@ -185,11 +185,12 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
             const compositePreview = await generateCompositePreview(baseImage, designOverlay);
 
             const cartPayload = {
-                productId: product.id, name: product.name, price: 29.99, quantity: 1,
+                productId: product.id, name: product.name, price: product.price, quantity: 1,
                 image: compositePreview || baseImage,
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates,
-                options: { color: selectedColor.name, size: selectedSize }
+                options: { color: selectedColor.name, size: selectedSize },
+                shippingCost: product.shippingCost
             };
 
             if (isUpdate && editCartId) {
@@ -210,12 +211,13 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
                     addToCart({
                         productId: product.id,
                         name: product.name,
-                        price: 29.99,
+                        price: product.price,
                         quantity: 1,
                         image: extraComposite || extraBaseImage,
                         previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                         designState: designStates,
-                        options: { color: colorName, size: selectedSize }
+                        options: { color: colorName, size: selectedSize },
+                        shippingCost: product.shippingCost
                     });
                 });
                 await Promise.all(extraPromises);

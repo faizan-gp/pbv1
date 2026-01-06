@@ -17,6 +17,7 @@ export interface CartItem {
         customText?: string;
         // Add other customization options here
     };
+    shippingCost?: number;
 }
 
 interface CartContextType {

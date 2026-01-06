@@ -6,8 +6,10 @@ import { useCart } from "../context/CartContext";
 
 export default function CartPage() {
     const { items, removeFromCart, updateQuantity, cartTotal } = useCart();
+    // Calculate total shipping (fallback to 5.99 if not set)
+    const shipping = items.reduce((acc, item) => acc + ((item.shippingCost ?? 5.99) * item.quantity), 0);
 
-    const shipping = 5.99;
+    // const shipping = 5.99; // Removed hardcoded
     const total = cartTotal + shipping;
     const hasItems = items.length > 0;
 
@@ -83,6 +85,9 @@ export default function CartPage() {
                                                             Text: "{item.options.customText}"
                                                         </div>
                                                     )}
+                                                    <div className="text-sm text-slate-400">
+                                                        Shipping: ${(item.shippingCost ?? 5.99).toFixed(2)}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <p className="text-lg font-bold text-slate-800">
@@ -156,7 +161,7 @@ export default function CartPage() {
                         </div>
                         <div className="flex justify-between text-slate-600">
                             <span>Shipping</span>
-                            <span className="font-medium text-slate-900">{items.length > 0 ? `$${shipping}` : '$0.00'}</span>
+                            <span className="font-medium text-slate-900">{items.length > 0 ? `$${shipping.toFixed(2)}` : '$0.00'}</span>
                         </div>
                         <div className="flex justify-between text-slate-600">
                             <span>Tax estimate</span>
