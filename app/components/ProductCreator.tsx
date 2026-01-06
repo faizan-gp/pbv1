@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2 } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -86,6 +86,9 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [subcategory, setSubcategory] = useState(initialData?.subcategory || "");
     const [categories, setCategories] = useState<any[]>([]);
     const [trending, setTrending] = useState(initialData?.trending || false);
+    const [price, setPrice] = useState(initialData?.price || '');
+    const [shippingCost, setShippingCost] = useState(initialData?.shippingCost || 0);
+    const [shippingTime, setShippingTime] = useState(initialData?.shippingTime || '');
 
     // Fetch Categories
     useEffect(() => {
@@ -337,6 +340,9 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             category,
             subcategory,
             trending,
+            price: Number(price),
+            shippingCost: Number(shippingCost),
+            shippingTime,
             image: mainImage,
             listingImages,
             shortDescription,
@@ -367,7 +373,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, trending, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, trending, price, shippingCost, shippingTime, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
 
 
     const handleSave = async () => {
@@ -1024,6 +1030,49 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                                 <input type="checkbox" id="trending" checked={trending} onChange={(e) => setTrending(e.target.checked)} className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" />
                                 <label htmlFor="trending" className="text-sm font-medium text-gray-900 cursor-pointer select-none">Mark as Trending Product</label>
+                            </div>
+
+                            {/* Pricing & Shipping */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Price ($)</label>
+                                    <div className="relative">
+                                        <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="number"
+                                            value={price}
+                                            onChange={(e) => setPrice(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Shipping Cost ($)</label>
+                                    <div className="relative">
+                                        <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="number"
+                                            value={shippingCost}
+                                            onChange={(e) => setShippingCost(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Shipping Time</label>
+                                    <div className="relative">
+                                        <Truck size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={shippingTime}
+                                            onChange={(e) => setShippingTime(e.target.value)}
+                                            placeholder="e.g. 3-5 Business Days"
+                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 

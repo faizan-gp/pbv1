@@ -123,8 +123,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
                         <div className="flex flex-wrap items-center gap-4 lg:gap-6">
                             <div className="flex items-baseline gap-3">
-                                <span className="text-3xl font-medium text-slate-900">$29.00</span>
-                                <span className="text-lg text-slate-400 line-through">$45.00</span>
+                                <span className="text-3xl font-medium text-slate-900">${(product.price || 29.99).toFixed(2)}</span>
                             </div>
                             <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
                             <div className="flex items-center gap-1">
@@ -179,7 +178,11 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
                         <div className="grid grid-cols-2 gap-3">
                             {[
-                                { icon: Package, title: "Fast Delivery", desc: "2-3 business days" },
+                                {
+                                    icon: Package,
+                                    title: "Shipping",
+                                    desc: `${product.shippingCost ? `$${product.shippingCost}` : 'Free'} • ${product.shippingTime || '2-3 business days'}`
+                                },
                                 { icon: ShieldCheck, title: "Quality Guarantee", desc: "Premium materials" }
                             ].map((item, i) => (
                                 <div key={i} className="bg-slate-50 p-3 rounded-lg flex items-start gap-2.5">

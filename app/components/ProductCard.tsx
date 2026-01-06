@@ -7,7 +7,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
     const { id, name, image } = product;
-    const price = 29.99; // Default price until added to DB
     return (
         <div className="group relative overflow-hidden rounded-lg border border-border bg-white transition-all hover:shadow-lg">
             <div className="aspect-square w-full overflow-hidden bg-muted">
@@ -25,14 +24,14 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <Link href={`/products/${id}`} className="block">
                     <h3 className="text-lg font-semibold text-foreground hover:text-primary transition-colors">{name}</h3>
                 </Link>
-                <p className="mt-1 text-sm text-muted-foreground">${price.toFixed(2)}</p>
+                <p className="mt-1 text-sm text-muted-foreground">${(product.price || 29.99).toFixed(2)}</p>
                 <Link
                     href={`/products/${id}`}
                     className="mt-4 block w-full rounded-md bg-white border-2 border-primary py-2 text-center text-sm font-bold text-primary transition-all hover:bg-primary hover:text-white"
                 >
                     View Details
                 </Link>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

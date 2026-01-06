@@ -408,7 +408,21 @@ export default function ShirtConfiguratorDesktop({ product, editCartId }: ShirtC
                     <>
                         <div className="h-20 px-8 flex items-center gap-4 border-b border-slate-50">
                             <Link href="/products" className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-400 hover:text-slate-800 transition-colors"><ArrowLeft size={20} /></Link>
-                            <div><h1 className="font-bold text-slate-900 leading-tight">{product.name}</h1><p className="text-xs text-slate-500 font-medium">$29.99 USD</p></div>
+                            <div>
+                                <h1 className="font-bold text-slate-900 leading-tight">{product.name}</h1>
+                                <div className="flex items-center gap-2">
+                                    <p className="text-xs text-slate-500 font-medium">${(product.price || 29.99).toFixed(2)} USD</p>
+                                    {(product.shippingCost !== undefined || product.shippingTime) && (
+                                        <>
+                                            <span className="text-slate-300">•</span>
+                                            <p className="text-[10px] text-slate-400">
+                                                {product.shippingCost ? `$${product.shippingCost} Shipping` : 'Free Shipping'}
+                                                {product.shippingTime && ` (${product.shippingTime})`}
+                                            </p>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="px-8 py-6">

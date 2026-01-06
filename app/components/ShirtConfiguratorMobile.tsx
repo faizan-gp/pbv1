@@ -10,7 +10,7 @@ import {
     ArrowLeft, Check, Palette, Type, Image as ImageIcon, Ruler,
     ChevronRight, ShoppingBag, Trash2, X, RefreshCw,
     ArrowUp, ArrowDown, ArrowRight, ArrowLeft as ArrowL, ArrowRight as ArrowR, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RotateCcw,
-    Bold, Italic, Underline, Sliders, Eye, Edit3, Keyboard, Layers
+    Bold, Italic, Underline, Sliders, Eye, Edit3, Keyboard, Layers, Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -241,6 +241,20 @@ export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtCo
                     <Link href="/products" className="w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-sm flex items-center justify-center text-slate-700 pointer-events-auto active:scale-95 transition-transform">
                         <ArrowLeft size={20} />
                     </Link>
+
+                    {/* Product Info (Centered) */}
+                    <div className="flex-1 flex flex-col items-center pt-2 px-2 pointer-events-auto">
+                        <span className="text-xs font-bold text-slate-900 shadow-sm bg-white/80 backdrop-blur px-2 py-0.5 rounded-full mb-1">{product.name}</span>
+                        <div className="flex items-center gap-1 bg-white/80 backdrop-blur px-2 py-0.5 rounded-full shadow-sm">
+                            <span className="text-[10px] font-bold text-slate-700">${(product.price || 29.99).toFixed(2)}</span>
+                            {(product.shippingCost !== undefined || product.shippingTime) && (
+                                <span className="text-[8px] text-slate-500 border-l border-slate-300 pl-1 ml-1 leading-none">
+                                    <Truck size={8} className="inline mr-0.5" />
+                                    {product.shippingCost ? `$${product.shippingCost}` : 'Free'}
+                                </span>
+                            )}
+                        </div>
+                    </div>
 
                     {/* View Switcher */}
                     <div className="flex flex-col gap-2 pointer-events-auto">

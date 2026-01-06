@@ -19,7 +19,7 @@ export default function ProductSchema({ product }: { product: Product }) {
             "@type": "Offer",
             "url": `https://www.printbrawl.com/products/${product.id}`,
             "priceCurrency": "USD",
-            "price": "29.99", // Dynamic price if available
+            "price": product.price ? String(product.price) : "29.99",
             "priceValidUntil": "2026-12-31",
             "availability": "https://schema.org/InStock",
             "itemCondition": "https://schema.org/NewCondition",
@@ -31,7 +31,7 @@ export default function ProductSchema({ product }: { product: Product }) {
                 "@type": "OfferShippingDetails",
                 "shippingRate": {
                     "@type": "MonetaryAmount",
-                    "value": "5.99",
+                    "value": product.shippingCost ? String(product.shippingCost) : "0",
                     "currency": "USD"
                 },
                 "shippingDestination": {
