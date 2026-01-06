@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { syncCartToFirestore } from "@/lib/firestore/carts";
 
 export interface CartItem {
     id: string; // Unique ID for the cart entry (e.g. productID + color + options)
@@ -56,6 +58,28 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem("cart", JSON.stringify(items));
         }
     }, [items, isLoaded]);
+
+    // Sync to Firestore (Authenticated Users)
+    const { data: session } = useSession();
+    useEffect(() => {
+        if (isLoaded && session?.user?.email) {
+            // Debounce or just sync? For now, sync on every change (low frequency expected)
+            // But let's wrap in a timeout to avoid rapid updates if multiple items added quickly
+            const timer = setTimeout(() => {
+                const total = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+                if (session?.user?.email) {
+                    syncCartToFirestore(
+                        (session.user as any).id || session.user.email,
+                        session.user.email,
+                        items,
+                        total
+                    );
+                }
+            }, 2000); // 2 second debounce
+
+            return () => clearTimeout(timer);
+        }
+    }, [items, isLoaded, session]);
 
     const addToCart = (newItem: Omit<CartItem, "id">) => {
         setItems((prev) => {

@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, MessageSquare, ShoppingCart } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -26,6 +26,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                         <ShoppingBag size={20} />
                         Orders
+                    </Link>
+                    <Link
+                        href="/admin/carts"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                        <ShoppingCart size={20} />
+                        Abandoned Carts
                     </Link>
                     <Link
                         href="/admin/products"
