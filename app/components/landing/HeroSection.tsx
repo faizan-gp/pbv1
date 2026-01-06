@@ -43,7 +43,7 @@ export default function HeroSection() {
                             Start Designing Now <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>
                         <Link
-                            href="#how-it-works"
+                            href="/products"
                             className="inline-flex h-14 items-center justify-center rounded-full border border-slate-200 bg-white px-8 font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                         >
                             See Products
