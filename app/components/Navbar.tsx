@@ -41,14 +41,14 @@ export default function Navbar() {
             <nav
                 className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200/50 bg-white/90 backdrop-blur-xl shadow-sm py-4"
             >
-                <div className="px-6 md:px-8 flex items-center justify-between">
+                <div className="px-4 md:px-8 flex items-center justify-between gap-4">
 
                     {/* LOGO */}
-                    <Link href="/" className="flex items-center gap-1 group z-50">
+                    <Link href="/" className="flex items-center gap-1 group z-50 shrink-0">
                         <img
                             src="/logov2.png"
                             alt="PrintBrawl"
-                            className="h-12 w-auto object-contain group-hover:opacity-90 transition-opacity"
+                            className="h-8 md:h-12 w-auto object-contain group-hover:opacity-90 transition-opacity max-w-[140px] md:max-w-none"
                         />
                     </Link>
 
@@ -102,7 +102,7 @@ export default function Navbar() {
                     </div>
 
                     {/* ACTIONS (Cart & Mobile Toggle) */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
 
                         {/* Start Designing CTA (Desktop) */}
                         <Link

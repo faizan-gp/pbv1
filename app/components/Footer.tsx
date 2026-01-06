@@ -17,7 +17,7 @@ export default function Footer() {
                     </a>
                 </div>
 
-                <div className="flex items-center gap-8">
+                <div className="grid grid-cols-3 sm:flex sm:items-center gap-4 sm:gap-8 text-center w-full sm:w-auto">
                     <a href="/about" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
                         About
                     </a>
@@ -33,7 +33,10 @@ export default function Footer() {
                     <a href="/site-map" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
                         Sitemap
                     </a>
-                    <div className="h-4 w-px bg-gray-300 mx-2 hidden sm:block"></div>
+
+                    {/* Divider for desktop */}
+                    <div className="hidden sm:block h-4 w-px bg-gray-300 mx-2"></div>
+
                     <a href="/privacy-policy" className="text-sm font-medium text-gray-500 transition-colors hover:text-gray-900">
                         Privacy
                     </a>
