@@ -181,7 +181,7 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
                                 {
                                     icon: Package,
                                     title: "Shipping",
-                                    desc: `${product.shippingCost ? `$${product.shippingCost}` : 'Free'} • ${product.shippingTime || '2-3 business days'}`
+                                    desc: `USA Shipping: ${product.shippingCost ? `$${product.shippingCost}` : 'Free'} • ${product.shippingTime || '2-3 business days'}`
                                 },
                                 { icon: ShieldCheck, title: "Quality Guarantee", desc: "Premium materials" }
                             ].map((item, i) => (

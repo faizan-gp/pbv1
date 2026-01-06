@@ -44,6 +44,10 @@ export const metadata: Metadata = {
       },
     ],
   },
+  other: {
+    "geo.region": "US",
+    "geo.placename": "United States",
+  },
   twitter: {
     card: "summary_large_image",
     title: "Print Brawl - Design Your Own Custom Apparel & Gifts",

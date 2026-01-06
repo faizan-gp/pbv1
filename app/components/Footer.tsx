@@ -11,6 +11,10 @@ export default function Footer() {
                     <p className="text-xs text-gray-500">
                         Premium Custom Apparel
                     </p>
+                    <p className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                        Ships to USA Only
+                    </p>
                     <a href="/dmca" className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-[10px] font-bold text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all">
                         <ShieldCheck size={12} className="text-indigo-500" />
                         DMCA Protected
