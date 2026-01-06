@@ -10,12 +10,32 @@ interface ShirtConfiguratorProps {
 
 import { useSearchParams } from 'next/navigation';
 
+import PrintExpectationModal from './PrintExpectationModal';
+
 export default function ShirtConfigurator(props: ShirtConfiguratorProps) {
     const searchParams = useSearchParams();
     const editCartId = searchParams.get('editCartId');
+    const { product } = props;
+
+    const [showOnboarding, setShowOnboarding] = React.useState(false);
+
+    React.useEffect(() => {
+        if (product.previewExpectationImage && product.realExpectationImage) {
+            setShowOnboarding(true);
+        }
+    }, [product]);
 
     return (
         <>
+            {showOnboarding && product.previewExpectationImage && product.realExpectationImage && (
+                <PrintExpectationModal
+                    previewImage={product.previewExpectationImage}
+                    realImage={product.realExpectationImage}
+                    onClose={() => {
+                        setShowOnboarding(false);
+                    }}
+                />
+            )}
             <div className="md:hidden">
                 <ShirtConfiguratorMobile {...props} editCartId={editCartId} />
             </div>

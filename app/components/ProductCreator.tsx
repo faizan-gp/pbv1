@@ -89,6 +89,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [price, setPrice] = useState(initialData?.price || '');
     const [shippingCost, setShippingCost] = useState(initialData?.shippingCost || 0);
     const [shippingTime, setShippingTime] = useState(initialData?.shippingTime || '');
+    const [previewExpectationImage, setPreviewExpectationImage] = useState(initialData?.previewExpectationImage || '');
+    const [realExpectationImage, setRealExpectationImage] = useState(initialData?.realExpectationImage || '');
 
     // Fetch Categories
     useEffect(() => {
@@ -343,6 +345,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             price: Number(price),
             shippingCost: Number(shippingCost),
             shippingTime,
+            previewExpectationImage,
+            realExpectationImage,
             image: mainImage,
             listingImages,
             shortDescription,
@@ -373,7 +377,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, trending, price, shippingCost, shippingTime, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, trending, price, shippingCost, shippingTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
 
 
     const handleSave = async () => {
@@ -1294,6 +1298,36 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                    <h4 className="font-bold text-gray-900 mb-4">Print Expectation Images (Onboarding)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Digital Preview (Fake)</label>
+                                            <label className="block w-full h-32 border-2 border-dashed border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer overflow-hidden relative group">
+                                                {previewExpectationImage ? <img src={previewExpectationImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">Upload Digital Preview</div>}
+                                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        const url = await uploadProductImage(e.target.files[0], 'onboarding', productName);
+                                                        setPreviewExpectationImage(url);
+                                                    }
+                                                }} />
+                                            </label>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Real Print (Reality)</label>
+                                            <label className="block w-full h-32 border-2 border-dashed border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer overflow-hidden relative group">
+                                                {realExpectationImage ? <img src={realExpectationImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-400">Upload Real Print</div>}
+                                                <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                                    if (e.target.files?.[0]) {
+                                                        const url = await uploadProductImage(e.target.files[0], 'onboarding', productName);
+                                                        setRealExpectationImage(url);
+                                                    }
+                                                }} />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
                                     <div className="flex items-center justify-between mb-4">
                                         <h4 className="font-bold text-gray-900">Features</h4>
