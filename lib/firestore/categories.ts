@@ -52,6 +52,11 @@ export const createCategory = async (data: { name: string, subcategories: string
     return slug;
 };
 
+export const updateCategory = async (slug: string, updates: Partial<CategoryData>) => {
+    const categoryRef = doc(db, 'categories', slug);
+    await setDoc(categoryRef, updates, { merge: true });
+};
+
 export const seedCategoriesBatch = async (categories: { name: string, subcategories: string[] }[]) => {
     const batch = writeBatch(db);
 
