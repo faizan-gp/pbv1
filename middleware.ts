@@ -4,7 +4,11 @@ import { NextResponse } from "next/server";
 export default withAuth(
     function middleware(req) {
         // If the user is not an admin, redirect to home or show error
-        if (req.nextUrl.pathname.startsWith("/admin") && req.nextauth.token?.role !== "admin") {
+        const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+        const isCreateProductRoute = req.nextUrl.pathname.startsWith("/create-product");
+        const isEditProductRoute = req.nextUrl.pathname.startsWith("/edit-product");
+
+        if ((isAdminRoute || isCreateProductRoute || isEditProductRoute) && req.nextauth.token?.role !== "admin") {
             return NextResponse.redirect(new URL("/", req.url));
         }
     },
@@ -16,5 +20,5 @@ export default withAuth(
 );
 
 export const config = {
-    matcher: ["/admin/:path*", "/profile/:path*"],
+    matcher: ["/admin/:path*", "/profile/:path*", "/create-product/:path*", "/edit-product/:path*"],
 };
