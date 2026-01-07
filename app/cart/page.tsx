@@ -38,7 +38,7 @@ export default function CartPage() {
                                 You haven't added any custom designs yet. Let's create something unique.
                             </p>
                             <Link
-                                href="/products"
+                                href="/categories"
                                 className="group relative inline-flex items-center justify-center px-8 py-3 font-semibold text-white transition-all duration-200 bg-blue-600 font-pj rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600 hover:bg-blue-700"
                             >
                                 Start Designing
@@ -143,7 +143,7 @@ export default function CartPage() {
 
                     {/* Back Link */}
                     <div className="mt-12 pt-8 border-t border-slate-100">
-                        <Link href="/products" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
+                        <Link href="/categories" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors">
                             <ChevronLeft className="h-4 w-4 mr-1" />
                             Continue Shopping
                         </Link>

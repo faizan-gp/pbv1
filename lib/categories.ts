@@ -8,6 +8,7 @@ export interface CategoryData {
     metaTitle: string;
     metaDescription: string;
     keywords: string[];
+    parentCategory?: string;
     subcategories?: Record<string, CategoryData>; // Recursive definition for subcategories
 }
 

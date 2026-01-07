@@ -170,7 +170,7 @@ export default function HowItWorksContent() {
                                 Upload your favorite photo, add text, or create a unique design using our studio tools. Whether it's for yourself or a gift, you're the artist.
                             </p>
                             <Link
-                                href="/products"
+                                href="/categories"
                                 className="group inline-flex items-center text-indigo-600 font-bold hover:text-indigo-700 text-lg"
                             >
                                 <span className="border-b-2 border-indigo-100 group-hover:border-indigo-600 transition-colors">Start Designing</span>
@@ -261,7 +261,7 @@ export default function HowItWorksContent() {
                             Join thousands of creators turning their imagination into reality.
                         </p>
                         <Link
-                            href="/products"
+                            href="/categories"
                             className="inline-flex items-center gap-2 bg-white text-slate-900 px-10 py-5 rounded-full font-bold text-lg hover:bg-indigo-50 hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.3)]"
                         >
                             Start Designing Now <ArrowRight className="w-5 h-5" />

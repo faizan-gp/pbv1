@@ -99,10 +99,13 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 const res = await fetch('/api/categories');
                 const data = await res.json();
                 if (data.success) {
-                    setCategories(data.data);
+                    const categoriesArray = Object.values(data.data);
+                    setCategories(categoriesArray);
                     // Default to first category if none selected
-                    if (!initialData?.category && data.data.length > 0) {
-                        setCategory(data.data[0].name);
+                    // @ts-ignore
+                    if (!initialData?.category && categoriesArray.length > 0) {
+                        // @ts-ignore
+                        setCategory(categoriesArray[0].name);
                     }
                 }
             } catch (e) {
@@ -1025,8 +1028,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none disabled:opacity-50"
                                     >
                                         <option value="">{category ? 'Select Subcategory' : 'Select Category First'}</option>
-                                        {selectedCategoryData?.subcategories?.map((sub: string) => (
-                                            <option key={sub} value={sub}>{sub}</option>
+                                        {selectedCategoryData?.subcategories && Object.values(selectedCategoryData.subcategories).map((sub: any) => (
+                                            <option key={sub.name || sub} value={sub.name || sub}>{sub.name || sub}</option>
                                         ))}
                                     </select>
                                 </div>

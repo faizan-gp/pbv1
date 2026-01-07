@@ -204,7 +204,7 @@ export default async function Home() {
               </p>
             </div>
             <Link
-              href="/products"
+              href="/categories"
               className="hidden md:flex items-center gap-2 font-bold text-slate-900 hover:text-indigo-600 transition-colors"
             >
               View Full Catalog <ArrowRight className="w-5 h-5" />
@@ -236,7 +236,7 @@ export default async function Home() {
 
               return (
                 <Link
-                  href={`/products/${cat.slug}`}
+                  href={`/categories/${cat.slug}`}
                   key={cat.slug}
                   className="group relative flex flex-col justify-between min-h-[320px] p-8 rounded-[2rem] border border-slate-100 bg-slate-50 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 hover:bg-white"
                 >
@@ -269,7 +269,7 @@ export default async function Home() {
 
           {/* Mobile Link Footer */}
           <div className="mt-8 md:hidden">
-            <Link href="/products" className="w-full py-4 rounded-xl border border-slate-200 flex items-center justify-center font-bold text-slate-900 hover:bg-slate-50">
+            <Link href="/categories" className="w-full py-4 rounded-xl border border-slate-200 flex items-center justify-center font-bold text-slate-900 hover:bg-slate-50">
               View Full Catalog
             </Link>
           </div>
@@ -284,7 +284,7 @@ export default async function Home() {
               <h2 className="text-4xl font-black tracking-tight text-slate-900">Popular Canvases</h2>
               <p className="mt-2 text-slate-600">Our best-selling blanks, ready for your customization.</p>
             </div>
-            <Link href="/products" className="group flex items-center text-sm font-bold text-indigo-600">
+            <Link href="/categories" className="group flex items-center text-sm font-bold text-indigo-600">
               View All Blanks <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
@@ -514,7 +514,7 @@ export default async function Home() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
-                  href="/products"
+                  href="/categories"
                   className="h-16 px-10 rounded-full bg-indigo-600 text-white text-lg font-bold flex items-center hover:bg-indigo-500 hover:scale-105 transition-all duration-300"
                 >
                   Start Designing

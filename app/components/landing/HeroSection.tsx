@@ -37,7 +37,7 @@ export default function HeroSection() {
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                         <Link
-                            href="/products"
+                            href="/categories"
                             className="inline-flex h-14 items-center justify-center rounded-full bg-slate-900 px-8 font-bold text-white shadow-xl hover:bg-indigo-600 hover:scale-105 transition-all"
                         >
                             Start Designing Now <ArrowRight className="ml-2 h-5 w-5" />

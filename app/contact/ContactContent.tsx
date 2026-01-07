@@ -1,17 +1,32 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Send, HelpCircle, MessageSquare, AlertCircle } from 'lucide-react';
+import {
+    Mail, Send, HelpCircle, MessageSquare, AlertCircle,
+    ArrowRight, CheckCircle2, Clock, Package
+} from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useToast } from '../components/Toast';
-
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
-// Simple FAQ data to make the page more useful/unique
+// FAQ Data
 const faqs = [
-    { question: "What is the standard production time?", answer: "Most orders are printed and shipped within 2-5 business days." },
-    { question: "Can I return custom items?", answer: "Because items are made-to-order, we only accept returns for damaged or defective goods." },
-    { question: "Where is my tracking number?", answer: "Tracking is emailed automatically as soon as the shipping label is generated." },
+    {
+        icon: Clock,
+        question: "Production Time?",
+        answer: "Orders ship within 2-5 business days."
+    },
+    {
+        icon: Package,
+        question: "Returns?",
+        answer: "We replace damaged or defective goods."
+    },
+    {
+        icon: Send,
+        question: "Tracking?",
+        answer: "Emailed automatically upon shipping."
+    },
 ];
 
 export default function ContactContent() {
@@ -21,8 +36,8 @@ export default function ContactContent() {
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        topic: 'Order Status', // Added a topic selector
-        orderId: '', // Added Order ID field
+        topic: 'Order Status',
+        orderId: '',
         message: ''
     });
 
@@ -41,173 +56,216 @@ export default function ContactContent() {
                 status: 'unread'
             });
 
-            showToast('Message sent! We will get back to you on your given email.', 'success');
+            showToast('Message sent! Check your email soon.', 'success');
             setFormData({ name: '', email: '', topic: 'Order Status', orderId: '', message: '' });
         } catch (error) {
             console.error(error);
-            showToast('Something went wrong. Please try emailing us directly.', 'error');
+            showToast('Something went wrong. Try emailing us.', 'error');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="bg-white min-h-screen">
-            {/* Header Section */}
-            <div className="bg-indigo-900 py-16 sm:py-24">
-                <div className="mx-auto max-w-7xl px-6 lg:px-8 text-center">
-                    <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">Contact Support</h1>
-                    <p className="mt-6 text-lg leading-8 text-indigo-200 max-w-2xl mx-auto">
-                        We are a digital-first team. The fastest way to get help with your Print Brawl order is via the form below or direct email.
+        <div className="bg-white min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-24">
+
+            {/* --- HERO SECTION --- */}
+            <div className="relative isolate overflow-hidden pt-14 pb-24 sm:pb-32">
+                {/* Background Effects */}
+                <div className="absolute inset-0 -z-10 bg-[radial-gradient(45rem_50rem_at_top,theme(colors.indigo.50),theme(colors.white))]" />
+                <div className="absolute inset-y-0 right-1/2 -z-10 -mr-96 w-[200%] origin-top-right skew-x-[-30deg] bg-white/50 shadow-xl shadow-indigo-600/10 ring-1 ring-indigo-50 sm:-mr-80 lg:-mr-96" aria-hidden="true" />
+                <div className="absolute inset-0 -z-20 opacity-[0.03] mix-blend-multiply bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+
+                <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-10 text-center">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6">
+                        Support Center
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-black tracking-tight text-slate-900 mb-6">
+                        We're Here to <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600">
+                            Help You.
+                        </span>
+                    </h1>
+                    <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                        Have a question about your custom order or just want to say hello?
+                        Drop us a message and we'll get back to you within 24 hours.
                     </p>
                 </div>
             </div>
 
-            <div className="mx-auto max-w-7xl px-6 lg:px-8 -mt-12 sm:-mt-16 pb-24">
-                <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-16 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+            {/* --- MAIN CARD --- */}
+            <div className="mx-auto max-w-7xl px-6 lg:px-8 -mt-12 relative z-10">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-white rounded-[2.5rem] shadow-2xl ring-1 ring-slate-900/5 overflow-hidden flex flex-col lg:flex-row"
+                >
 
-                    {/* Left Column: Contact Info & FAQ */}
-                    <div className="lg:col-span-1 space-y-8">
-                        {/* Email Card */}
-                        <div className="rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-900/10">
-                            <div className="flex items-center gap-x-3 mb-4">
-                                <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-                                    <Mail className="h-6 w-6" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900">Email Us</h3>
-                            </div>
-                            <p className="text-gray-600 mb-6">
-                                For general inquiries, partnership opportunities, or if you prefer using your own mail client.
-                            </p>
-                            <a
-                                href="mailto:hello@printbrawl.com"
-                                className="text-indigo-600 font-semibold hover:text-indigo-500 flex items-center gap-2"
-                            >
-                                hello@printbrawl.com <span aria-hidden="true">&rarr;</span>
-                            </a>
+                    {/* LEFT SIDE: FORM */}
+                    <div className="flex-1 p-8 lg:p-16">
+                        <div className="mb-10">
+                            <h2 className="text-3xl font-black text-slate-900 mb-2">Send a Message</h2>
+                            <p className="text-slate-500">Fill out the form below and we'll follow up via email.</p>
                         </div>
 
-                        {/* FAQ Mini Section */}
-                        <div className="rounded-2xl bg-gray-50 p-8 ring-1 ring-gray-900/5">
-                            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900 mb-4">
-                                <HelpCircle className="h-5 w-5 text-gray-400" />
-                                Quick Answers
-                            </h3>
-                            <dl className="space-y-4">
-                                {faqs.map((faq, index) => (
-                                    <div key={index}>
-                                        <dt className="font-medium text-gray-900 text-sm">{faq.question}</dt>
-                                        <dd className="mt-1 text-sm text-gray-600">{faq.answer}</dd>
-                                    </div>
-                                ))}
-                            </dl>
-                        </div>
-                    </div>
-
-                    {/* Right Column: The Form */}
-                    <div className="lg:col-span-2">
-                        <div className="rounded-2xl bg-white shadow-xl ring-1 ring-gray-900/10 p-8 sm:p-12">
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-bold text-gray-900">Send us a message</h2>
-                                <p className="mt-2 text-gray-600">Please include your Order ID if this is regarding an existing purchase.</p>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Your Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        required
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                        placeholder="John Doe"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</label>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        required
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                        placeholder="john@example.com"
+                                    />
+                                </div>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                                    <div>
-                                        <label htmlFor="name" className="block text-sm font-semibold leading-6 text-gray-900">Name</label>
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            id="name"
-                                            required
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            className="mt-2.5 block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label htmlFor="email" className="block text-sm font-semibold leading-6 text-gray-900">Email</label>
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            id="email"
-                                            required
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            className="mt-2.5 block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-                                    <div>
-                                        <label htmlFor="topic" className="block text-sm font-semibold leading-6 text-gray-900">Topic</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Topic</label>
+                                    <div className="relative">
                                         <select
-                                            id="topic"
                                             name="topic"
                                             value={formData.topic}
                                             onChange={handleChange}
-                                            className="mt-2.5 block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all appearance-none cursor-pointer"
                                         >
                                             <option>Order Status</option>
                                             <option>Returns & Refunds</option>
                                             <option>Product Quality Issue</option>
                                             <option>General Inquiry</option>
                                         </select>
-                                    </div>
-                                    <div>
-                                        <label htmlFor="orderId" className="block text-sm font-semibold leading-6 text-gray-900">
-                                            Order ID <span className="text-gray-400 font-normal">(Optional)</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="orderId"
-                                            id="orderId"
-                                            placeholder="#12345"
-                                            value={formData.orderId}
-                                            onChange={handleChange}
-                                            className="mt-2.5 block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                        />
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div>
-                                    <label htmlFor="message" className="block text-sm font-semibold leading-6 text-gray-900">Message</label>
-                                    <textarea
-                                        name="message"
-                                        id="message"
-                                        rows={4}
-                                        required
-                                        value={formData.message}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                        Order ID <span className="text-slate-300 font-normal normal-case">(Optional)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="orderId"
+                                        value={formData.orderId}
                                         onChange={handleChange}
-                                        className="mt-2.5 block w-full rounded-md border-0 px-3.5 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                                        placeholder="#12345"
                                     />
                                 </div>
+                            </div>
 
-                                <div className="flex justify-end pt-2">
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        className="flex w-full sm:w-auto justify-center rounded-md bg-indigo-600 px-5 py-2.5 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed items-center gap-2"
-                                    >
-                                        {isSubmitting ? 'Sending...' : (
-                                            <>
-                                                Send Message <Send className="w-4 h-4" />
-                                            </>
-                                        )}
-                                    </button>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Message</label>
+                                <textarea
+                                    name="message"
+                                    rows={5}
+                                    required
+                                    value={formData.message}
+                                    onChange={handleChange}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all resize-none"
+                                    placeholder="How can we help you today?"
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg shadow-slate-900/20 hover:bg-indigo-600 hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <span>Sending...</span>
+                                ) : (
+                                    <>
+                                        Send Message <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
+                            </button>
+
+                            <div className="flex items-start gap-2 text-xs text-slate-400 mt-4 bg-slate-50 p-3 rounded-lg">
+                                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-slate-500" />
+                                <span>Note: For damaged items, please email us directly with photos attached, as this form supports text only.</span>
+                            </div>
+                        </form>
+                    </div>
+
+                    {/* RIGHT SIDE: INFO & FAQ */}
+                    <div className="lg:w-[400px] bg-slate-900 p-8 lg:p-16 flex flex-col justify-between relative overflow-hidden">
+                        {/* Background Decor */}
+                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
+                        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[400px] h-[400px] bg-indigo-500/20 rounded-full blur-[80px]"></div>
+
+                        <div className="relative z-10">
+                            <h3 className="text-white font-black text-xl mb-6">Contact Info</h3>
+
+                            <div className="space-y-6 mb-12">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-indigo-400 shrink-0">
+                                        <Mail size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Email Us</p>
+                                        <a href="mailto:hello@printbrawl.com" className="text-white font-bold hover:text-indigo-400 transition-colors">hello@printbrawl.com</a>
+                                        <p className="text-slate-500 text-sm mt-1">Response within 24 hours</p>
+                                    </div>
                                 </div>
-                            </form>
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-green-400 shrink-0">
+                                        <CheckCircle2 size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Status</p>
+                                        <p className="text-white font-bold">Systems Operational</p>
+                                        <p className="text-slate-500 text-sm mt-1">Accepting new orders</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h3 className="text-white font-black text-xl mb-6 flex items-center gap-2">
+                                <HelpCircle size={20} className="text-indigo-400" /> FAQ
+                            </h3>
+
+                            <div className="space-y-4">
+                                {faqs.map((faq, i) => (
+                                    <div key={i} className="bg-white/5 border border-white/5 rounded-xl p-4 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <faq.icon size={14} className="text-indigo-400" />
+                                            <span className="text-white font-bold text-sm">{faq.question}</span>
+                                        </div>
+                                        <p className="text-slate-400 text-xs leading-relaxed">
+                                            {faq.answer}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Extra help note */}
-                        <div className="mt-6 flex items-start gap-3 text-sm text-gray-500 px-4">
-                            <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                            <p>For damaged items, please email us directly with photos attached, as our form currently supports text only.</p>
+                        <div className="relative z-10 mt-12 pt-8 border-t border-white/10">
+                            <p className="text-slate-500 text-xs">
+                                &copy; {new Date().getFullYear()} Print Brawl Inc.<br />
+                                Designed for creativity.
+                            </p>
                         </div>
                     </div>
-                </div>
+
+                </motion.div>
             </div>
         </div>
     );
