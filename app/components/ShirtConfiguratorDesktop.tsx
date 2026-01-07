@@ -22,6 +22,7 @@ interface ShirtConfiguratorProps {
     product: any;
     editCartId?: string | null;
     cartUserId?: string | null;
+    viewOnly?: boolean;
 }
 
 const STEPS = [
@@ -34,12 +35,16 @@ const STEPS = [
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CartData } from '@/lib/firestore/carts';
+import { Lock, Unlock } from 'lucide-react';
 
-export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const { showToast } = useToast();
     const editorRef = useRef<DesignEditorRef>(null);
+
+    // Read Only State
+    const [isReadOnly, setIsReadOnly] = useState(!!viewOnly);
 
     // 1. Resolve Local Cart Item
     const localCartItem = React.useMemo(() => {
@@ -633,9 +638,37 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                 <div className="flex-1 flex flex-col items-center justify-center p-12 pb-0">
                     <div className="relative w-full h-full max-w-[800px] max-h-[800px] transition-all duration-500 flex flex-col">
                         <div className="flex-1 relative">
-                            <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'editor' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
-                                <DesignEditor ref={editorRef} onUpdate={handleDesignUpdate} product={product} activeViewId={activeViewId} initialState={designStates[activeViewId]} hideToolbar={true} onSelectionChange={handleSelectionChange} selectedColor={selectedColor} />
+                            {/* Design Editor */}
+                            <div className={cn("absolute inset-0 z-20 transition-opacity duration-300", activeViewMode === 'editor' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')}>
+                                <DesignEditor
+                                    ref={editorRef}
+                                    product={product}
+                                    activeViewId={activeViewId}
+                                    onUpdate={handleDesignUpdate}
+                                    initialState={designStates[activeViewId]}
+                                    onSelectionChange={handleSelectionChange}
+                                    selectedColor={selectedColor}
+                                    readOnly={isReadOnly}
+                                />
                             </div>
+
+                            {/* ADMIN CONTROLS */}
+                            {(cartUserId || viewOnly) && (
+                                <div className="absolute top-4 right-4 z-50">
+                                    <button
+                                        onClick={() => setIsReadOnly(!isReadOnly)}
+                                        className={cn(
+                                            "flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-lg transition-all",
+                                            isReadOnly
+                                                ? "bg-slate-900 text-white hover:bg-slate-800"
+                                                : "bg-red-500 text-white hover:bg-red-600 animate-pulse"
+                                        )}
+                                    >
+                                        {isReadOnly ? <Lock size={14} /> : <Unlock size={14} />}
+                                        {isReadOnly ? "Design Locked (Admin)" : "Editing Enabled"}
+                                    </button>
+                                </div>
+                            )}
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                                 <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
                                     <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />

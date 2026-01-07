@@ -28,9 +28,10 @@ interface DesignEditorProps {
     hideToolbar?: boolean;
     onSelectionChange?: (selection: any | null) => void;
     selectedColor?: ProductColor;
+    readOnly?: boolean;
 }
 
-const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange, selectedColor }, ref) => {
+const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange, selectedColor, readOnly }, ref) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null); // The Right-side container
@@ -46,6 +47,22 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
     const currentDesignZone = activePreview.editorZone || product.designZone;
 
+    // --- Read Only Effect ---
+    useEffect(() => {
+        if (!fabricCanvas) return;
+        fabricCanvas.selection = !readOnly;
+        fabricCanvas.forEachObject((obj) => {
+            obj.selectable = !readOnly;
+            obj.evented = !readOnly;
+        });
+        fabricCanvas.requestRenderAll();
+        if (readOnly) {
+            setFabricCanvas(fabricCanvas); // Trigger re-render or just ensure specific state?
+            // Deselect everything
+            fabricCanvas.discardActiveObject();
+            fabricCanvas.requestRenderAll();
+        }
+    }, [readOnly, fabricCanvas]);
     // --- Responsive Scaling ---
     useEffect(() => {
         const handleResize = () => {

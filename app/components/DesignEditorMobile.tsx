@@ -18,9 +18,10 @@ interface DesignEditorProps {
     activeViewId: string;
     initialState?: any;
     onSelectionChange?: (selection: any | null) => void;
+    readOnly?: boolean;
 }
 
-const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, onSelectionChange }, ref) => {
+const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, onSelectionChange, readOnly }, ref) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,22 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
 
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
     const currentDesignZone = activePreview.editorZone || product.designZone;
+
+    // --- Read Only Effect ---
+    useEffect(() => {
+        if (!fabricCanvas) return;
+        fabricCanvas.selection = !readOnly;
+        fabricCanvas.forEachObject((obj) => {
+            obj.selectable = !readOnly;
+            obj.evented = !readOnly;
+        });
+        fabricCanvas.requestRenderAll();
+        if (readOnly) {
+            setFabricCanvas(fabricCanvas);
+            fabricCanvas.discardActiveObject();
+            fabricCanvas.requestRenderAll();
+        }
+    }, [readOnly, fabricCanvas]);
 
     // --- CANVAS INIT ---
     useEffect(() => {
@@ -43,9 +60,9 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             width: product.canvasSize,
             height: product.canvasSize,
             backgroundColor: 'transparent',
-            selection: false,
+            selection: !readOnly, // Initialize with correct state
             preserveObjectStacking: true,
-            allowTouchScrolling: false, // Important for drag experience
+            allowTouchScrolling: false,
         });
 
         // Optimization for touch

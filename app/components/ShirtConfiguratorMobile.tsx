@@ -19,12 +19,14 @@ interface ShirtConfiguratorProps {
     product: any;
     editCartId?: string | null;
     cartUserId?: string | null;
+    viewOnly?: boolean;
 }
 
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { CartData } from '@/lib/firestore/carts';
 import { useToast } from './Toast';
+import { Lock, Unlock } from 'lucide-react';
 
 const TABS = [
     { id: 'color', label: 'Color', icon: Palette },
@@ -33,11 +35,14 @@ const TABS = [
     { id: 'size', label: 'Size', icon: Ruler },
 ];
 
-export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId, viewOnly }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
     const { showToast } = useToast();
+
+    // Read Only State
+    const [isReadOnly, setIsReadOnly] = useState(!!viewOnly);
 
     // 1. Resolve Local Cart Item
     const localCartItem = React.useMemo(() => {
@@ -319,18 +324,35 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                     {/* Background Noise/Grid */}
                     <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none" />
 
-                    {/* Editor View */}
-                    <div className={cn("absolute inset-0 z-10 transition-opacity duration-300", viewMode === 'editor' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
+                    {/* Editor Layer */}
+                    <div className={cn("absolute inset-0 z-20 transition-opacity duration-300", viewMode === 'editor' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')}>
                         <DesignEditor
                             ref={editorRef}
-                            onUpdate={handleDesignUpdate}
                             product={product}
                             activeViewId={activeViewId}
+                            onUpdate={handleDesignUpdate}
                             initialState={designStates[activeViewId]}
                             onSelectionChange={handleSelectionChange}
+                            readOnly={isReadOnly}
                         />
                     </div>
 
+                    {/* ADMIN CONTROLS - Mobile */}
+                    {(cartUserId || viewOnly) && (
+                        <div className="absolute top-4 right-4 z-50">
+                            <button
+                                onClick={() => setIsReadOnly(!isReadOnly)}
+                                className={cn(
+                                    "flex items-center justify-center p-3 rounded-full shadow-lg transition-all",
+                                    isReadOnly
+                                        ? "bg-slate-900 text-white hover:bg-slate-800"
+                                        : "bg-red-500 text-white hover:bg-red-600 animate-pulse"
+                                )}
+                            >
+                                {isReadOnly ? <Lock size={16} /> : <Unlock size={16} />}
+                            </button>
+                        </div>
+                    )}
                     {/* Preview View */}
                     <div className={cn("absolute inset-0 z-20 bg-[#F3F4F6] flex items-center justify-center transition-opacity duration-300", viewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                         <ProductPreview
