@@ -65,6 +65,8 @@ export async function generateMetadata({ params }: {
     };
 }
 
+import ProductDescriptionServer from '@/app/components/ProductDescriptionServer';
+
 export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const product = await getProduct(id);
@@ -81,7 +83,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 { name: product.name, url: `/products/${product.id}` }
             ]} />
             <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12 py-12 lg:py-20">
-                <ProductDetailView product={product} />
+                <ProductDetailView
+                    product={product}
+                    descriptionSlot={<ProductDescriptionServer product={product} />}
+                />
             </main>
         </div>
     );

@@ -5,15 +5,16 @@ import Link from 'next/link';
 import { Product as IProduct } from '@/lib/firestore/products';
 import { Star, ArrowRight, ShieldCheck, Zap, Package, Heart } from 'lucide-react';
 
-import ProductInfoStacked from './ProductInfoStacked';
+import ProductSizeGuide from './ProductSizeGuide';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 interface ProductDetailViewProps {
     product: IProduct;
+    descriptionSlot?: React.ReactNode;
 }
 
-export default function ProductDetailView({ product }: ProductDetailViewProps) {
+export default function ProductDetailView({ product, descriptionSlot }: ProductDetailViewProps) {
     const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name || null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
@@ -93,14 +94,8 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
                 {/* Desktop Details (Stacked) */}
                 <div className="hidden lg:block pt-8 border-t border-slate-100 mt-2">
-                    <ProductInfoStacked
-                        shortDescription={product.shortDescription}
-                        bulletPoints={product.bulletPoints}
-                        description={product.fullDescription}
-                        features={product.features}
-                        careInstructions={product.careInstructions}
-                        sizeGuide={product.sizeGuide}
-                    />
+                    {descriptionSlot}
+                    <ProductSizeGuide sizeGuide={product.sizeGuide} />
                 </div>
             </div>
 
@@ -198,14 +193,8 @@ export default function ProductDetailView({ product }: ProductDetailViewProps) {
 
                     {/* Mobile Stacked View */}
                     <div className="lg:hidden pt-8 border-t border-slate-100">
-                        <ProductInfoStacked
-                            shortDescription={product.shortDescription}
-                            bulletPoints={product.bulletPoints}
-                            description={product.fullDescription}
-                            features={product.features}
-                            careInstructions={product.careInstructions}
-                            sizeGuide={product.sizeGuide}
-                        />
+                        {descriptionSlot}
+                        <ProductSizeGuide sizeGuide={product.sizeGuide} />
                     </div>
                 </div>
             </div>
