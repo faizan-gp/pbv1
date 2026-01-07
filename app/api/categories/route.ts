@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllCategories, createCategory, seedCategoriesBatch } from '@/lib/firestore/categories';
+import { getAllCategoriesFromDB, createCategory, seedCategoriesBatch } from '@/lib/firestore/categories';
 
 // Seed Data from User's Image
 const SEED_DATA = [
@@ -27,13 +27,12 @@ const SEED_DATA = [
 
 export async function GET() {
     try {
-        const categories = await getAllCategories();
+        let categories = await getAllCategoriesFromDB();
         // Auto-seed if empty
-        if (categories.length === 0) {
+        if (Object.keys(categories).length === 0) {
             await seedCategoriesBatch(SEED_DATA);
-            // Return seed data since we just seeded and fetching again might have latency/consistency delay (though Firestore is usually fast)
-            // But to be safe and fast:
-            return NextResponse.json({ success: true, data: SEED_DATA });
+            // Re-fetch to return the standard Record format
+            categories = await getAllCategoriesFromDB();
         }
         return NextResponse.json({ success: true, data: categories });
     } catch (error) {

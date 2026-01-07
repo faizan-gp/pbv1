@@ -3,13 +3,15 @@ import Link from "next/link";
 import {
   ArrowRight, Truck, ShieldCheck,
   ShoppingBag, Zap, Wand2, Layers,
-  Image as ImageIcon, Leaf, Recycle, CheckCircle2, Star, Mail
+  Image as ImageIcon, Leaf, Recycle, CheckCircle2, Star, Mail,
+  Shirt, Scissors, Baby, Home as HomeIcon
 } from "lucide-react";
 import ProductCard from "./components/ProductCard";
 import HeroSection from "./components/landing/HeroSection";
 import FaqSection from "./components/landing/FaqSection";
 
 import { getAllProducts } from "@/lib/firestore/products";
+import { getCategories, CATEGORIES } from "@/lib/categories";
 
 // --- STATIC DATA ---
 const steps = [
@@ -67,6 +69,7 @@ export const dynamic = 'force-dynamic'; // Ensure fresh data on each request
 
 export default async function Home() {
   const featuredProducts = await getTrendingProducts();
+  const allCategories = await getCategories();
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -92,6 +95,95 @@ export default async function Home() {
 
       {/* --- HERO SECTION --- */}
       <HeroSection />
+
+      {/* --- CATEGORIES SECTION (NEW) --- */}
+      <section className="py-20 bg-white z-10 border-b border-slate-100">
+        <div className="container-width px-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+            <div className="space-y-2">
+              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+                Shop by Category
+              </h2>
+              <p className="text-slate-500 text-lg">Browse our premium custom blanks.</p>
+            </div>
+            <Link href="/products" className="font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group">
+              View Full Catalog <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 md:gap-6 auto-rows-[200px]">
+            {Object.values(allCategories).map((cat, i) => {
+              // Custom Styles per category
+              const styles: Record<string, { icon: any, color: string, span: string, gradient: string }> = {
+                'mens-clothing': {
+                  icon: Shirt,
+                  color: 'text-blue-600',
+                  span: 'col-span-1 md:col-span-2',
+                  gradient: 'from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100'
+                },
+                'womens-clothing': {
+                  icon: Scissors, // Using Scissors as a proxy for fashion/design
+                  color: 'text-pink-600',
+                  span: 'col-span-1 md:col-span-2',
+                  gradient: 'from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100'
+                },
+                'kids-clothing': {
+                  icon: Baby,
+                  color: 'text-yellow-600',
+                  span: 'col-span-1 md:col-span-2 row-span-1',
+                  gradient: 'from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100'
+                },
+                'accessories': {
+                  icon: ShoppingBag,
+                  color: 'text-purple-600',
+                  span: 'col-span-1 md:col-span-3',
+                  gradient: 'from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100'
+                },
+                'home-living': {
+                  icon: HomeIcon,
+                  color: 'text-teal-600',
+                  span: 'col-span-1 md:col-span-3',
+                  gradient: 'from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100'
+                }
+              };
+
+              const style = styles[cat.slug] || {
+                icon: Star,
+                color: 'text-slate-600',
+                span: 'col-span-1',
+                gradient: 'bg-slate-50'
+              };
+              const Icon = style.icon;
+
+              return (
+                <Link
+                  href={`/products/${cat.slug}`}
+                  key={cat.slug}
+                  className={`group relative flex flex-col justify-between p-6 rounded-[2rem] transition-all duration-300 bg-gradient-to-br ${style.gradient} ${style.span}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className={`w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center ${style.color}`}>
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
+                      <ArrowRight className="w-4 h-4 text-slate-900" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 group-hover:translate-x-1 transition-transform mb-1">
+                      {cat.name}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-500 opacity-80 line-clamp-2">
+                      {cat.description.split('.')[0]}
+                    </p>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      </section>
 
       <script
         id="faq-schema"

@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { CategoryData } from '@/lib/categories';
+
 export default function ProductFilters() {
     const [categories, setCategories] = useState<{ name: string, subcategories: string[] }[]>([]);
 
@@ -12,7 +14,12 @@ export default function ProductFilters() {
                 const res = await fetch('/api/categories');
                 const data = await res.json();
                 if (data.success) {
-                    setCategories(data.data);
+                    const rawCategories = data.data as Record<string, CategoryData>;
+                    const formatted = Object.values(rawCategories).map(cat => ({
+                        name: cat.name,
+                        subcategories: cat.subcategories ? Object.values(cat.subcategories).map(s => s.name) : []
+                    }));
+                    setCategories(formatted);
                 }
             } catch (error) {
                 console.error("Failed to fetch categories");
