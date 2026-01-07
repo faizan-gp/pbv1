@@ -18,7 +18,13 @@ import Link from 'next/link';
 interface ShirtConfiguratorProps {
     product: any;
     editCartId?: string | null;
+    cartUserId?: string | null;
 }
+
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { CartData } from '@/lib/firestore/carts';
+import { useToast } from './Toast';
 
 const TABS = [
     { id: 'color', label: 'Color', icon: Palette },
@@ -27,32 +33,69 @@ const TABS = [
     { id: 'size', label: 'Size', icon: Ruler },
 ];
 
-export default function ShirtConfiguratorMobile({ product, editCartId }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
+    const { showToast } = useToast();
 
-    // --- STATE RESTORATION ---
-    const initialCartItem = React.useMemo(() => {
-        if (!editCartId) return null;
+    // 1. Resolve Local Cart Item
+    const localCartItem = React.useMemo(() => {
+        if (!editCartId || cartUserId) return null; // Ignore local if remote user specified
         return cartItems.find(item => item.id === editCartId);
-    }, [editCartId, cartItems]);
+    }, [editCartId, cartItems, cartUserId]);
+
+    // 2. Fetch Remote Cart Item (Async)
+    const [fetchedCartItem, setFetchedCartItem] = useState<any | null>(null);
+
+    React.useEffect(() => {
+        if (cartUserId && editCartId) {
+            const fetchRemoteCart = async () => {
+                try {
+                    const cartRef = doc(db, 'carts', cartUserId);
+                    const snap = await getDoc(cartRef);
+                    if (snap.exists()) {
+                        const data = snap.data() as CartData;
+                        const item = data.items.find(i => i.id === editCartId);
+                        if (item) {
+                            setFetchedCartItem(item);
+                            // Hydrate State
+                            if (item.designState) setDesignStates(item.designState);
+                            if (item.options.color) {
+                                const colorObj = product.colors.find((c: any) => c.name === item.options.color) || product.colors[0];
+                                setSelectedColor(colorObj);
+                            }
+                            if (item.options.size) setSelectedSize(item.options.size);
+                            if (item.previews) setDesignPreviews(item.previews);
+                            setActiveTab('text'); // Go to edit mode
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch remote cart item", err);
+                    showToast("Failed to load customer design", "error");
+                }
+            };
+            fetchRemoteCart();
+        }
+    }, [cartUserId, editCartId, product.colors, showToast]);
+
+    const activeItem = fetchedCartItem || localCartItem;
 
     // --- STATE ---
-    const [activeTab, setActiveTab] = useState(initialCartItem ? 'text' : 'color'); // If editing, go to edit mode
+    const [activeTab, setActiveTab] = useState(activeItem || editCartId ? 'text' : 'color'); // If editing, go to edit mode
     const [selectedColor, setSelectedColor] = useState(
-        initialCartItem?.options.color
-            ? (product.colors.find((c: any) => c.name === initialCartItem.options.color) || product.colors[0])
+        localCartItem?.options.color
+            ? (product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0])
             : (product.colors?.[0] || { name: 'White', hex: '#fff', images: {} })
     );
 
-    const [selectedSize, setSelectedSize] = useState<string>(initialCartItem?.options.size || '');
+    const [selectedSize, setSelectedSize] = useState<string>(localCartItem?.options.size || '');
     const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add
     const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [isAdding, setIsAdding] = useState(false);
 
     // Canvas & View
-    const [designStates, setDesignStates] = useState<Record<string, any>>(initialCartItem?.designState || {});
+    const [designStates, setDesignStates] = useState<Record<string, any>>(localCartItem?.designState || {});
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
     const [viewMode, setViewMode] = useState<'editor' | 'preview'>('editor');

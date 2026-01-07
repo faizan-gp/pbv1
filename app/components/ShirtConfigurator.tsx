@@ -15,6 +15,7 @@ import PrintExpectationModal from './PrintExpectationModal';
 export default function ShirtConfigurator(props: ShirtConfiguratorProps) {
     const searchParams = useSearchParams();
     const editCartId = searchParams.get('editCartId');
+    const cartUserId = searchParams.get('cartUserId'); // remote user id
     const { product } = props;
 
     const [showOnboarding, setShowOnboarding] = React.useState(false);
@@ -37,10 +38,10 @@ export default function ShirtConfigurator(props: ShirtConfiguratorProps) {
                 />
             )}
             <div className="md:hidden">
-                <ShirtConfiguratorMobile {...props} editCartId={editCartId} />
+                <ShirtConfiguratorMobile {...props} editCartId={editCartId} cartUserId={cartUserId} />
             </div>
             <div className="hidden md:block">
-                <ShirtConfiguratorDesktop {...props} editCartId={editCartId} />
+                <ShirtConfiguratorDesktop {...props} editCartId={editCartId} cartUserId={cartUserId} />
             </div>
         </>
     );

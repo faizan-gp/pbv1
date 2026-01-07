@@ -156,7 +156,7 @@ export default function AdminCartsPage() {
                                                 </div>
                                                 {item.designState ? (
                                                     <a
-                                                        href={`/customize/${item.productId}?editCartId=${item.id}&viewOnly=true`}
+                                                        href={`/customize/${item.productId}?editCartId=${item.id}&cartUserId=${selectedCart.userId}&viewOnly=true`}
                                                         target="_blank"
                                                         className="px-4 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center gap-2"
                                                     >
