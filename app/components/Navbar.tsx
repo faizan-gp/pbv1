@@ -26,11 +26,11 @@ export default function Navbar() {
     // Categories Data for Mega Menu
     // Categories Data for Mega Menu
     const categories = [
-        { name: "Men's Clothing", href: "/products?category=Men's+Clothing", icon: Shirt, desc: "T-Shirts, Hoodies & Tanks" },
-        { name: "Women's Clothing", href: "/products?category=Women's+Clothing", icon: Scissors, desc: "Dresses, Tops & Activewear" },
-        { name: "Kids' Clothing", href: "/products?category=Kids'+Clothing", icon: Baby, desc: "Onesies & Youth Tees" },
-        { name: "Home & Living", href: "/products?category=Home+&+Living", icon: Home, desc: "Posters, Mugs & Pillows" },
-        { name: "Accessories", href: "/products?category=Accessories", icon: Watch, desc: "Hats, Phone Cases & Bags" },
+        { name: "Men's Clothing", href: "/categories/mens-clothing", icon: Shirt, desc: "T-Shirts, Hoodies & Tanks" },
+        { name: "Women's Clothing", href: "/categories/womens-clothing", icon: Scissors, desc: "Dresses, Tops & Activewear" },
+        { name: "Kids' Clothing", href: "/categories/kids-clothing", icon: Baby, desc: "Onesies & Youth Tees" },
+        { name: "Home & Living", href: "/categories/home-living", icon: Home, desc: "Posters, Mugs & Pillows" },
+        { name: "Accessories", href: "/categories/accessories", icon: Watch, desc: "Hats, Phone Cases & Bags" },
     ];
 
     return (

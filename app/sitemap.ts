@@ -20,6 +20,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
     }));
 
+    // Categories
+    let categoryEntries: any[] = [];
+    try {
+        const { getCategories } = await import('@/lib/categories');
+        const categories = await getCategories();
+
+        categoryEntries = Object.values(categories).flatMap(cat => {
+            const catEntry = {
+                url: `${baseUrl}/categories/${cat.slug}`,
+                lastModified: new Date(),
+                changeFrequency: 'weekly' as const,
+                priority: 0.8,
+            };
+
+            const subEntries = cat.subcategories ? Object.values(cat.subcategories).map(sub => ({
+                url: `${baseUrl}/categories/${cat.slug}/${sub.slug}`,
+                lastModified: new Date(),
+                changeFrequency: 'weekly' as const,
+                priority: 0.7,
+            })) : [];
+
+            return [catEntry, ...subEntries];
+        });
+    } catch (error) {
+        console.error('Failed to fetch categories for sitemap:', error);
+    }
+
     // Static pages
     const staticPages = [
         {
@@ -84,5 +111,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
     ];
 
-    return [...staticPages, ...productEntries];
+    return [...staticPages, ...categoryEntries, ...productEntries];
 }

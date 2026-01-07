@@ -46,7 +46,7 @@ export default function CategoryPage({ category, products }: CategoryPageProps) 
                             {Object.entries(category.subcategories).map(([key, sub]) => (
                                 <Link
                                     key={key}
-                                    href={`/products/${category.slug}/${sub.slug}`}
+                                    href={`/categories/${category.slug}/${sub.slug}`}
                                     className="px-5 py-2 rounded-full bg-slate-100 text-slate-700 text-sm font-bold hover:bg-slate-900 hover:text-white transition-all border border-transparent hover:shadow-md"
                                 >
                                     {sub.name}

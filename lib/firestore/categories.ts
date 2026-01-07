@@ -110,7 +110,8 @@ export async function getAllCategoriesFromDB(): Promise<Record<string, CategoryD
 
         snapshot.forEach((doc) => {
             const data = doc.data();
-            const slug = doc.id; // Assuming ID is slug
+            // FIX: Prefer "slug" field from DB, otherwise slugify name, otherwise use ID
+            const slug = data.slug || (data.name ? slugify(data.name) : doc.id);
 
             let subcategories: Record<string, CategoryData> = {};
 

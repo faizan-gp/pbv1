@@ -96,94 +96,6 @@ export default async function Home() {
       {/* --- HERO SECTION --- */}
       <HeroSection />
 
-      {/* --- CATEGORIES SECTION (NEW) --- */}
-      <section className="py-20 bg-white z-10 border-b border-slate-100">
-        <div className="container-width px-4">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-            <div className="space-y-2">
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-                Shop by Category
-              </h2>
-              <p className="text-slate-500 text-lg">Browse our premium custom blanks.</p>
-            </div>
-            <Link href="/products" className="font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group">
-              View Full Catalog <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-4 md:gap-6 auto-rows-[200px]">
-            {Object.values(allCategories).map((cat, i) => {
-              // Custom Styles per category
-              const styles: Record<string, { icon: any, color: string, span: string, gradient: string }> = {
-                'mens-clothing': {
-                  icon: Shirt,
-                  color: 'text-blue-600',
-                  span: 'col-span-1 md:col-span-2',
-                  gradient: 'from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100'
-                },
-                'womens-clothing': {
-                  icon: Scissors, // Using Scissors as a proxy for fashion/design
-                  color: 'text-pink-600',
-                  span: 'col-span-1 md:col-span-2',
-                  gradient: 'from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100'
-                },
-                'kids-clothing': {
-                  icon: Baby,
-                  color: 'text-yellow-600',
-                  span: 'col-span-1 md:col-span-2 row-span-1',
-                  gradient: 'from-yellow-50 to-orange-50 hover:from-yellow-100 hover:to-orange-100'
-                },
-                'accessories': {
-                  icon: ShoppingBag,
-                  color: 'text-purple-600',
-                  span: 'col-span-1 md:col-span-3',
-                  gradient: 'from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100'
-                },
-                'home-living': {
-                  icon: HomeIcon,
-                  color: 'text-teal-600',
-                  span: 'col-span-1 md:col-span-3',
-                  gradient: 'from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100'
-                }
-              };
-
-              const style = styles[cat.slug] || {
-                icon: Star,
-                color: 'text-slate-600',
-                span: 'col-span-1',
-                gradient: 'bg-slate-50'
-              };
-              const Icon = style.icon;
-
-              return (
-                <Link
-                  href={`/products/${cat.slug}`}
-                  key={cat.slug}
-                  className={`group relative flex flex-col justify-between p-6 rounded-[2rem] transition-all duration-300 bg-gradient-to-br ${style.gradient} ${style.span}`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className={`w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center ${style.color}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0">
-                      <ArrowRight className="w-4 h-4 text-slate-900" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 group-hover:translate-x-1 transition-transform mb-1">
-                      {cat.name}
-                    </h3>
-                    <p className="text-sm font-medium text-slate-500 opacity-80 line-clamp-2">
-                      {cat.description.split('.')[0]}
-                    </p>
-                  </div>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </section>
 
       <script
         id="faq-schema"
@@ -274,6 +186,92 @@ export default async function Home() {
               </div>
             </div>
 
+          </div>
+        </div>
+      </section>
+
+      {/* --- CATEGORIES SECTION (NEW) --- */}
+      <section className="py-24 bg-white">
+        <div className="container-width px-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 mb-4">
+                Shop by Category
+              </h2>
+              <p className="text-lg text-slate-500 font-medium">
+                Premium blanks designed for your brand. Explore our curated collections.
+              </p>
+            </div>
+            <Link
+              href="/products"
+              className="hidden md:flex items-center gap-2 font-bold text-slate-900 hover:text-indigo-600 transition-colors"
+            >
+              View Full Catalog <ArrowRight className="w-5 h-5" />
+            </Link>
+          </div>
+
+          {/* Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Object.values(allCategories).map((cat, index) => {
+              // Icon Mapping
+              const iconMap: Record<string, any> = {
+                'mens-clothing': Shirt,
+                'womens-clothing': Scissors,
+                'kids-clothing': Baby,
+                'accessories': ShoppingBag,
+                'home-living': HomeIcon
+              };
+              const Icon = iconMap[cat.slug] || Star;
+
+              // Staggered color accents for visual variety
+              const colors = [
+                'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white',
+                'bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white',
+                'bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white',
+                'bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white',
+                'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white',
+              ];
+              const colorClass = colors[index % colors.length];
+
+              return (
+                <Link
+                  href={`/products/${cat.slug}`}
+                  key={cat.slug}
+                  className="group relative flex flex-col justify-between min-h-[320px] p-8 rounded-[2rem] border border-slate-100 bg-slate-50 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 hover:bg-white"
+                >
+                  {/* Background Decor - Subtle Gradient Blob */}
+                  <div className="absolute -right-20 -top-20 w-64 h-64 bg-slate-200/20 rounded-full blur-3xl group-hover:bg-indigo-50/50 transition-colors" />
+
+                  <div className="relative z-10">
+                    {/* Icon */}
+                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300 shadow-sm ${colorClass}`}>
+                      <Icon className="w-10 h-10" strokeWidth={1.5} />
+                    </div>
+
+                    <h3 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+                      {cat.name}
+                    </h3>
+                    <p className="text-slate-500 font-medium leading-relaxed max-w-[80%]">
+                      {cat.description || `Premium quality ${cat.name.toLowerCase()} for your custom designs.`}
+                    </p>
+                  </div>
+
+                  {/* Bottom Action Area */}
+                  <div className="relative z-10 flex items-center gap-3 mt-8 font-bold text-slate-900 opacity-60 group-hover:opacity-100 group-hover:text-indigo-600 transition-all">
+                    <span>Explore Collection</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Mobile Link Footer */}
+          <div className="mt-8 md:hidden">
+            <Link href="/products" className="w-full py-4 rounded-xl border border-slate-200 flex items-center justify-center font-bold text-slate-900 hover:bg-slate-50">
+              View Full Catalog
+            </Link>
           </div>
         </div>
       </section>
