@@ -135,7 +135,7 @@ export default function AdminCartsPage() {
 
                             <div className="space-y-4">
                                 {selectedCart.items.map((item, idx) => (
-                                    <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 flex gap-6">
+                                    <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-6">
                                         {/* Preview Image */}
                                         <div className="w-32 h-32 bg-slate-50 rounded-lg border border-slate-100 relative shrink-0">
                                             <img src={item.image} alt={item.name} className="w-full h-full object-contain p-2 mix-blend-multiply" />
@@ -145,26 +145,50 @@ export default function AdminCartsPage() {
                                         </div>
 
                                         <div className="flex-1">
-                                            <h4 className="font-bold text-slate-900 mb-1">{item.name}</h4>
-                                            <div className="text-xs text-slate-500 mb-4 space-y-1">
-                                                <div>Color: {item.options.color}</div>
-                                                <div>Size: {item.options.size}</div>
-                                                <div>Quantity: {item.quantity}</div>
-                                            </div>
-
-                                            {item.designState ? (
-                                                <div className="flex gap-2">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-slate-900 mb-1">{item.name}</h4>
+                                                    <div className="text-xs text-slate-500 mb-3 space-y-1">
+                                                        <div>Color: {item.options.color}</div>
+                                                        <div>Size: {item.options.size}</div>
+                                                        <div>Quantity: {item.quantity}</div>
+                                                    </div>
+                                                </div>
+                                                {item.designState ? (
                                                     <a
                                                         href={`/customize/${item.productId}?editCartId=${item.id}&viewOnly=true`}
                                                         target="_blank"
-                                                        className="px-4 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                                        className="px-4 py-2 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100 hover:bg-indigo-100 transition-colors flex items-center gap-2"
                                                     >
-                                                        Open in Configurator
+                                                        <Eye size={14} /> Open in Configurator
                                                     </a>
-                                                    {/* We could restore the design state here if we wanted to view it directly */}
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">No design data</span>
+                                                )}
+                                            </div>
+
+                                            {/* Design Assets Section */}
+                                            {item.previews && Object.keys(item.previews).length > 0 && (
+                                                <div className="mt-4 pt-4 border-t border-slate-100">
+                                                    <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Design Assets</h5>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {Object.entries(item.previews).map(([viewId, url], i) => (
+                                                            <div key={i} className="flex flex-col items-center gap-2 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                                                                <span className="text-[10px] font-semibold text-slate-400 uppercase">{viewId}</span>
+                                                                <div className="relative w-16 h-16 bg-white rounded border border-slate-200">
+                                                                    <img src={url} className="w-full h-full object-contain p-1" />
+                                                                </div>
+                                                                <a
+                                                                    href={url}
+                                                                    download={`${item.name}-${viewId}-design.png`}
+                                                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                                                                >
+                                                                    Download PNG
+                                                                </a>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 italic">No design data</span>
                                             )}
                                         </div>
                                     </div>
