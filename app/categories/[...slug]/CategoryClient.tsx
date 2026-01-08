@@ -20,16 +20,19 @@ interface ExtendedProduct extends Product {
 interface CategoryClientProps {
     category: CategoryData | null;
     products: Product[];
+    subcategories: { slug: string, name: string }[];
+    currentSubcategorySlug: string | null;
+    basePath: string;
 }
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'newest';
 
-export default function CategoryClient({ category, products }: CategoryClientProps) {
+export default function CategoryClient({ category, products, subcategories, currentSubcategorySlug, basePath }: CategoryClientProps) {
     // --- State ---
     const [viewMode, setViewMode] = useState<ViewMode>('grid');
     const [sortBy, setSortBy] = useState<SortOption>('featured');
-    const [selectedSubcategory, setSelectedSubcategory] = useState<string | 'all'>('all');
+    // removed selectedSubcategory state
 
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -38,24 +41,11 @@ export default function CategoryClient({ category, products }: CategoryClientPro
 
     // --- Derived Data ---
 
-    // 1. Extract Unique Subcategories
-    const subcategories = useMemo(() => {
-        if (!category?.subcategories) return [];
-        return Object.entries(category.subcategories).map(([slug, data]) => ({
-            slug,
-            name: data.name || slug
-        }));
-    }, [category]);
-
     // 2. Filter & Sort Logic
     const filteredProducts = useMemo(() => {
         let result = [...products] as ExtendedProduct[];
 
-        // Subcategory Filter
-        if (selectedSubcategory !== 'all') {
-            const target = selectedSubcategory.toLowerCase();
-            result = result.filter(p => p.subcategory?.toLowerCase() === target);
-        }
+        // Subcategory Filter REMOVED (handled by server/URL)
 
         // Search Filter
         if (searchQuery) {
@@ -79,12 +69,11 @@ export default function CategoryClient({ category, products }: CategoryClientPro
         }
 
         return result;
-    }, [products, sortBy, searchQuery, priceRange, selectedSubcategory]);
+    }, [products, sortBy, searchQuery, priceRange]); // removed selectedSubcategory dependency
 
     const clearAll = () => {
         setSearchQuery('');
         setPriceRange({ min: '', max: '' });
-        setSelectedSubcategory('all');
         setSortBy('featured');
     };
 
@@ -107,6 +96,12 @@ export default function CategoryClient({ category, products }: CategoryClientPro
                         <span className="mx-3 text-slate-300">/</span>
                         <Link href="/categories" className="hover:text-indigo-600 transition-colors">Collections</Link>
                         <span className="mx-3 text-slate-300">/</span>
+                        {category.parentCategory && (
+                            <>
+                                <Link href={basePath} className="hover:text-indigo-600 transition-colors">{category.parentCategory}</Link>
+                                <span className="mx-3 text-slate-300">/</span>
+                            </>
+                        )}
                         <span className="text-indigo-600">{category.name}</span>
                     </nav>
 
@@ -131,31 +126,31 @@ export default function CategoryClient({ category, products }: CategoryClientPro
                 <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-indigo-50/50 shadow-sm">
                     <div className="mx-auto max-w-7xl px-6 lg:px-8 py-4">
                         <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide no-scrollbar pb-1">
-                            <button
-                                onClick={() => setSelectedSubcategory('all')}
+                            <Link
+                                href={basePath}
                                 className={cn(
                                     "px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border",
-                                    selectedSubcategory === 'all'
+                                    !currentSubcategorySlug
                                         ? "bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20"
                                         : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
                                 )}
                             >
                                 View All
-                            </button>
+                            </Link>
 
                             {subcategories.map((sub) => (
-                                <button
+                                <Link
                                     key={sub.slug}
-                                    onClick={() => setSelectedSubcategory(sub.slug)}
+                                    href={`${basePath}/${sub.slug}`}
                                     className={cn(
                                         "px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all border capitalize",
-                                        selectedSubcategory === sub.slug
+                                        currentSubcategorySlug === sub.slug
                                             ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-600/20"
                                             : "bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600"
                                     )}
                                 >
                                     {sub.name}
-                                </button>
+                                </Link>
                             ))}
                         </div>
                     </div>
@@ -216,7 +211,7 @@ export default function CategoryClient({ category, products }: CategoryClientPro
                             </div>
 
                             {/* Reset Button */}
-                            {(searchQuery || priceRange.min || priceRange.max || selectedSubcategory !== 'all') && (
+                            {(searchQuery || priceRange.min || priceRange.max) && (
                                 <button
                                     onClick={clearAll}
                                     className="w-full py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:text-red-500 hover:border-red-200 transition-all shadow-sm"
@@ -404,11 +399,11 @@ export default function CategoryClient({ category, products }: CategoryClientPro
                                 <div>
                                     <h3 className="font-bold text-slate-900 mb-4 text-sm uppercase tracking-wide">Subcategory</h3>
                                     <div className="space-y-2">
-                                        <button onClick={() => setSelectedSubcategory('all')} className={cn("w-full text-left px-4 py-3 rounded-2xl text-sm font-bold", selectedSubcategory === 'all' ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-600")}>View All</button>
+                                        <Link href={basePath} className={cn("block w-full text-left px-4 py-3 rounded-2xl text-sm font-bold", !currentSubcategorySlug ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-600")}>View All</Link>
                                         {subcategories.map(sub => (
-                                            <button key={sub.slug} onClick={() => setSelectedSubcategory(sub.slug)} className={cn("w-full text-left px-4 py-3 rounded-2xl text-sm font-bold capitalize", selectedSubcategory === sub.slug ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-600")}>
+                                            <Link key={sub.slug} href={`${basePath}/${sub.slug}`} className={cn("block w-full text-left px-4 py-3 rounded-2xl text-sm font-bold capitalize", currentSubcategorySlug === sub.slug ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-600")}>
                                                 {sub.name}
-                                            </button>
+                                            </Link>
                                         ))}
                                     </div>
                                 </div>

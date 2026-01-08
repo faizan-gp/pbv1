@@ -80,34 +80,32 @@ export default async function CategoryPage({ params }: PageProps) {
         if (!p.category) return false;
 
         // Normalization helper
-        const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-');
+        const normalize = (s: string) => s.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
 
         const productCatSlug = normalize(p.category);
         const targetCatSlug = normalize(category!.slug || category!.name); // category is not null here
 
         if (isSubcategory) {
             // Must match category AND subcategory
-            // Since we don't have the parent category object easily here for the product check unless we assume strict naming.
-            // But wait, if it's a subcategory page, `category` object IS the subcategory data.
-
-            // Product should have:
-            // category: "Women's Clothing" (or slug)
-            // subcategory: "Sweatshirts" (or slug)
+            const parentSlug = normalize(slug[0]);
 
             // Check Parent Category Match
-            // We need to know the parent category of this current page.
-            // slug[0] is the parent category slug.
-
-            const parentSlug = normalize(slug[0]);
-            // p.category should match parentSlug
-            const productParentMatch = productCatSlug === parentSlug || normalize(p.category) === normalize(slug[0]); // redundant but safe
+            // Support both "Women's Clothing" (Name) and "womens-clothing" (Slug)
+            const productParentMatch = productCatSlug === parentSlug || productCatSlug === normalize(category!.parentCategory || '');
 
             // Check Subcategory Match
             const productSub = p.subcategory ? normalize(p.subcategory) : '';
-            const targetSub = normalize(category!.name); // category here is the subcategory object
+            const targetSub = normalize(category!.name);
             const targetSubSlug = normalize(category!.slug);
+            const urlSub = normalize(slug[1]); // Direct URL match
 
-            return productParentMatch && (productSub === targetSub || productSub === targetSubSlug);
+            const isMatch = productParentMatch && (
+                productSub === targetSub ||
+                productSub === targetSubSlug ||
+                productSub === urlSub
+            );
+
+            return isMatch;
         } else {
             // specific category page (e.g. Men's Clothing)
             // Match category only.
@@ -115,10 +113,25 @@ export default async function CategoryPage({ params }: PageProps) {
         }
     });
 
+    // Prepare subcategories array for client
+    const subcategoriesMap = isSubcategory
+        ? (await getCategoryBySlug(slug[0]))?.subcategories
+        : category.subcategories;
+
+    const subcategoriesList = subcategoriesMap
+        ? Object.entries(subcategoriesMap).map(([s, d]) => ({ slug: s, name: d.name || s }))
+        : [];
+
+    const basePath = `/categories/${slug[0]}`;
+    const currentSubcategorySlug = isSubcategory ? slug[1] : null;
+
     return (
         <CategoryClient
             category={category}
             products={filteredProducts}
+            subcategories={subcategoriesList}
+            currentSubcategorySlug={currentSubcategorySlug}
+            basePath={basePath}
         />
     );
 }
