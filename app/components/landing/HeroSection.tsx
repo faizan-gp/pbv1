@@ -28,11 +28,11 @@ export default function HeroSection() {
 
                     <h1 className="text-5xl font-black tracking-tighter text-slate-900 sm:text-6xl lg:text-7xl leading-[0.95] mb-6">
                         Create Custom <br />
-                        Apparel in <span className="text-indigo-600">Minutes.</span>
+                        Products in <span className="text-indigo-600">Minutes.</span>
                     </h1>
 
                     <p className="text-xl text-slate-600 leading-relaxed mb-10 text-balance font-medium">
-                        The easiest way to design your own clothes. Pick a product, upload your photo or logo, and we'll print and ship it to your door.
+                        The easiest way to design your own custom products. Pick an item, upload your photo or logo, and we'll print and ship it to your door.
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
