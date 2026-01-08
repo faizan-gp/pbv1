@@ -86,7 +86,7 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                                         : "border-transparent opacity-60 hover:opacity-100"
                                 )}
                             >
-                                <img src={img} className="w-full h-full object-contain p-2 mix-blend-multiply" alt="" />
+                                <img src={img} className="w-full h-full object-contain p-2 mix-blend-multiply" alt={`${product.name} view ${i + 1}`} />
                             </button>
                         ))}
                     </div>

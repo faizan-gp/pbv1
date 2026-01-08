@@ -11,6 +11,15 @@ import CategoryPage from '@/app/components/CategoryPage';
 
 export const dynamic = 'force-dynamic';
 
+// Pre-render all product pages at build time
+export async function generateStaticParams() {
+    const products = await getAllProducts();
+
+    return products.map((product) => ({
+        slug: [product.id],
+    }));
+}
+
 async function getProduct(id: string) {
     const product = await getProductById(id);
     if (!product) return null;

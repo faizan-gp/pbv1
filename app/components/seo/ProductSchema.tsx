@@ -9,7 +9,7 @@ export default function ProductSchema({ product }: { product: Product }) {
             product.image,
             ...(product.listingImages?.map(img => img.url) || [])
         ],
-        "description": product.shortDescription || product.fullDescription || `Custom ${product.name}`,
+        "description": product.fullDescription || product.shortDescription || `Custom ${product.name}`,
         "sku": product.id,
         "mpn": product.id,
         "brand": {

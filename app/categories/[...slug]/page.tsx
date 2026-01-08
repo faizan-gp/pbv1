@@ -4,6 +4,7 @@ import { Metadata } from 'next';
 import { getCategoryBySlug, getSubcategoryBySlug, CategoryData } from '@/lib/categories';
 import { getAllProducts, Product } from '@/lib/firestore/products';
 import CategoryClient from './CategoryClient';
+import CategorySchema from '@/app/components/seo/CategorySchema';
 
 export const dynamic = 'force-dynamic';
 
@@ -126,12 +127,15 @@ export default async function CategoryPage({ params }: PageProps) {
     const currentSubcategorySlug = isSubcategory ? slug[1] : null;
 
     return (
-        <CategoryClient
-            category={category}
-            products={filteredProducts}
-            subcategories={subcategoriesList}
-            currentSubcategorySlug={currentSubcategorySlug}
-            basePath={basePath}
-        />
+        <>
+            <CategorySchema category={category} />
+            <CategoryClient
+                category={category}
+                products={filteredProducts}
+                subcategories={subcategoriesList}
+                currentSubcategorySlug={currentSubcategorySlug}
+                basePath={basePath}
+            />
+        </>
     );
 }

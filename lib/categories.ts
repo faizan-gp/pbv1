@@ -10,6 +10,7 @@ export interface CategoryData {
     keywords: string[];
     parentCategory?: string;
     subcategories?: Record<string, CategoryData>; // Recursive definition for subcategories
+    longDescription?: string; // SEO Pillar Content (300-500 words)
 }
 
 // Fallback / Static Cache
@@ -21,6 +22,22 @@ export const CATEGORIES: Record<string, CategoryData> = {
         metaTitle: "Custom Men's Clothing & Apparel | Print Brawl",
         metaDescription: "Design your own men's t-shirts, hoodies, and more. High-quality print-on-demand men's clothing made in the USA.",
         keywords: ["custom mens clothing", "mens custom t-shirts", "custom hoodies for men", "print on demand mens apparel"],
+        longDescription: `
+## Premium Custom Men's Clothing
+
+Elevate your wardrobe or build your brand with Print Brawl's extensive collection of custom men's clothing. We believe that personal style shouldn't be limited by what's on the rack. That's why we offer a premium range of men's apparel ready for your unique designs, logos, and art.
+
+### Quality You Can Feel
+Our men's collection isn't just about printing; it's about wearing. We source high-quality fabrics—from heavyweight 100% cotton tees that stand the test of time to moisture-wicking sportswear designed for performance. Whether you're creating merchandise for a band, uniforms for a startup, or just a one-off graphic tee for yourself, the canvas matters.
+
+### Styles for Every Occasion
+*   **Custom T-Shirts:** The staple of any closet. Choose from classic boxy cuts, modern fitted styles, or vintage tri-blends. Perfect for logos, slogans, and artistic prints.
+*   **Hoodies & Sweatshirts:** When the temperature drops, layer up with our cozy, durable fleece. Our custom hoodies feature double-lined hoods and reinforced stitching.
+*   **Activewear:** Hit the gym in style. Our performance tees and shorts are designed to move with you, featuring breathable fabrics that handle sweat like a pro.
+
+### Print on Demand Made Simple
+Gone are the days of bulk ordering 50 shirts just to get one. With Print Brawl's state-of-the-art Direct-to-Garment (DTG) technology, we print your men's clothing order on demand. This means sustainable production, zero waste, and no minimum order quantities for you.
+        `,
         subcategories: {
             'sweatshirts': { slug: 'sweatshirts', name: 'Sweatshirts', description: 'Stay warm and stylish with our premium custom sweatshirts. Soft blends tailored for everyday comfort.', metaTitle: '', metaDescription: '', keywords: [] },
             'hoodies': { slug: 'hoodies', name: 'Hoodies', description: 'The ultimate canvas for your creativity. Heavyweight, durable, and super soft hoodies.', metaTitle: '', metaDescription: '', keywords: [] },
@@ -41,6 +58,22 @@ export const CATEGORIES: Record<string, CategoryData> = {
         metaTitle: "Custom Women's Clothing & Apparel | Print Brawl",
         metaDescription: "Create custom women's t-shirts, tank tops, and sweatshirts. Premium quality and fast shipping.",
         keywords: ["custom womens clothing", "womens custom t-shirts", "custom ladies apparel", "print on demand womens fashion"],
+        longDescription: `
+## Retail-Ready Custom Women's Fashion
+
+Step into the world of limitless fashion with Print Brawl's custom women's clothing line. We've curated a selection of apparel that combines contemporary fits with superior printability, giving you the power to become your own fashion designer.
+
+### Designed for Her
+Forget "unisex" sizing that never quite fits right. Our women's collection features cuts tailored for a feminine silhouette. From flowy tank tops perfect for summer festivals to cropped hoodies that pair perfectly with high-waisted jeans, we prioritize style and fit. We offer a wide range of sizes to ensure inclusivity for every body type.
+
+### Create Your Signature Look
+*   **Statement Tees:** Turn a simple t-shirt into a conversation starter. Our high-resolution printing captures every detail of your artwork, illustration, or typography.
+*   **Cozy Loungewear:** Design the ultimate work-from-home uniform with our ultra-soft sweatshirts and joggers.
+*   **Dresses & Skirts:** Yes, we print on those too! Create all-over print patterns for a truly unique garment that you can't find in stores.
+
+### Sustainable & fast
+Fashion shouldn't cost the earth. By utilizing print-on-demand technology, we produce only what is ordered, significantly reducing textile waste compared to traditional fast fashion. Plus, with our US-based production partners, you get your custom women's apparel fast—often shipping within 2-3 business days.
+        `,
         subcategories: {
             'sweatshirts': { slug: 'sweatshirts', name: 'Sweatshirts', description: 'Cozy up in style with our collection of soft, custom printed sweatshirts.', metaTitle: '', metaDescription: '', keywords: [] },
             't-shirts': { slug: 't-shirts', name: 'T-shirts', description: 'From fitted to relaxed, find the perfect women\'s tee for your unique designs.', metaTitle: '', metaDescription: '', keywords: [] },
@@ -62,6 +95,23 @@ export const CATEGORIES: Record<string, CategoryData> = {
         metaTitle: "Custom Kids' Clothing | Print Brawl",
         metaDescription: "Design custom t-shirts and hoodies for kids. Safe, durable, and comfortable.",
         keywords: ["custom kids clothing", "kids t-shirts", "custom baby clothes"],
+        longDescription: `
+## Durable, Fun, and Safe Custom Kids' Clothing
+
+Kids play hard, so their clothes need to work harder. At Print Brawl, our custom kids' collection is built to withstand the playground test while handling your adorable designs with care.
+
+### Safety First
+We know that what touches your child's skin matters. That's why we prioritize CPSIA-compliant fabrics and inks. Our water-based printing process is non-toxic and eco-friendly, ensuring a safe product for babies and toddlers.
+
+### Growing with Style
+From onesies for the tiniest trendsetters to hoodies for cool elementary kids, our range spans all ages.
+*   **Baby Clothing:** Ultra-soft onesies with convenient snap closures. Perfect for "New to the Crew" announcements or baby shower gifts.
+*   **Kids' Tees:** Durable cotton shirts that hold their shape wash after wash (because we know you'll be washing them a lot!).
+*   **Hoodies:** Warm layers for chilly mornings at the bus stop or weekend adventures.
+
+### Create Memories
+Custom kids' clothing is perfect for birthdays, family vacations, or just showing off their unique personality. Let them draw a picture and print it on a shirt—it's a wearable masterpiece they'll be proud of.
+        `,
         subcategories: {
             't-shirts': { slug: 't-shirts', name: 'T-shirts', description: 'Soft, durable tees built for playtime.', metaTitle: '', metaDescription: '', keywords: [] },
             'long-sleeves': { slug: 'long-sleeves', name: 'Long Sleeves', description: 'Cozy long sleeves for cooler days.', metaTitle: '', metaDescription: '', keywords: [] },
@@ -79,6 +129,25 @@ export const CATEGORIES: Record<string, CategoryData> = {
         metaTitle: "Custom Accessories | Print Brawl",
         metaDescription: "Create custom accessories. Phone cases, bags, hats, and more.",
         keywords: ["custom accessories", "custom phone cases", "custom bags"],
+        longDescription: `
+## Custom Accessories for Every Lifestyle
+
+Complete your look and express your personality with custom accessories from Print Brawl. Accessories are often the most fun and versatile canvas for creativity, allowing you to brand everyday items or create affordable, high-margin merchandise.
+
+### Tech in Style
+Your phone goes everywhere with you—make it match your vibe. Our custom phone cases for iPhone and Samsung aren't just pretty; they're tough. Featuring dual-layer protection and vibrant, wrap-around printing, they turn your device into a piece of art. Top it off with a custom mouse pad to upgrade your workspace.
+
+### Bags & Totes
+From grocery runs to gym sessions, carry your stuff in style. our custom tote bags are a bestseller for a reason: practical, eco-friendly, and a fantastic billboard for your art. For something sturdier, check out our backpacks and accessory pouches, perfect for organizing your life on the go.
+
+### Head-to-Toe Customization
+*   **Hats:** Snapbacks, dad hats, beanies, and bucket hats. Embroidery or print, we've got your head covered.
+*   **Socks:** Add a pop of fun to any outfit with custom printed socks. A great gift item!
+*   **Jewelry:** Unique engraved pieces that add a touch of elegance to your brand.
+
+### The Perfect Gift
+Custom accessories make the best gifts. A personalized mug for a coworker, a custom phone case for a teenager, or a tote bag for Mom—it's thoughtful, unique, and easy to design in minutes.
+        `,
         subcategories: {
             'jewelry': { slug: 'jewelry', name: 'Jewelry', description: 'Elegant custom jewelry pieces.', metaTitle: '', metaDescription: '', keywords: [] },
             'phone-cases': { slug: 'phone-cases', name: 'Phone Cases', description: 'Protect your tech with style. Custom cases for iPhone and Samsung.', metaTitle: '', metaDescription: '', keywords: [] },
@@ -106,6 +175,24 @@ export const CATEGORIES: Record<string, CategoryData> = {
         metaTitle: "Custom Home Decor | Print Brawl",
         metaDescription: "Design your own home decor. Mugs, pillows, blankets, and more.",
         keywords: ["custom home decor", "custom mugs", "custom pillows"],
+        longDescription: `
+## Transform Your Space with Custom Home & Living
+
+Your home should tell your story. With Print Brawl's Home & Living collection, you can move beyond mass-produced decor and create a space that is uniquely yours. From the coffee table to the bedroom, we offer custom printed items that combine functionality with your artistic flair.
+
+### Decor That Speaks
+*   **Canvas & Posters:** Turn your favorite photos or digital art into gallery-quality displays. Our high-resolution prints ensure vibrant colors that pop on any wall.
+*   **Pillows & Blankets:** Cozy up with custom-printed fleece blankets and accent pillows. Mix and match patterns to refresh your living room seasonally without a full renovation.
+
+### Kitchen & Dining
+Start your morning right with a custom mug that makes you smile. Our ceramic and enamel mugs are perfect for branding, gifts, or just enjoying your daily brew. We also offer custom tumblers and water bottles to keep you hydrated in style.
+
+### The Ultimate Housewarming Gift
+Struggling to find a gift for a new homeowner? A personalized doormat, a set of custom coasters, or an engraved cutting board adds a personal touch that a gift card just can't match.
+
+### Print on Demand for Home
+Whether you're an interior designer looking to sell your patterns or a homeowner wanting a specific color scheme, our POD service allows for complete customization with no inventory risk.
+        `,
         subcategories: {
             'mugs': { slug: 'mugs', name: 'Mugs', description: 'Sip in style with custom ceramic and enamel mugs.', metaTitle: '', metaDescription: '', keywords: [] },
             'candles': { slug: 'candles', name: 'Candles', description: 'Scented and unscented candles for a cozy atmosphere.', metaTitle: '', metaDescription: '', keywords: [] },
