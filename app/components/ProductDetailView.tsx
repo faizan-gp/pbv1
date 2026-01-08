@@ -118,14 +118,14 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
 
                         <div className="flex flex-wrap items-center gap-4 lg:gap-6">
                             <div className="flex items-baseline gap-3">
-                                <span className="text-3xl font-medium text-slate-900">${(product.price || 29.99).toFixed(2)}</span>
+                                <span className="text-3xl font-medium text-slate-900">${(product.price || 0).toFixed(2)}</span>
                             </div>
-                            <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+                            {/* <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
                             <div className="flex items-center gap-1">
                                 <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                 <span className="font-bold text-slate-900">4.9</span>
                                 <span className="text-slate-400 text-sm">(128 Reviews)</span>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 

@@ -10,6 +10,8 @@ export default function ProductSchema({ product }: { product: Product }) {
             ...(product.listingImages?.map(img => img.url) || [])
         ],
         "description": product.shortDescription || product.fullDescription || `Custom ${product.name}`,
+        "sku": product.id,
+        "mpn": product.id,
         "brand": {
             "@type": "Brand",
             "name": "Print Brawl"
@@ -19,8 +21,8 @@ export default function ProductSchema({ product }: { product: Product }) {
             "@type": "Offer",
             "url": `https://www.printbrawl.com/products/${product.id}`,
             "priceCurrency": "USD",
-            "price": product.price ? String(product.price) : "29.99",
-            "priceValidUntil": "2026-12-31",
+            "price": product.price ? String(product.price) : "0", // Default to 0 if missing, better than fake price
+            "sku": product.id,
             "availability": "https://schema.org/InStock",
             "itemCondition": "https://schema.org/NewCondition",
             "seller": {
