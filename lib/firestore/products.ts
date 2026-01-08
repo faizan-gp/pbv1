@@ -67,6 +67,7 @@ export interface Product {
         height: number;
     };
     previews: IPreviewConfig[];
+    tags?: string[]; // SEO Tags (e.g. category:mens-clothing, material:cotton)
 }
 
 export const PRODUCTS_COLLECTION = "products";

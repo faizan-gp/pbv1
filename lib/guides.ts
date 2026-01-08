@@ -8,6 +8,7 @@ export interface Guide {
     author: string;
     relatedProducts?: string[]; // Product IDs
     relatedCategories?: string[]; // Category Slugs
+    tags?: string[];
 }
 
 export const GUIDES: Guide[] = [
@@ -18,6 +19,7 @@ export const GUIDES: Guide[] = [
         date: "2024-01-15",
         author: "Print Brawl Team",
         relatedCategories: ['mens-clothing', 'womens-clothing', 'kids-clothing'],
+        tags: ['topic:design', 'category:custom-apparel', 'subcategory:t-shirts', 'audience:beginners'],
         content: `
 ## The Art of T-Shirt Design
 
@@ -59,6 +61,7 @@ Always use high-resolution files. For Print on Demand, we recommend **PNG files 
         date: "2024-01-20",
         author: "Print Brawl Team",
         relatedCategories: ['mens-clothing', 'womens-clothing'],
+        tags: ['topic:business', 'print:dtg', 'print:screen-printing', 'audience:entrepreneurs'],
         content: `
 ## Choosing the Right Production Method
 
@@ -101,6 +104,7 @@ Screen printing involves creating a stencil (screen) for each color in your desi
         date: "2024-01-25",
         author: "Print Brawl Team",
         relatedCategories: ['mens-clothing', 'womens-clothing', 'sportswear'],
+        tags: ['material:cotton', 'material:polyester', 'topic:materials', 'audience:designers'],
         content: `
 ## The Fabric Guide
 
@@ -136,6 +140,7 @@ A step up from "Carded Open End" (basic stiff cotton). Ring-spun cotton creates 
         date: "2024-02-01",
         author: "Inspo Team",
         relatedCategories: ['mens-clothing', 'womens-clothing', 'kids-clothing'],
+        tags: ['topic:inspiration', 'trend:2026', 'use:gift', 'audience:everyone'],
         content: `
 ## Trending Themes
 

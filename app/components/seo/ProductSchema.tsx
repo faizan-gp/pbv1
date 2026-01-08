@@ -10,6 +10,7 @@ export default function ProductSchema({ product }: { product: Product }) {
             ...(product.listingImages?.map(img => img.url) || [])
         ],
         "description": product.fullDescription || product.shortDescription || `Custom ${product.name}`,
+        "keywords": product.tags?.join(", ") || "",
         "sku": product.id,
         "mpn": product.id,
         "brand": {
