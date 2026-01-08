@@ -114,7 +114,7 @@ export default function CategoryClient({ category, products, subcategories, curr
                                 {category.name}
                             </span>
                         </h1>
-                        <p className="text-lg text-slate-600 leading-relaxed max-w-2xl">
+                        <p className="text-lg text-slate-600 leading-relaxed max-w-2xl mt-4">
                             {category.description || `Explore our premium collection of ${category.name}. Customizable, durable, and printed to perfection.`}
                         </p>
                     </div>

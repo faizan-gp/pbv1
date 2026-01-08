@@ -1,98 +1,133 @@
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, writeBatch, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
-import { getAllCategoriesFromDB, createCategory, seedCategoriesBatch, updateCategory, getAllRawCategories, deleteCategory } from '@/lib/firestore/categories';
+import slugify from 'slugify';
+import { CATEGORIES, CategoryData } from '@/lib/categories';
+import { createCategory, getAllCategoriesFromDB } from '@/lib/firestore/categories';
 
-// Seed Data from User's Image
-const SEED_DATA = [
-    {
-        name: "Men's Clothing",
-        description: "Elevate your style with premium custom apparel. From heavyweight cotton tees to durable hoodies, our men's collection is built for comfort and print perfection.",
-        subcategories: ["Sweatshirts", "Hoodies", "T-shirts", "Long Sleeves", "Tank Tops", "Sportswear", "Bottoms", "Swimwear", "Shoes", "Outerwear"]
-    },
-    {
-        name: "Women's Clothing",
-        description: "Discover retail-ready women's fashion. Soft fabrics, modern cuts, and versatile styles waiting for your unique creativity.",
-        subcategories: ["Sweatshirts", "T-shirts", "Hoodies", "Long Sleeves", "Tank Tops", "Skirts & Dresses", "Sportswear", "Bottoms", "Swimwear", "Shoes", "Outerwear"]
-    },
-    {
-        name: "Kids' Clothing",
-        description: "Durable, soft, and play-ready. Our kids' collection features safe, comfortable fabrics perfect for little ones and their big adventures.",
-        subcategories: ["T-shirts", "Long Sleeves", "Sweatshirts", "Baby Clothing", "Sportswear", "Bottoms", "Other"]
-    },
-    {
-        name: "Accessories",
-        description: "The perfect finishing touches. Personalize everything from tote bags and hats to phone cases with high-quality printing.",
-        subcategories: ["Jewelry", "Phone Cases", "Bags", "Socks", "Hats", "Underwear", "Baby Accessories", "Mouse Pads", "Pets", "Kitchen Accessories", "Car Accessories", "Tech Accessories", "Travel Accessories", "Stationery Accessories", "Sports & Games", "Face Masks", "Other"]
-    },
-    {
-        name: "Home & Living",
-        description: "Transform your space. Custom printed mugs, pillows, and decor that turn houses into homes with your personal artistic flair.",
-        subcategories: ["Mugs", "Candles", "Ornaments", "Seasonal Decorations", "Glassware", "Bottles & Tumblers", "Canvas", "Posters", "Postcards", "Journals & Notebooks", "Magnets & Stickers", "Home Decor", "Blankets", "Pillows & Covers", "Towels", "Bathroom", "Rugs & Mats", "Bedding", "Food - Health - Beauty"]
+// Helper function to update category if description or subcategories are missing/empty
+async function healCategory(docRef: any, currentData: any, seedData: CategoryData) {
+    const updates: any = {};
+    let needsUpdate = false;
+
+    // 1. Check Description
+    if (!currentData.description || currentData.description.trim() === "") {
+        if (seedData.description) {
+            updates.description = seedData.description;
+            needsUpdate = true;
+        }
     }
-];
+
+    // 2. Check Name (fix raw slugs)
+    if (currentData.name === currentData.slug || !currentData.name) {
+        if (seedData.name && seedData.name !== seedData.slug) {
+            updates.name = seedData.name;
+            needsUpdate = true;
+        }
+    }
+
+    // 3. Check Subcategories
+    const currentSubs = currentData.subcategories || {};
+    let subsChanged = false;
+
+    if (seedData.subcategories) {
+        const newSubs = { ...currentSubs };
+
+        for (const [subSlug, subData] of Object.entries(seedData.subcategories)) {
+            const existingSub = newSubs[subSlug];
+
+            if (!existingSub) {
+                newSubs[subSlug] = subData;
+                subsChanged = true;
+            } else {
+                // Enrich existing
+                if (!existingSub.description && subData.description) {
+                    existingSub.description = subData.description;
+                    subsChanged = true;
+                }
+                if ((!existingSub.name || existingSub.name === subSlug) && subData.name) {
+                    existingSub.name = subData.name;
+                    subsChanged = true;
+                }
+            }
+        }
+
+        if (subsChanged) {
+            updates.subcategories = newSubs;
+            needsUpdate = true;
+        }
+    }
+
+    if (needsUpdate) {
+        console.log(`Self-healing category: ${currentData.slug}`, updates);
+        await setDoc(docRef, updates, { merge: true });
+    }
+}
 
 export async function GET(req: Request) {
     try {
-        let categories = await getAllCategoriesFromDB();
+        const categoriesRef = collection(db, 'categories');
+        const snapshot = await getDocs(categoriesRef);
 
-        // Auto-seed if empty
-        if (Object.keys(categories).length === 0) {
-            await seedCategoriesBatch(SEED_DATA);
-            // Re-fetch to return the standard Record format
-            categories = await getAllCategoriesFromDB();
-        } else {
-            // Self-healing: Check for missing descriptions and update if needed
-            const updates = [];
-            for (const seedCat of SEED_DATA) {
-                const slugCandidate = seedCat.name.toLowerCase().replace(/['&]/g, '').replace(/\s+/g, '-');
-                const dbCat = categories[slugCandidate];
+        const categories: any[] = [];
+        const existingSlugs = new Set();
+        const healingPromises: Promise<any>[] = [];
 
-                if (dbCat) {
-                    const needsDescriptionUpdate = !dbCat.description;
-                    const needsNameUpdate = dbCat.name === slugCandidate || dbCat.name.toLowerCase() === slugCandidate;
-                    const needsSubcategories = !dbCat.subcategories || Object.keys(dbCat.subcategories).length === 0;
+        // 1. Fetch Existing
+        for (const docSnap of snapshot.docs) {
+            const data = docSnap.data();
+            const id = docSnap.id;
 
-                    if (needsDescriptionUpdate || needsNameUpdate || needsSubcategories) {
-                        const updateData: any = {};
-                        if (needsDescriptionUpdate) {
-                            console.log(`Migrating description for ${seedCat.name}...`);
-                            updateData.description = seedCat.description;
-                        }
-                        if (needsNameUpdate) {
-                            console.log(`Fixing name for ${seedCat.name}...`);
-                            updateData.name = seedCat.name;
-                        }
-                        if (needsSubcategories) {
-                            console.log(`Restoring subcategories for ${seedCat.name}...`);
-                            const subcategoriesMap: Record<string, any> = {};
-                            const slugify = (text: string) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+            // Check against authoritative seed data
+            const seed = CATEGORIES[id];
 
-                            seedCat.subcategories.forEach(subName => {
-                                const subSlug = slugify(subName);
-                                subcategoriesMap[subSlug] = {
-                                    slug: subSlug,
-                                    name: subName,
-                                    description: `Custom ${subName}`,
-                                    metaTitle: `${subName} | Print Brawl`,
-                                    metaDescription: `Shop custom ${subName}`,
-                                    keywords: [subName, `custom ${subName}`],
-                                };
-                            });
-                            updateData.subcategories = subcategoriesMap;
-                        }
+            if (seed) {
+                // Self-heal descriptions/names/subcategories if missing
+                healingPromises.push(healCategory(docSnap.ref, data, seed));
 
-                        updates.push(updateCategory(slugCandidate, updateData));
-                    }
-                }
+                // Return the updated shape (optimistic for response)
+                categories.push({
+                    ...data,
+                    id: id,
+                    slug: id,
+                    description: data.description || seed.description,
+                    name: (data.name === id ? seed.name : data.name) || seed.name,
+                    subcategories: data.subcategories || seed.subcategories
+                });
+            } else {
+                categories.push({ id, ...data, slug: id });
             }
-            if (updates.length > 0) {
-                await Promise.all(updates);
-                categories = await getAllCategoriesFromDB();
+            existingSlugs.add(id);
+        }
+
+        // Wait for all healing to complete
+        if (healingPromises.length > 0) {
+            await Promise.all(healingPromises);
+        }
+
+        // 2. Seed Missing Categories
+        const batch = writeBatch(db);
+        let hasNew = false;
+
+        Object.values(CATEGORIES).forEach((cat) => {
+            if (!existingSlugs.has(cat.slug)) {
+                const docRef = doc(db, 'categories', cat.slug);
+                batch.set(docRef, {
+                    ...cat,
+                    createdAt: new Date().toISOString()
+                });
+                categories.push(cat);
+                hasNew = true;
             }
+        });
+
+        if (hasNew) {
+            await batch.commit();
         }
 
         return NextResponse.json({ success: true, data: categories });
     } catch (error) {
-        console.error("Categories fetch error:", error);
+        console.error('Error fetching categories:', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch categories' }, { status: 500 });
     }
 }
