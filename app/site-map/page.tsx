@@ -12,11 +12,11 @@ export default function SitemapPage() {
             title: "Shop",
             links: [
                 { name: "All Products", href: "/products" },
-                { name: "Men's Clothing", href: "/products?category=Men's+Clothing" },
-                { name: "Women's Clothing", href: "/products?category=Women's+Clothing" },
-                { name: "Kids' Clothing", href: "/products?category=Kids'+Clothing" },
-                { name: "Home & Living", href: "/products?category=Home+&+Living" },
-                { name: "Accessories", href: "/products?category=Accessories" },
+                { name: "Men's Clothing", href: "/categories/mens-clothing" },
+                { name: "Women's Clothing", href: "/categories/womens-clothing" },
+                { name: "Kids' Clothing", href: "/categories/kids-clothing" },
+                { name: "Home & Living", href: "/categories/home-living" },
+                { name: "Accessories", href: "/categories/accessories" },
             ]
         },
         {

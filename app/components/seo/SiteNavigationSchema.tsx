@@ -11,11 +11,11 @@ export default function SiteNavigationSchema() {
     const navItems: NavItem[] = [
         { name: "Home", url: `${baseUrl}/` },
         { name: "All Products", url: `${baseUrl}/products` },
-        { name: "Men's Clothing", url: `${baseUrl}/products?category=Men's+Clothing` },
-        { name: "Women's Clothing", url: `${baseUrl}/products?category=Women's+Clothing` },
-        { name: "Kids' Clothing", url: `${baseUrl}/products?category=Kids'+Clothing` },
-        { name: "Home & Living", url: `${baseUrl}/products?category=Home+&+Living` },
-        { name: "Accessories", url: `${baseUrl}/products?category=Accessories` },
+        { name: "Men's Clothing", url: `${baseUrl}/categories/mens-clothing` },
+        { name: "Women's Clothing", url: `${baseUrl}/categories/womens-clothing` },
+        { name: "Kids' Clothing", url: `${baseUrl}/categories/kids-clothing` },
+        { name: "Home & Living", url: `${baseUrl}/categories/home-living` },
+        { name: "Accessories", url: `${baseUrl}/categories/accessories` },
     ];
 
     const schema = {

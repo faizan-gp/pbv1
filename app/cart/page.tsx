@@ -71,7 +71,7 @@ export default function CartPage() {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
-                                                    <Link href={`/product/${item.productId}`}>{item.name}</Link>
+                                                    <Link href={`/products/${item.productId}`}>{item.name}</Link>
                                                 </h3>
                                                 <div className="mt-2 space-y-1">
                                                     {item.options.color && (
