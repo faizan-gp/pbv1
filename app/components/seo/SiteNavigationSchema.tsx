@@ -16,6 +16,7 @@ export default function SiteNavigationSchema() {
         { name: "Kids' Clothing", url: `${baseUrl}/categories/kids-clothing` },
         { name: "Home & Living", url: `${baseUrl}/categories/home-living` },
         { name: "Accessories", url: `${baseUrl}/categories/accessories` },
+        { name: "Guides", url: `${baseUrl}/guides` },
     ];
 
     const schema = {

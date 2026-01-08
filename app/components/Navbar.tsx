@@ -56,6 +56,9 @@ export default function Navbar() {
                         <Link href="/how-it-works" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
                             How it Works
                         </Link>
+                        <Link href="/guides" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
+                            Guides
+                        </Link>
                         <Link href="/about" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors">
                             About Us
                         </Link>
@@ -134,6 +137,7 @@ export default function Navbar() {
                     <div className="flex flex-col gap-4 text-sm text-slate-500">
                         <Link href="/track-order" onClick={() => setMobileMenuOpen(false)}>Track Order</Link>
                         <Link href="/how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</Link>
+                        <Link href="/guides" onClick={() => setMobileMenuOpen(false)}>Guides</Link>
                         <Link href="/about" onClick={() => setMobileMenuOpen(false)}>About Us</Link>
                         <Link href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
                         <Link href="/faq" onClick={() => setMobileMenuOpen(false)}>Help Center</Link>
