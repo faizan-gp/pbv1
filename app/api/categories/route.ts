@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllCategoriesFromDB, createCategory, seedCategoriesBatch, updateCategory } from '@/lib/firestore/categories';
+import { getAllCategoriesFromDB, createCategory, seedCategoriesBatch, updateCategory, getAllRawCategories, deleteCategory } from '@/lib/firestore/categories';
 
 // Seed Data from User's Image
 const SEED_DATA = [
@@ -30,7 +30,7 @@ const SEED_DATA = [
     }
 ];
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
         let categories = await getAllCategoriesFromDB();
 
@@ -43,19 +43,15 @@ export async function GET() {
             // Self-healing: Check for missing descriptions and update if needed
             const updates = [];
             for (const seedCat of SEED_DATA) {
-                // Find matching category in DB by name (since slug might vary slightly, but name should trigger match)
-                // However, categories is Record<slug, data>. We need to find by name or guess slug.
-                // Simple slug match:
                 const slugCandidate = seedCat.name.toLowerCase().replace(/['&]/g, '').replace(/\s+/g, '-');
-
-                // Check if this slug exists in DB
                 const dbCat = categories[slugCandidate];
 
                 if (dbCat) {
                     const needsDescriptionUpdate = !dbCat.description;
                     const needsNameUpdate = dbCat.name === slugCandidate || dbCat.name.toLowerCase() === slugCandidate;
+                    const needsSubcategories = !dbCat.subcategories || Object.keys(dbCat.subcategories).length === 0;
 
-                    if (needsDescriptionUpdate || needsNameUpdate) {
+                    if (needsDescriptionUpdate || needsNameUpdate || needsSubcategories) {
                         const updateData: any = {};
                         if (needsDescriptionUpdate) {
                             console.log(`Migrating description for ${seedCat.name}...`);
@@ -65,14 +61,31 @@ export async function GET() {
                             console.log(`Fixing name for ${seedCat.name}...`);
                             updateData.name = seedCat.name;
                         }
+                        if (needsSubcategories) {
+                            console.log(`Restoring subcategories for ${seedCat.name}...`);
+                            const subcategoriesMap: Record<string, any> = {};
+                            const slugify = (text: string) => text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+
+                            seedCat.subcategories.forEach(subName => {
+                                const subSlug = slugify(subName);
+                                subcategoriesMap[subSlug] = {
+                                    slug: subSlug,
+                                    name: subName,
+                                    description: `Custom ${subName}`,
+                                    metaTitle: `${subName} | Print Brawl`,
+                                    metaDescription: `Shop custom ${subName}`,
+                                    keywords: [subName, `custom ${subName}`],
+                                };
+                            });
+                            updateData.subcategories = subcategoriesMap;
+                        }
+
                         updates.push(updateCategory(slugCandidate, updateData));
                     }
                 }
             }
-
             if (updates.length > 0) {
                 await Promise.all(updates);
-                // Re-fetch to get updated data
                 categories = await getAllCategoriesFromDB();
             }
         }
@@ -88,9 +101,7 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
         const { name, subcategories } = body;
-
         if (!name) return NextResponse.json({ success: false, error: 'Name is required' }, { status: 400 });
-
         const id = await createCategory({ name, subcategories: subcategories || [] });
         return NextResponse.json({ success: true, data: { id, name, subcategories } });
     } catch (error) {

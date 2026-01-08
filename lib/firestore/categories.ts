@@ -1,6 +1,26 @@
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, setDoc, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, setDoc, writeBatch, deleteDoc } from "firebase/firestore";
 import { CategoryData } from "@/lib/categories";
+
+// ... existing slugify ...
+
+// ... createCategory ...
+
+// ... updateCategory ...
+
+// ... seedCategoriesBatch ...
+
+// ... getAllCategoriesFromDB ...
+
+export const deleteCategory = async (id: string) => {
+    await deleteDoc(doc(db, 'categories', id));
+};
+
+export const getAllRawCategories = async () => {
+    const categoriesRef = collection(db, "categories");
+    const snapshot = await getDocs(categoriesRef);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+};
 
 // Helper to slugify text
 const slugify = (text: string) => {
@@ -156,3 +176,5 @@ export async function getAllCategoriesFromDB(): Promise<Record<string, CategoryD
         return {};
     }
 }
+
+
