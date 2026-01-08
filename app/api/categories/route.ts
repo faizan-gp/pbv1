@@ -1,7 +1,6 @@
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, writeBatch, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
-import slugify from 'slugify';
 import { CATEGORIES, CategoryData } from '@/lib/categories';
 import { createCategory, getAllCategoriesFromDB } from '@/lib/firestore/categories';
 
