@@ -14,11 +14,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // Map products to sitemap entries
     const productEntries = products.map((product) => ({
-        url: `${baseUrl}/products/${product.id}`,
+        url: `${baseUrl}/products/${encodeURIComponent(product.id)}`,
         lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
-        images: [product.image],
+        images: product.image ? [product.image.replace(/&/g, '&amp;')] : [],
     }));
 
     // Categories
@@ -29,14 +29,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         categoryEntries = Object.values(categories).flatMap(cat => {
             const catEntry = {
-                url: `${baseUrl}/categories/${cat.slug}`,
+                url: `${baseUrl}/categories/${encodeURIComponent(cat.slug)}`,
                 lastModified: new Date(),
                 changeFrequency: 'weekly' as const,
                 priority: 0.8,
             };
 
             const subEntries = cat.subcategories ? Object.values(cat.subcategories).map(sub => ({
-                url: `${baseUrl}/categories/${cat.slug}/${sub.slug}`,
+                url: `${baseUrl}/categories/${encodeURIComponent(cat.slug)}/${encodeURIComponent(sub.slug)}`,
                 lastModified: new Date(),
                 changeFrequency: 'weekly' as const,
                 priority: 0.7,
