@@ -217,6 +217,8 @@ Whether you're an interior designer looking to sell your patterns or a homeowner
     }
 };
 
+export const ALL_CATEGORIES = Object.values(CATEGORIES);
+
 let cache: { data: Record<string, CategoryData>, timestamp: number } | null = null;
 const CACHE_DURATION = 0; // Disable cache to ensure fresh DB data
 

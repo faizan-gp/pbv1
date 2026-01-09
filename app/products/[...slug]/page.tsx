@@ -6,6 +6,7 @@ import { Metadata } from 'next';
 import ProductSchema from '@/app/components/seo/ProductSchema';
 import BreadcrumbSchema from '@/app/components/seo/BreadcrumbSchema';
 import ProductDescriptionServer from '@/app/components/ProductDescriptionServer';
+import RelatedProducts from '@/app/components/RelatedProducts';
 import { getCategoryBySlug, getSubcategoryBySlug } from '@/lib/categories';
 import CategoryPage from '@/app/components/CategoryPage';
 
@@ -103,6 +104,7 @@ export default async function ProductPageCatchAll({ params }: { params: Promise<
                     product={product}
                     descriptionSlot={<ProductDescriptionServer product={product} />}
                 />
+                <RelatedProducts category={product.category} currentProductId={product.id} />
             </main>
         </div>
     );

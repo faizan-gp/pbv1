@@ -114,3 +114,16 @@ export async function deleteProduct(id: string): Promise<void> {
     const productRef = doc(db, PRODUCTS_COLLECTION, id);
     await deleteDoc(productRef);
 }
+
+export async function getProductsByCategory(category: string, limitCount: number = 4, excludeId?: string): Promise<Product[]> {
+    const productsRef = collection(db, PRODUCTS_COLLECTION);
+    const q = query(productsRef, where("category", "==", category));
+
+    const snapshot = await getDocs(q);
+    const products = snapshot.docs.map(doc => doc.data() as Product);
+
+    // Filter out excluded ID and limit results (Firestore limit() doesn't work well with excluding specific IDs in client SDK without complex indexing sometimes, doing in-memory for small datasets is fine)
+    // For larger datasets, we'd want to use proper indices and limits.
+    const filtered = products.filter(p => p.id !== excludeId);
+    return filtered.slice(0, limitCount);
+}

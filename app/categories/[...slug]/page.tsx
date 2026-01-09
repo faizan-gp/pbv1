@@ -5,6 +5,7 @@ import { getCategoryBySlug, getSubcategoryBySlug, CategoryData } from '@/lib/cat
 import { getAllProducts, Product } from '@/lib/firestore/products';
 import CategoryClient from './CategoryClient';
 import CategorySchema from '@/app/components/seo/CategorySchema';
+import CategoryGrid from '@/app/components/CategoryGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,6 +137,7 @@ export default async function CategoryPage({ params }: PageProps) {
                 currentSubcategorySlug={currentSubcategorySlug}
                 basePath={basePath}
             />
+            <CategoryGrid />
         </>
     );
 }
