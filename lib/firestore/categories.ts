@@ -166,6 +166,7 @@ export async function getAllCategoriesFromDB(): Promise<Record<string, CategoryD
                 metaTitle: data.metaTitle || "",
                 metaDescription: data.metaDescription || "",
                 keywords: data.keywords || [],
+                longDescription: data.longDescription, // Fetch from DB
                 subcategories: subcategories
             };
         });

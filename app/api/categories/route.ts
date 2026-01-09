@@ -17,6 +17,12 @@ async function healCategory(docRef: any, currentData: any, seedData: CategoryDat
         }
     }
 
+    // 1.5 Check Long Description (Pillar Content)
+    if (!currentData.longDescription && seedData.longDescription) {
+        updates.longDescription = seedData.longDescription;
+        needsUpdate = true;
+    }
+
     // 2. Check Name (fix raw slugs)
     if (currentData.name === currentData.slug || !currentData.name) {
         if (seedData.name && seedData.name !== seedData.slug) {
