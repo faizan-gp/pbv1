@@ -62,6 +62,35 @@ export default function ProductSchema({ product }: { product: Product }) {
                     }
                 }
             }
+        },
+        // FAQ Schema embedded
+        "mainEntity": {
+            "@type": "FAQPage",
+            "mainEntity": (product.faq || [
+                {
+                    question: "How long does shipping take?",
+                    answer: `Standard shipping for ${product.name} typically takes ${product.shippingTime || '2-5 business days'} within the USA. International shipping times vary.`
+                },
+                {
+                    question: "Can I customize the design?",
+                    answer: "Yes! Use our interactive design studio to add your own text, images, logo, or artwork to this product."
+                },
+                {
+                    question: "What is the return policy?",
+                    answer: "Since this is a custom printed product, we cannot accept returns for buyer's remorse. However, if there is a defect in printing or the item arrives damaged, we will offer a free replacement."
+                },
+                {
+                    question: "How should I wash this item?",
+                    answer: "To ensure longevity of the print, we recommend machine washing cold, inside-out, on a gentle cycle. Tumble dry low or hang-dry for best results."
+                }
+            ]).map(faq => ({
+                "@type": "Question",
+                "name": faq.question,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": faq.answer
+                }
+            }))
         }
     };
 

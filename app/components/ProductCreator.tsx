@@ -190,6 +190,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             { size: '2XL', width: '26', length: '32' },
         ]
     });
+    const [faq, setFaq] = useState<{ question: string; answer: string }[]>(initialData?.faq || []);
 
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
@@ -357,6 +358,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             features,
             bulletPoints,
             careInstructions,
+            faq,
             sizeGuide,
             canvasSize: 1024,
             colors: productColors.map(c => ({
@@ -380,7 +382,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, trending, price, shippingCost, shippingTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, trending, price, shippingCost, shippingTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors]);
 
 
     const handleSave = async () => {
@@ -1418,6 +1420,58 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </div>
                                         ))}
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* FAQ EDITOR */}
+                            <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h4 className="font-bold text-gray-900">Freq. Asked Questions</h4>
+                                    <button onClick={() => setFaq([...faq, { question: '', answer: '' }])} className="text-xs text-indigo-600 font-medium">+ Add Question</button>
+                                </div>
+                                <div className="space-y-4">
+                                    {faq.map((item, i) => (
+                                        <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3 relative group">
+                                            <button
+                                                onClick={() => setFaq(prev => prev.filter((_, idx) => idx !== i))}
+                                                className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-200 rounded transition-colors"
+                                                title="Remove FAQ"
+                                            >
+                                                <X size={14} />
+                                            </button>
+
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Question</label>
+                                                <input
+                                                    type="text"
+                                                    value={item.question}
+                                                    onChange={(e) => { const n = [...faq]; n[i].question = e.target.value; setFaq(n); }}
+                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    placeholder="e.g. How do I wash this?"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Answer</label>
+                                                <textarea
+                                                    value={item.answer}
+                                                    onChange={(e) => { const n = [...faq]; n[i].answer = e.target.value; setFaq(n); }}
+                                                    className="w-full h-20 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 resize-none"
+                                                    placeholder="Provide a helpful answer..."
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {faq.length === 0 && (
+                                        <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
+                                            No FAQs added. <br />
+                                            <button onClick={() => setFaq([
+                                                { question: "How long does shipping take?", answer: "Standard shipping typically takes 2-5 business days within the USA." },
+                                                { question: "Can I machine wash this?", answer: "Yes, wash cold and tumble dry low." }
+                                            ])} className="text-indigo-600 font-bold hover:underline mt-2">
+                                                Add Defaults
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
