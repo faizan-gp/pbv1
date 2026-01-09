@@ -12,6 +12,7 @@ import ProductCard from '@/app/components/ProductCard';
 import { CategoryData } from '@/lib/categories';
 import { Product } from '@/lib/firestore/products';
 import { cn } from '@/lib/utils';
+import CategorySEOContent from '@/app/components/CategorySEOContent';
 
 // --- Types ---
 interface ExtendedProduct extends Product {
@@ -414,29 +415,11 @@ export default function CategoryClient({ category, products, subcategories, curr
             </AnimatePresence>
 
             {/* --- 6. SEO PILLAR CONTENT --- */}
-            {category.longDescription && (
-                <section className="bg-slate-50 border-t border-slate-200 py-16 lg:py-24 mt-12">
-                    <div className="mx-auto max-w-4xl px-6 lg:px-8">
-                        <div className="prose prose-lg prose-slate mx-auto max-w-none">
-                            {category.longDescription.split('\n').map((line, i) => {
-                                const trimmed = line.trim();
-                                if (trimmed.startsWith('### ')) return <h3 key={i} className="text-2xl font-bold text-slate-900 mt-8 mb-4">{trimmed.replace('### ', '')}</h3>;
-                                if (trimmed.startsWith('## ')) return <h2 key={i} className="text-3xl font-black text-slate-900 mt-12 mb-6">{trimmed.replace('## ', '')}</h2>;
-                                if (trimmed.startsWith('* ')) return <li key={i} className="ml-4 list-disc mb-2 marker:text-indigo-500 text-slate-600">{trimmed.replace(/\* |\*\*/g, '').replace('**', '')}</li>; // Simple strip of bold markers for list items if complexity is high, or just render text. 
-                                // Better bold handling:
-                                const parts = line.split('**');
-                                return (
-                                    <p key={i} className="mb-4 text-slate-600 leading-relaxed">
-                                        {parts.map((part, idx) => (
-                                            idx % 2 === 1 ? <strong key={idx} className="font-bold text-slate-900">{part}</strong> : part
-                                        ))}
-                                    </p>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </section>
-            )}
+            {/* --- 6. SEO PILLAR CONTENT --- */}
+            <CategorySEOContent
+                categoryName={category.name}
+                description={category.longDescription || ''}
+            />
         </div>
     );
 }
