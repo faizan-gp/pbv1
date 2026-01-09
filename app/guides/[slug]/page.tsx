@@ -39,6 +39,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
 }
 
+import ArticleSchema from '@/app/components/seo/ArticleSchema';
+
 export default async function GuidePage({ params }: PageProps) {
     const { slug } = await params;
     const guide = getGuideBySlug(slug);
@@ -49,6 +51,7 @@ export default async function GuidePage({ params }: PageProps) {
 
     return (
         <article className="max-w-3xl mx-auto">
+            <ArticleSchema guide={guide} />
             <Link href="/guides" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 mb-8 transition-colors">
                 <ChevronLeft className="w-4 h-4 mr-1" />
                 Back to All Guides

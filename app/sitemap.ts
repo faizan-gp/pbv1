@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Map products to sitemap entries
     const productEntries = products.map((product) => ({
         url: `${baseUrl}/products/${product.id}`,
-        lastModified: new Date(), // Ideally this would come from the product data
+        lastModified: product.updatedAt ? new Date(product.updatedAt) : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
         images: [product.image],

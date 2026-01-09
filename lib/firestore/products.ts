@@ -69,6 +69,7 @@ export interface Product {
     previews: IPreviewConfig[];
     tags?: string[]; // SEO Tags (e.g. category:mens-clothing, material:cotton)
     faq?: { question: string; answer: string }[];
+    updatedAt?: string; // ISO Date string for SEO lastMod
 }
 
 export const PRODUCTS_COLLECTION = "products";

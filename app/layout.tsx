@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     template: "%s | Print Brawl"
   },
   description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories. Perfect for personal use, gifts, and special occasions.",
-  keywords: ["custom t-shirts", "design your own", "personalized gifts", "custom hoodies", "create your own shirt", "custom apparel"],
   openGraph: {
     type: "website",
     locale: "en_US",
