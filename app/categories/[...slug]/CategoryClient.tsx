@@ -97,8 +97,10 @@ export default function CategoryClient({ category, products, subcategories, curr
                     <Breadcrumbs items={[
                         { label: 'Collections', href: '/categories' },
                         ...(category.parentCategory ? [{ label: category.parentCategory, href: basePath }] : []),
-                        { label: category.name, href: basePath },
-                        ...(currentSubcategorySlug && activeSubcategoryName ? [{ label: activeSubcategoryName, href: `${basePath}/${currentSubcategorySlug}` }] : [])
+                        {
+                            label: category.name,
+                            href: category.parentCategory ? `${basePath}/${category.slug}` : basePath
+                        }
                     ]} className="mb-8 font-bold tracking-widest uppercase text-xs" />
 
                     <div className="max-w-4xl">
