@@ -18,7 +18,11 @@ export default function OrganizationSchema() {
         "sameAs": [
             "https://www.facebook.com/printbrawl",
             "https://www.instagram.com/printbrawl",
-            "https://www.twitter.com/printbrawl"
+            "https://www.twitter.com/printbrawl",
+            "https://www.pinterest.com/printbrawl",
+            "https://www.tiktok.com/@printbrawl",
+            "https://www.linkedin.com/company/printbrawl",
+            "https://www.youtube.com/@printbrawl"
         ]
     };
 
