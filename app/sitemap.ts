@@ -18,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         lastModified: new Date(), // Ideally this would come from the product data
         changeFrequency: 'weekly' as const,
         priority: 0.8,
+        images: [product.image],
     }));
 
     // Categories

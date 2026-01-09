@@ -16,7 +16,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 rounded-sm">
                 <Image
                     src={image}
-                    alt={`${name} - ${product.category || 'Apparel'}`}
+                    alt={`${name} - Custom ${product.subcategory || product.category || 'Apparel'} | Print Brawl`}
                     fill
                     className="object-contain p-6 transition-transform duration-500 ease-out group-hover:scale-105"
                 />

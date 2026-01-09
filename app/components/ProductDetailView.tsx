@@ -59,6 +59,8 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                         transition={{ duration: 0.4 }}
                         src={activeImage}
                         alt={product.name}
+                        loading="eager"
+                        fetchPriority="high"
                         className="w-full h-full object-contain p-8 md:p-12 mix-blend-multiply transition-transform duration-700 ease-out group-hover:scale-105"
                     />
 

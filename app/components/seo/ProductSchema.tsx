@@ -8,7 +8,16 @@ export default function ProductSchema({ product }: { product: Product }) {
         "image": [
             product.image,
             ...(product.listingImages?.map(img => img.url) || [])
-        ],
+        ].map(url => ({
+            "@type": "ImageObject",
+            "url": url,
+            "name": product.name,
+            "caption": product.shortDescription || `Custom ${product.name}`,
+            "author": {
+                "@type": "Organization",
+                "name": "Print Brawl"
+            }
+        })),
         "description": product.fullDescription || product.shortDescription || `Custom ${product.name}`,
         "keywords": product.tags?.join(", ") || "",
         "sku": product.id,
