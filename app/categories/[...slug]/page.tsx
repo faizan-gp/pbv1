@@ -128,7 +128,7 @@ export default async function CategoryPage({ params }: PageProps) {
 
     return (
         <>
-            <CategorySchema category={category} />
+            <CategorySchema category={category} products={filteredProducts} />
             <CategoryClient
                 category={category}
                 products={filteredProducts}
