@@ -7,6 +7,7 @@ import {
     Search, X, ArrowUpDown, ChevronDown, Check, Sparkles, Shirt, Zap
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Breadcrumbs from '@/app/components/ui/Breadcrumbs';
 import ProductCard from '@/app/components/ProductCard';
 import { CategoryData } from '@/lib/categories';
 import { Product } from '@/lib/firestore/products';
@@ -40,6 +41,7 @@ export default function CategoryClient({ category, products, subcategories, curr
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
     // --- Derived Data ---
+    const activeSubcategoryName = subcategories.find(s => s.slug === currentSubcategorySlug)?.name;
 
     // 2. Filter & Sort Logic
     const filteredProducts = useMemo(() => {
@@ -91,19 +93,12 @@ export default function CategoryClient({ category, products, subcategories, curr
 
                 <div className="mx-auto max-w-7xl px-6 lg:px-8 pt-10">
                     {/* Breadcrumbs */}
-                    <nav className="flex items-center text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">
-                        <Link href="/" className="hover:text-indigo-600 transition-colors">Home</Link>
-                        <span className="mx-3 text-slate-300">/</span>
-                        <Link href="/categories" className="hover:text-indigo-600 transition-colors">Collections</Link>
-                        <span className="mx-3 text-slate-300">/</span>
-                        {category.parentCategory && (
-                            <>
-                                <Link href={basePath} className="hover:text-indigo-600 transition-colors">{category.parentCategory}</Link>
-                                <span className="mx-3 text-slate-300">/</span>
-                            </>
-                        )}
-                        <span className="text-indigo-600">{category.name}</span>
-                    </nav>
+                    <Breadcrumbs items={[
+                        { label: 'Collections', href: '/categories' },
+                        ...(category.parentCategory ? [{ label: category.parentCategory, href: basePath }] : []),
+                        { label: category.name, href: basePath },
+                        ...(currentSubcategorySlug && activeSubcategoryName ? [{ label: activeSubcategoryName, href: `${basePath}/${currentSubcategorySlug}` }] : [])
+                    ]} className="mb-8 font-bold tracking-widest uppercase text-xs" />
 
                     <div className="max-w-4xl">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6">

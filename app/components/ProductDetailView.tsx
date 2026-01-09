@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useMemo } from 'react';
 import { Product as IProduct } from '@/lib/firestore/products';
+import Link from 'next/link';
 import { Star, ArrowRight, ShieldCheck, Zap, Package, Heart } from 'lucide-react';
 
 import ProductSizeGuide from './ProductSizeGuide';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import Breadcrumbs from './ui/Breadcrumbs';
 
 interface ProductDetailViewProps {
     product: IProduct;
@@ -33,8 +34,17 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
 
     const activeImage = galleryImages[activeImageIndex] || galleryImages[0] || product.image;
 
+    const breadcrumbItems = [
+        { label: 'Products', href: '/products' },
+        ...(product.category ? [{ label: product.category, href: `/categories/${product.category.toLowerCase().replace(/\s+/g, '-')}` }] : []),
+        { label: product.name, href: `/products/${product.id}` }
+    ];
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-24 relative items-start w-full">
+            <div className="lg:col-span-12 mb-4">
+                <Breadcrumbs items={breadcrumbItems} />
+            </div>
 
             {/* --- LEFT COLUMN: IMMERSIVE GALLERY --- */}
             {/* ADDED: min-w-0 is critical here to prevent horizontal scroll on mobile */}

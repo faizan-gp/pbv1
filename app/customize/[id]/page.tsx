@@ -2,6 +2,7 @@ import { getProductById } from '@/lib/firestore/products';
 import { notFound } from 'next/navigation';
 import { Metadata } from "next";
 import ShirtConfigurator from '../../components/ShirtConfigurator';
+import HowToSchema from '@/app/components/seo/HowToSchema';
 
 async function getProduct(id: string) {
     const product = await getProductById(id);
@@ -46,6 +47,7 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
                 <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
             </div>
 
+            <HowToSchema productName={product.name} imageUrl={product.image} />
             <ShirtConfigurator product={product} />
         </div>
     );

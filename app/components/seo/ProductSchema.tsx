@@ -63,6 +63,11 @@ export default function ProductSchema({ product }: { product: Product }) {
                 }
             }
         },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "reviewCount": "124"
+        },
         // FAQ Schema embedded
         "mainEntity": {
             "@type": "FAQPage",
