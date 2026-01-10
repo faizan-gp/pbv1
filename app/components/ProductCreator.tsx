@@ -947,6 +947,57 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    const handleBulkColorJsonUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const json = JSON.parse(event.target?.result as string);
+                if (!Array.isArray(json)) {
+                    showToast('Invalid JSON format: Expected an array', 'error');
+                    return;
+                }
+
+                const newColors: ProductColor[] = [];
+                let invalidCount = 0;
+
+                json.forEach((item: any) => {
+                    if (item.name && item.hex) {
+                        newColors.push({
+                            name: item.name,
+                            hex: item.hex,
+                            images: {}
+                        });
+                    } else {
+                        invalidCount++;
+                    }
+                });
+
+                if (newColors.length === 0) {
+                    showToast('No valid colors found in JSON', 'error');
+                    return;
+                }
+
+                setProductColors(prev => {
+                    // Filter out "Default" if it's the only one and untouched? 
+                    // Or just append. Let's append, user can delete.
+                    // Actually, if we are doing a bulk load, maybe we want to avoid duplicates?
+                    // Let's just append for now as per plan.
+                    return [...prev, ...newColors];
+                });
+
+                showToast(`Added ${newColors.length} colors${invalidCount > 0 ? ` (${invalidCount} invalid skipped)` : ''}`, 'success');
+
+            } catch (error) {
+                console.error("JSON parse error", error);
+                showToast('Failed to parse JSON file', 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+
     const activeView = views.find(v => v.id === activeViewId);
 
     // Render Steps
@@ -1092,6 +1143,15 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
                                     <Plus size={14} /> Add Color
                                 </button>
+                                <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                    <FolderUp size={14} /> Import JSON
+                                    <input
+                                        type="file"
+                                        accept=".json,application/json"
+                                        className="hidden"
+                                        onChange={handleBulkColorJsonUpload}
+                                    />
+                                </label>
                             </div>
                             <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
                             <div className="space-y-3">
