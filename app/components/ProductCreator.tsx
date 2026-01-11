@@ -51,6 +51,7 @@ interface ListingImage {
     url: string;
     color: string;
     isThumbnail: boolean;
+    fileName?: string;
 }
 
 interface ProductColor {
@@ -440,7 +441,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 ...urls.map((url, i) => ({
                     url,
                     color: targetColor,
-                    isThumbnail: prev.length === 0 && i === 0
+                    isThumbnail: prev.length === 0 && i === 0,
+                    fileName: files[i].name // Store filename
                 }))
             ]);
         } catch (error) {
@@ -499,7 +501,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     newImages.push({
                         url,
                         color: colorName,
-                        isThumbnail: isListingImage // Temporary flag, resolved later
+                        isThumbnail: isListingImage, // Temporary flag, resolved later
+                        fileName: file.name
                     });
                 });
             }
@@ -644,20 +647,42 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
-    const assignListingImageToView = (img: ListingImage, viewId: string) => {
+    const assignListingImageToView = (img: ListingImage, viewId: string, bulkByFilename: boolean = false) => {
         const targetColorName = img.color;
         if (!targetColorName || targetColorName === 'All') {
             showToast('Please set a specific color for this image first', 'error');
             return;
         }
 
+        const imagesToAssign: { color: string, url: string }[] = [];
+
+        // 1. Assign current image
+        imagesToAssign.push({ color: targetColorName, url: img.url });
+
+        // 2. Find matching filenames if bulk mode
+        if (bulkByFilename && img.fileName) {
+            // Find other images with same filename in other colors
+            const siblings = listingImages.filter(other =>
+                other.fileName === img.fileName &&
+                other.color !== 'All' &&
+                other.color !== targetColorName
+            );
+
+            siblings.forEach(sib => {
+                // Check if this color already has an image for this view?
+                // Overwrite behavior is assumed desired.
+                imagesToAssign.push({ color: sib.color, url: sib.url });
+            });
+        }
+
         setProductColors(prev => prev.map(c => {
-            if (c.name === targetColorName) {
+            const assignment = imagesToAssign.find(a => a.color === c.name);
+            if (assignment) {
                 return {
                     ...c,
                     images: {
                         ...(c.images || {}),
-                        [viewId]: img.url
+                        [viewId]: assignment.url
                     }
                 };
             }
@@ -665,7 +690,11 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }));
 
         const viewName = views.find(v => v.id === viewId)?.name || 'View';
-        showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+        if (bulkByFilename && imagesToAssign.length > 1) {
+            showToast(`Assigned "${img.fileName}" to ${viewName} for ${imagesToAssign.length} colors`, 'success');
+        } else {
+            showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+        }
     };
 
     const SortableListingImage = ({ img, index, colorGroup }: { img: ListingImage, index: number, colorGroup: string }) => {
@@ -785,18 +814,31 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                             <div className="flex-1 overflow-y-auto p-1 custom-scrollbar">
                                 {views.map(v => (
-                                    <button
-                                        key={v.id}
-                                        onClick={() => {
-                                            assignListingImageToView(img, v.id);
-                                            setIsMenuOpen(false);
-                                        }}
-                                        className="w-full text-left px-2 py-1.5 mb-1 rounded text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center justify-between group/item"
-                                    >
-                                        <span className="truncate">{v.name}</span>
-                                        {/* Optional: Show checkmark if already assigned? (Would need efficient lookup) */}
-                                        <ArrowUp size={12} className="opacity-0 group-hover/item:opacity-100 -rotate-45" />
-                                    </button>
+                                    <div key={v.id} className="mb-1">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    assignListingImageToView(img, v.id, false);
+                                                    setIsMenuOpen(false);
+                                                }}
+                                                className="flex-1 text-left px-2 py-1.5 rounded-l text-xs font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center justify-between group/item"
+                                            >
+                                                <span className="truncate">{v.name}</span>
+                                            </button>
+                                            {img.fileName && (
+                                                <button
+                                                    onClick={() => {
+                                                        assignListingImageToView(img, v.id, true);
+                                                        setIsMenuOpen(false);
+                                                    }}
+                                                    className="px-2 py-1.5 bg-gray-100 hover:bg-indigo-100 text-gray-500 hover:text-indigo-700 rounded-r border-l border-white transition-colors"
+                                                    title={`Assign "${img.fileName}" to ${v.name} for ALL colors`}
+                                                >
+                                                    <span className="text-[10px] font-bold">ALL</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
