@@ -1578,9 +1578,9 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                                 { question: "Are there side seams on this shirt?", answer: "No. It’s made with a seamless tubular body, which helps the shirt keep its shape and gives it a clean look." },
                                                 { question: "How many colors can I choose from?", answer: "You can choose from 58 colors, so you can match your custom print design to your exact vibe." },
                                                 { question: "How do I wash and care for my custom printed shirt?", answer: "Machine wash cold (max 30°C / 90°F). Do not bleach. Tumble dry low. Iron/steam low (avoid ironing directly on the print). Do not dry clean." },
-                                                { question: "Can I order one shirt only, or do I need a bulk order?", answer: "You can order one custom print t-shirt or place a bulk order—whatever you need." }
-                                                { question: "Can I print on the front and back?", answer: "If your designer supports multiple print areas, yes—front, back, and more (availability depends on your selected print options)." }
-                                                { question: "Is this good for business merch and event shirts?", answer: "Definitely. The premium feel, durable stitching, and huge color range make it a strong choice for brand merch, team shirts, events, and creator drops." }
+                                                { question: "Can I order one shirt only, or do I need a bulk order?", answer: "You can order one custom print t-shirt or place a bulk order—whatever you need." },
+                                                { question: "Can I print on the front and back?", answer: "If your designer supports multiple print areas, yes—front, back, and more (availability depends on your selected print options)." },
+                                                { question: "Is this good for business merch and event shirts?", answer: "Definitely. The premium feel, durable stitching, and huge color range make it a strong choice for brand merch, team shirts, events, and creator drops." },
                                                 { question: "Where are these shirts made?", answer: "The Comfort Colors 1717 shirts are made in Honduras." }
                                             ])} className="text-indigo-600 font-bold hover:underline mt-2">
                                                 Add Defaults
