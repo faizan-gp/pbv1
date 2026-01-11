@@ -3,6 +3,8 @@ import { getAllProducts } from '@/lib/firestore/products';
 import { Edit, Plus, ExternalLink } from 'lucide-react';
 import ProductActions from './ProductActions';
 
+export const dynamic = 'force-dynamic';
+
 async function getProducts() {
     return await getAllProducts();
 }
