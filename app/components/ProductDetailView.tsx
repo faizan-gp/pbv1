@@ -16,13 +16,15 @@ interface ProductDetailViewProps {
 }
 
 export default function ProductDetailView({ product, descriptionSlot }: ProductDetailViewProps) {
-    const [selectedColor, setSelectedColor] = useState<string | null>(product.colors?.[0]?.name || null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
 
     const galleryImages = useMemo(() => {
         let images = product.listingImages || [];
         if (selectedColor) {
             images = images.filter(img => !img.color || img.color === 'All' || img.color === selectedColor);
+        } else {
+            images = images.filter(img => !img.color || img.color === 'All');
         }
         let urls = images.map(img => (typeof img === 'string' ? img : img.url));
         if (urls.length === 0 && product.image) urls = [product.image];
