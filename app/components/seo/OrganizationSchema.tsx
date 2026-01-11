@@ -14,7 +14,6 @@ export default function OrganizationSchema() {
             "areaServed": "Worldwide",
             "availableLanguage": "English"
         },
-        "priceRange": "$$-$$$",
         "sameAs": [
             "https://www.facebook.com/printbrawl",
             "https://www.instagram.com/printbrawl",
