@@ -51,6 +51,7 @@ export interface Product {
     price?: number;
     shippingCost?: number;
     shippingTime?: string;
+    productionTime?: string;
     bulletPoints?: string[];
     features?: IProductFeature[];
     careInstructions?: string[];

@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -90,6 +90,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [price, setPrice] = useState(initialData?.price || '');
     const [shippingCost, setShippingCost] = useState(initialData?.shippingCost || 0);
     const [shippingTime, setShippingTime] = useState(initialData?.shippingTime || '');
+    const [productionTime, setProductionTime] = useState(initialData?.productionTime || '');
     const [previewExpectationImage, setPreviewExpectationImage] = useState(initialData?.previewExpectationImage || '');
     const [realExpectationImage, setRealExpectationImage] = useState(initialData?.realExpectationImage || '');
 
@@ -350,6 +351,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             price: Number(price),
             shippingCost: Number(shippingCost),
             shippingTime,
+            productionTime,
             previewExpectationImage,
             realExpectationImage,
             image: mainImage,
@@ -383,7 +385,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }))
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, trending, price, shippingCost, shippingTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors]);
 
 
     const handleSave = async () => {
@@ -1162,16 +1164,29 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         />
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Shipping Time</label>
+                                <div className="flex-1 space-y-2">
+                                    <label className="text-sm font-bold text-gray-700">Shipping Time</label>
                                     <div className="relative">
-                                        <Truck size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <Truck className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                                         <input
                                             type="text"
                                             value={shippingTime}
                                             onChange={(e) => setShippingTime(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
                                             placeholder="e.g. 3-5 Business Days"
-                                            className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="flex-1 space-y-2">
+                                    <label className="text-sm font-bold text-gray-700">Production Time</label>
+                                    <div className="relative">
+                                        <Package className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                                        <input
+                                            type="text"
+                                            value={productionTime}
+                                            onChange={(e) => setProductionTime(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm transition-all"
+                                            placeholder="e.g. 1-3 Business Days"
                                         />
                                     </div>
                                 </div>

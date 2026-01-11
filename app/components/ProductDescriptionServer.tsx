@@ -20,18 +20,29 @@ export default function ProductDescriptionServer({ product }: ProductDescription
                         {/* Bullet Points with Checkmarks */}
                         {bulletPoints && bulletPoints.length > 0 && (
                             <ul className="grid sm:grid-cols-2 gap-4 my-8 not-prose">
-                                {bulletPoints.map((point, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
-                                        <span className="leading-snug">{point}</span>
-                                    </li>
-                                ))}
+                                {bulletPoints.map((point, i) => {
+                                    const parts = point.split(':');
+                                    const hasKey = parts.length > 1;
+                                    return (
+                                        <li key={i} className="flex items-start gap-3 text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 shrink-0" />
+                                            <span className="leading-snug">
+                                                {hasKey ? (
+                                                    <>
+                                                        <span className="font-bold text-slate-900">{parts[0]}:</span>
+                                                        {parts.slice(1).join(':')}
+                                                    </>
+                                                ) : point}
+                                            </span>
+                                        </li>
+                                    );
+                                })}
                             </ul>
                         )}
 
                         {description && (
                             <div className="bg-white rounded-2xl">
-                                <p>{description}</p>
+                                <p className="whitespace-pre-wrap">{description}</p>
                             </div>
                         )}
                     </div>

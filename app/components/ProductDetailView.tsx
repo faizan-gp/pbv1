@@ -187,16 +187,20 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                             {[
                                 {
                                     icon: Package,
-                                    title: "Shipping",
-                                    desc: `USA Shipping: ${product.shippingCost ? `$${product.shippingCost}` : 'Free'} • ${product.shippingTime || '2-3 business days'}`
+                                    title: "Shipping & Production",
+                                    desc: product.productionTime
+                                        ? `Production: ${product.productionTime} • Shipping: ${product.shippingTime || '2-5 days'}`
+                                        : `USA Shipping: ${product.shippingCost ? `$${product.shippingCost}` : 'Free'} • ${product.shippingTime || '2-5 business days'}`
                                 },
-                                { icon: ShieldCheck, title: "Quality Guarantee", desc: "Premium materials" }
+                                { icon: ShieldCheck, title: "Quality Guarantee", desc: "Premium materials & expert support" }
                             ].map((item, i) => (
-                                <div key={i} className="bg-slate-50 p-3 rounded-lg flex items-start gap-2.5">
-                                    <item.icon className="w-4 h-4 text-indigo-600 mt-0.5 shrink-0" />
+                                <div key={i} className="bg-indigo-50/50 p-4 rounded-xl flex items-start gap-3 border border-indigo-50">
+                                    <div className="bg-indigo-100/50 p-2 rounded-lg shrink-0">
+                                        <item.icon className="w-5 h-5 text-indigo-600" />
+                                    </div>
                                     <div>
-                                        <h4 className="font-bold text-xs text-slate-900">{item.title}</h4>
-                                        <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">{item.desc}</p>
+                                        <h4 className="font-bold text-sm text-slate-900">{item.title}</h4>
+                                        <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-snug">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
