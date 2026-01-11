@@ -1567,10 +1567,21 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
                                             No FAQs added. <br />
                                             <button onClick={() => setFaq([
-                                                { question: "How long does shipping take?", answer: "Standard shipping typically takes 2-5 business days within the USA. International shipping times vary depending on the destination." },
-                                                { question: "Can I customize the design?", answer: "Yes! Use our interactive design studio to add your own text, images, logo, or artwork to this item." },
-                                                { question: "What is the return policy?", answer: "Since this is a custom printed product, we cannot accept returns for buyer's remorse. However, if there is a defect in printing or the item arrives damaged, we will offer a free replacement." },
-                                                { question: "How should I wash this item?", answer: "To ensure longevity of the print, we recommend machine washing cold, inside-out, on a gentle cycle. Tumble dry low or hang-dry for best results." }
+                                                { question: "How do I create my custom print t-shirt?", answer: "Just open our online designer, upload your artwork (or add text), position it the way you want, preview your design, then place the order. We’ll print and produce it for you." },
+                                                { question: "Can I add my own logo or brand design?", answer: "Yes. You can upload your logo, graphics, or full design and make a custom print t-shirt for personal use, business merch, events, or gifts." },
+                                                { question: "What t-shirt is used for printing?", answer: "We print on the Comfort Colors 1717 garment-dyed t-shirt, made with 100% ring-spun U.S. cotton and a soft-washed, premium feel." },
+                                                { question: "What does “garment-dyed” mean?", answer: "Garment-dyed means the shirt is dyed after it’s constructed. This gives it a softer texture and a rich, lived-in color tone." },
+                                                { question: "Is this t-shirt thick or lightweight?", answer: "It’s heavyweight—6.1 oz/yd²—so it feels premium, holds shape well, and is great for everyday wear." },
+                                                { question: "Will the shirt shrink after washing?", answer: "It’s pre-shrunk and designed to have minimal shrinkage with proper care. For best results, wash cold and tumble dry low." },
+                                                { question: "What sizes are available?", answer: "Sizes typically range from S to 4XL (4XL availability depends on the printing partner and color choice)." },
+                                                { question: "How does the fit feel?", answer: "The Comfort Colors 1717 has a relaxed fit—comfortable and slightly roomier than a fitted tee." },
+                                                { question: "Are there side seams on this shirt?", answer: "No. It’s made with a seamless tubular body, which helps the shirt keep its shape and gives it a clean look." },
+                                                { question: "How many colors can I choose from?", answer: "You can choose from 58 colors, so you can match your custom print design to your exact vibe." },
+                                                { question: "How do I wash and care for my custom printed shirt?", answer: "Machine wash cold (max 30°C / 90°F). Do not bleach. Tumble dry low. Iron/steam low (avoid ironing directly on the print). Do not dry clean." },
+                                                { question: "Can I order one shirt only, or do I need a bulk order?", answer: "You can order one custom print t-shirt or place a bulk order—whatever you need." }
+                                                { question: "Can I print on the front and back?", answer: "If your designer supports multiple print areas, yes—front, back, and more (availability depends on your selected print options)." }
+                                                { question: "Is this good for business merch and event shirts?", answer: "Definitely. The premium feel, durable stitching, and huge color range make it a strong choice for brand merch, team shirts, events, and creator drops." }
+                                                { question: "Where are these shirts made?", answer: "The Comfort Colors 1717 shirts are made in Honduras." }
                                             ])} className="text-indigo-600 font-bold hover:underline mt-2">
                                                 Add Defaults
                                             </button>
