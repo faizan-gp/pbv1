@@ -1,84 +1,95 @@
 import { Product } from "@/lib/firestore/products";
 
 export default function ProductSchema({ product }: { product: Product }) {
-    const schema = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": product.name,
-        "image": [
-            product.image,
-            ...(product.listingImages?.map(img => img.url) || [])
-        ].map(url => ({
-            "@type": "ImageObject",
-            "url": url,
-            "name": product.name,
-            "caption": product.shortDescription || `Custom ${product.name}`,
-            "author": {
-                "@type": "Organization",
-                "name": "Print Brawl"
-            }
-        })),
-        "description": product.fullDescription || product.shortDescription || `Custom ${product.name}`,
-        "keywords": product.tags?.join(", ") || "",
-        "sku": product.id,
-        "mpn": product.id,
-        "brand": {
-            "@type": "Brand",
-            "name": "Print Brawl"
-        },
-        "category": product.category,
-        "offers": {
-            "@type": "Offer",
-            "url": `https://www.printbrawl.com/products/${product.id}`,
-            "priceCurrency": "USD",
-            "price": product.price ? String(product.price) : "0", // Default to 0 if missing, better than fake price
+    // Helper to clean text
+    const cleanText = (text: string) => {
+        if (!text) return "";
+        return text
+            .replace(/[\u2018\u2019]/g, "'") // Smart single quotes
+            .replace(/[\u201C\u201D]/g, '"') // Smart double quotes
+            .replace(/\uFFFD/g, ""); // Replacement character
+    };
+
+    const graph = [
+        {
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": cleanText(product.name),
+            "image": [
+                product.image,
+                ...(product.listingImages?.map(img => img.url) || [])
+            ].map(url => ({
+                "@type": "ImageObject",
+                "url": url,
+                "name": cleanText(product.name),
+                "caption": cleanText(product.shortDescription || `Custom ${product.name}`),
+                "author": {
+                    "@type": "Organization",
+                    "name": "Print Brawl"
+                }
+            })),
+            "description": cleanText(product.fullDescription || product.shortDescription || `Custom ${product.name}`),
+            "keywords": product.tags?.join(", ") || "",
             "sku": product.id,
-            "availability": "https://schema.org/InStock",
-            "itemCondition": "https://schema.org/NewCondition",
-            "seller": {
-                "@type": "Organization",
+            "mpn": product.id,
+            "brand": {
+                "@type": "Brand",
                 "name": "Print Brawl"
             },
-            "shippingDetails": {
-                "@type": "OfferShippingDetails",
-                "shippingRate": {
-                    "@type": "MonetaryAmount",
-                    "value": product.shippingCost ? String(product.shippingCost) : "0",
-                    "currency": "USD"
+            "category": product.category,
+            "offers": {
+                "@type": "Offer",
+                "url": `https://www.printbrawl.com/products/${product.id}`,
+                "priceCurrency": "USD",
+                "price": product.price ? String(product.price) : "0",
+                "sku": product.id,
+                "availability": "https://schema.org/InStock",
+                "itemCondition": "https://schema.org/NewCondition",
+                "seller": {
+                    "@type": "Organization",
+                    "name": "Print Brawl"
                 },
-                "shippingDestination": {
-                    "@type": "DefinedRegion",
-                    "addressCountry": "US"
-                },
-                "deliveryTime": {
-                    "@type": "ShippingDeliveryTime",
-                    "businessDays": {
-                        "@type": "OpeningHoursSpecification",
-                        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                "shippingDetails": {
+                    "@type": "OfferShippingDetails",
+                    "shippingRate": {
+                        "@type": "MonetaryAmount",
+                        "value": product.shippingCost ? String(product.shippingCost) : "0",
+                        "currency": "USD"
                     },
-                    "cutoffTime": "14:00",
-                    "handlingTime": {
-                        "@type": "QuantitativeValue",
-                        "minValue": 2,
-                        "maxValue": 7,
-                        "unitCode": "DAY"
+                    "shippingDestination": {
+                        "@type": "DefinedRegion",
+                        "addressCountry": "US"
                     },
-                    "transitTime": {
-                        "@type": "QuantitativeValue",
-                        "minValue": 2,
-                        "maxValue": 5,
-                        "unitCode": "DAY"
+                    "deliveryTime": {
+                        "@type": "ShippingDeliveryTime",
+                        "businessDays": {
+                            "@type": "OpeningHoursSpecification",
+                            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                        },
+                        "cutoffTime": "14:00",
+                        "handlingTime": {
+                            "@type": "QuantitativeValue",
+                            "minValue": 2,
+                            "maxValue": 7,
+                            "unitCode": "DAY"
+                        },
+                        "transitTime": {
+                            "@type": "QuantitativeValue",
+                            "minValue": 2,
+                            "maxValue": 5,
+                            "unitCode": "DAY"
+                        }
                     }
                 }
+            },
+            "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": "4.8",
+                "reviewCount": "124"
             }
         },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.8",
-            "reviewCount": "124"
-        },
-        // FAQ Schema embedded
-        "mainEntity": {
+        {
+            "@context": "https://schema.org",
             "@type": "FAQPage",
             "mainEntity": (product.faq || [
                 {
@@ -99,19 +110,19 @@ export default function ProductSchema({ product }: { product: Product }) {
                 }
             ]).map(faq => ({
                 "@type": "Question",
-                "name": faq.question,
+                "name": cleanText(faq.question),
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": faq.answer
+                    "text": cleanText(faq.answer)
                 }
             }))
         }
-    };
+    ];
 
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+            dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@graph": graph }) }}
         />
     );
 }
