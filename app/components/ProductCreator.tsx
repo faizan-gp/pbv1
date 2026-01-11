@@ -1567,8 +1567,10 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         <div className="text-center py-8 text-sm text-gray-400 border-2 border-dashed border-gray-100 rounded-xl">
                                             No FAQs added. <br />
                                             <button onClick={() => setFaq([
-                                                { question: "How long does shipping take?", answer: "Standard shipping typically takes 2-5 business days within the USA." },
-                                                { question: "Can I machine wash this?", answer: "Yes, wash cold and tumble dry low." }
+                                                { question: "How long does shipping take?", answer: "Standard shipping typically takes 2-5 business days within the USA. International shipping times vary depending on the destination." },
+                                                { question: "Can I customize the design?", answer: "Yes! Use our interactive design studio to add your own text, images, logo, or artwork to this item." },
+                                                { question: "What is the return policy?", answer: "Since this is a custom printed product, we cannot accept returns for buyer's remorse. However, if there is a defect in printing or the item arrives damaged, we will offer a free replacement." },
+                                                { question: "How should I wash this item?", answer: "To ensure longevity of the print, we recommend machine washing cold, inside-out, on a gentle cycle. Tumble dry low or hang-dry for best results." }
                                             ])} className="text-indigo-600 font-bold hover:underline mt-2">
                                                 Add Defaults
                                             </button>
@@ -1605,7 +1607,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 }
 
             </div>
-        </div>
+        </div >
     );
 }
 
