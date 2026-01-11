@@ -18,6 +18,7 @@ export default function ShirtConfigurator(props: ShirtConfiguratorProps) {
     const cartUserId = searchParams.get('cartUserId'); // remote user id
     const viewOnlyParam = searchParams.get('viewOnly');
     const viewOnly = viewOnlyParam === 'true';
+    const initialColor = searchParams.get('color');
     const { product } = props;
 
     const [showOnboarding, setShowOnboarding] = React.useState(false);
@@ -40,10 +41,10 @@ export default function ShirtConfigurator(props: ShirtConfiguratorProps) {
                 />
             )}
             <div className="md:hidden">
-                <ShirtConfiguratorMobile {...props} editCartId={editCartId} cartUserId={cartUserId} viewOnly={viewOnly} />
+                <ShirtConfiguratorMobile {...props} editCartId={editCartId} cartUserId={cartUserId} viewOnly={viewOnly} initialColor={initialColor} />
             </div>
             <div className="hidden md:block">
-                <ShirtConfiguratorDesktop {...props} editCartId={editCartId} cartUserId={cartUserId} viewOnly={viewOnly} />
+                <ShirtConfiguratorDesktop {...props} editCartId={editCartId} cartUserId={cartUserId} viewOnly={viewOnly} initialColor={initialColor} />
             </div>
         </>
     );

@@ -23,6 +23,7 @@ interface ShirtConfiguratorProps {
     editCartId?: string | null;
     cartUserId?: string | null;
     viewOnly?: boolean;
+    initialColor?: string | null;
 }
 
 const STEPS = [
@@ -37,7 +38,7 @@ import { db } from '@/lib/firebase';
 import { CartData } from '@/lib/firestore/carts';
 import { Lock, Unlock } from 'lucide-react';
 
-export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly, initialColor }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const { showToast } = useToast();
@@ -92,11 +93,15 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     // Actually, editor will trigger onUpdate when it loads state, so setDesignPreviews will happen naturally.
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
 
-    const [selectedColor, setSelectedColor] = useState(
-        localCartItem?.options.color
-            ? (product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0])
-            : (product.colors?.[0] || { name: 'White', hex: '#fff', images: {} })
-    );
+    const [selectedColor, setSelectedColor] = useState(() => {
+        if (localCartItem?.options.color) {
+            return product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0];
+        }
+        if (initialColor) {
+            return product.colors.find((c: any) => c.name === initialColor) || product.colors[0];
+        }
+        return product.colors?.[0] || { name: 'White', hex: '#fff', images: {} };
+    });
 
     const [selectedSize, setSelectedSize] = useState<string>(localCartItem?.options.size || '');
     const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add

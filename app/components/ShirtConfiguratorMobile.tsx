@@ -20,6 +20,7 @@ interface ShirtConfiguratorProps {
     editCartId?: string | null;
     cartUserId?: string | null;
     viewOnly?: boolean;
+    initialColor?: string | null;
 }
 
 import { doc, getDoc } from 'firebase/firestore';
@@ -35,7 +36,7 @@ const TABS = [
     { id: 'size', label: 'Size', icon: Ruler },
 ];
 
-export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId, viewOnly }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId, viewOnly, initialColor }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
@@ -88,11 +89,15 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
     // --- STATE ---
     const [activeTab, setActiveTab] = useState(activeItem || editCartId ? 'text' : 'color'); // If editing, go to edit mode
-    const [selectedColor, setSelectedColor] = useState(
-        localCartItem?.options.color
-            ? (product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0])
-            : (product.colors?.[0] || { name: 'White', hex: '#fff', images: {} })
-    );
+    const [selectedColor, setSelectedColor] = useState(() => {
+        if (localCartItem?.options.color) {
+            return product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0];
+        }
+        if (initialColor) {
+            return product.colors.find((c: any) => c.name === initialColor) || product.colors[0];
+        }
+        return product.colors?.[0] || { name: 'White', hex: '#fff', images: {} };
+    });
 
     const [selectedSize, setSelectedSize] = useState<string>(localCartItem?.options.size || '');
     const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add
