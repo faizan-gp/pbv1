@@ -623,28 +623,93 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 const oldIndex = items.findIndex((item) => item.url === active.id);
                 const newIndex = items.findIndex((item) => item.url === over?.id);
 
-                // Only allow reordering if strictly within same list?
-                // Actually dnd-kit might let us drag between lists if we use unique IDs.
-                // But for simplicity, we assume we just call arrayMove. 
-                // However, our `items` is the GLOBAL list of all images (all colors). 
-                // If we filter in UI, arrayMove on the global list might behave weirdly if indices don't match displayed indices.
-                // WE NEED TO BE CAREFUL.
-                // Correct approach:
-                // 1. Identify which "Group" (color) the drag happened in.
-                // 2. Extract that group's items.
-                // 3. Perform arrayMove on that sub-list.
-                // 4. Merge back into main list? 
+                // 1. Perform the primary reorder
+                const reorderedItems = arrayMove(items, oldIndex, newIndex);
 
-                // Simpler: Just rely on unique URL ids? 
-                // If I drag Item A (Red) to Item B (Red)'s position. 
-                // arrayMove(items, oldIndex, newIndex) works IF oldIndex and newIndex are correct in the MASTER array.
-                // Yes, findIndex searches the master array. So standard arrayMove works fine even if they are far apart in the array, 
-                // AS LONG AS we don't change the "color" property during move. 
-                // And since we are reordering "visual" position, arrayMove on the master list *should* reflect the new visual order 
-                // assuming the render loop just Filters and Maps safely.
-                // Yes: `items.filter(...).map(...)`. If I swap two Red items in the master list, their relative order in the filtered list swaps too.
+                // 2. Identify the source color group of the moved item
+                const movedItem = items[oldIndex];
+                if (!movedItem || !movedItem.color || movedItem.color === 'All') {
+                    // If moving in 'All' or unknown context, just return simple reorder
+                    // Or if we want 'All' to also sync? Let's assume Color Variatents is the main goal.
+                    return reorderedItems;
+                }
 
-                return arrayMove(items, oldIndex, newIndex);
+                // 3. Extract the new filename sequence for this color group
+                const sourceColor = movedItem.color;
+                const sourceGroupItems = reorderedItems.filter(img => img.color === sourceColor);
+                const sourceFilenames = sourceGroupItems.map(img => img.fileName).filter(Boolean) as string[];
+
+                if (sourceFilenames.length === 0) return reorderedItems;
+
+                // 4. Propagate this order to ALL other groups
+                // We want to reorder other groups to match 'sourceFilenames' order as best as possible.
+                // Strategy: For each other color, extract their items, sort them to match sourceFilenames index, then reconstruct the master list.
+
+                // We'll rebuild the entire list to be safe.
+                const newMasterList: ListingImage[] = [];
+                const groups: Record<string, ListingImage[]> = {};
+
+                // Group all items
+                reorderedItems.forEach(img => {
+                    const g = img.color || 'All';
+                    if (!groups[g]) groups[g] = [];
+                    groups[g].push(img);
+                });
+
+                // Process each group
+                Object.keys(groups).forEach(groupName => {
+                    if (groupName === sourceColor) {
+                        // Already sorted correctly in the reorderedItems, just take them
+                        newMasterList.push(...groups[groupName]);
+                    } else {
+                        // Reorder this group to match sourceFilenames
+                        const groupItems = groups[groupName];
+
+                        // Separate items that have matching filenames and those that don't
+                        const sortedMatches: ListingImage[] = [];
+                        const leftovers: ListingImage[] = [];
+
+                        // We iterate through the SOURCE pattern to determine order
+                        sourceFilenames.forEach(filename => {
+                            const matchIndex = groupItems.findIndex(img => img.fileName === filename);
+                            if (matchIndex !== -1) {
+                                sortedMatches.push(groupItems[matchIndex]);
+                                // Remove from groupItems search pool locally so we don't dupe? 
+                                // Actually better to mark used.
+                                // But since filenames should be unique within a color group (usually), find is okay.
+                            }
+                        });
+
+                        // Note: The above only picks items present in Source. 
+                        // We also need items in Group that are NOT in Source (leftovers).
+                        // And items in Source that are NOT in Group (ignored).
+
+                        groupItems.forEach(img => {
+                            if (!img.fileName || !sourceFilenames.includes(img.fileName)) {
+                                leftovers.push(img);
+                            }
+                        });
+
+                        // If the group had items that matched source, we put them in source's order.
+                        // Then append leftovers.
+                        // Wait, what if the group has multiple files with same name? (Unlikely for listings but possible)
+                        // The simplified logic: Filter groupItems by those in sourceFilenames, sort them by sourceFilenames.indexOf(img.fileName).
+
+                        const matches = groupItems.filter(img => img.fileName && sourceFilenames.includes(img.fileName));
+                        matches.sort((a, b) => {
+                            return sourceFilenames.indexOf(a.fileName!) - sourceFilenames.indexOf(b.fileName!);
+                        });
+
+                        // Reconstruct group
+                        // We put matches first? Or try to preserve relative positions of leftovers?
+                        // "Reorder all files based on filenames" implies the filename order is paramount.
+                        // So: Matches (sorted), then Leftovers.
+
+                        newMasterList.push(...matches, ...leftovers);
+                    }
+                });
+
+                return newMasterList;
             });
         }
     };
