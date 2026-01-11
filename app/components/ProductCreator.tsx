@@ -763,7 +763,16 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                                 <button
                                     onPointerDown={e => e.stopPropagation()}
-                                    onClick={() => setListingImages(prev => prev.filter(item => item !== img))}
+                                    onClick={() => {
+                                        if (img.fileName) {
+                                            // Delete all images with matching filename (bulk delete)
+                                            setListingImages(prev => prev.filter(item => item.fileName !== img.fileName));
+                                            showToast(`Deleted all variations of ${img.fileName}`, 'success');
+                                        } else {
+                                            // Fallback: Delete just this specific image instance
+                                            setListingImages(prev => prev.filter(item => item !== img));
+                                        }
+                                    }}
                                     className="p-1.5 text-white/70 hover:text-red-400 hover:bg-white/20 rounded transition-colors"
                                     title="Delete"
                                 >
