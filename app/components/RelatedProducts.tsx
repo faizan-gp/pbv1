@@ -1,7 +1,6 @@
-
 import Link from 'next/link';
 import { getProductsByCategory } from '@/lib/firestore/products';
-import ProductCard from './ProductCard';
+import RelatedProductsCarousel from './RelatedProductsCarousel';
 
 interface RelatedProductsProps {
     category: string;
@@ -9,7 +8,8 @@ interface RelatedProductsProps {
 }
 
 export default async function RelatedProducts({ category, currentProductId }: RelatedProductsProps) {
-    const relatedProducts = await getProductsByCategory(category, 4, currentProductId);
+    // Fetch more products to allow for scrolling
+    const relatedProducts = await getProductsByCategory(category, 12, currentProductId);
 
     if (!relatedProducts || relatedProducts.length === 0) {
         return null;
@@ -17,10 +17,10 @@ export default async function RelatedProducts({ category, currentProductId }: Re
 
     return (
         <section className="bg-slate-50 py-16 lg:py-24 border-t border-slate-200">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="flex items-center justify-between mb-12">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-12">
+                <div className="flex items-center justify-between mb-8 md:mb-12">
                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-                        You May Also Like
+                        Frequently Sold Together
                     </h2>
                     <Link
                         href={`/categories/${category.toLowerCase().replace(/\s+/g, '-')}`}
@@ -30,13 +30,7 @@ export default async function RelatedProducts({ category, currentProductId }: Re
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-                    {relatedProducts.map(product => (
-                        <div key={product.id} className="h-full">
-                            <ProductCard product={product} />
-                        </div>
-                    ))}
-                </div>
+                <RelatedProductsCarousel products={relatedProducts} />
             </div>
         </section>
     );
