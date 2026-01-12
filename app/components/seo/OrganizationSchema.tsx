@@ -4,7 +4,7 @@ export default function OrganizationSchema() {
         "@type": "Organization",
         "name": "Print Brawl",
         "url": "https://printbrawl.com",
-        "logo": "https://printbrawl.com/logov2.png",
+        "logo": "https://printbrawl.com/logov2.webp",
         "description": "Premium custom apparel and personalized gifts for everyone. Design your own t-shirts, hoodies, and more.",
         "contactPoint": {
             "@type": "ContactPoint",

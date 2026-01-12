@@ -38,7 +38,7 @@ export default function Navbar() {
                     {/* LOGO */}
                     <Link href="/" className="flex items-center gap-1 group z-50 shrink-0">
                         <img
-                            src="/logov2.png"
+                            src="/logov2.webp"
                             alt="PrintBrawl"
                             className="h-8 md:h-12 w-auto object-contain group-hover:opacity-90 transition-opacity max-w-[140px] md:max-w-none"
                         />

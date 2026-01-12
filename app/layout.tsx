@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories.",
     images: [
       {
-        url: "/logov2.png", // Using logo as fallback OG image
+        url: "/logov2.webp", // Using logo as fallback OG image
         width: 800,
         height: 600,
         alt: "Print Brawl - Design Your Own",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Print Brawl - Design Your Own Custom Apparel & Gifts",
     description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories.",
-    images: ["/logov2.png"],
+    images: ["/logov2.webp"],
   },
   robots: {
     index: true,

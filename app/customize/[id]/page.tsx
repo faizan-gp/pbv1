@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         openGraph: {
             title,
             description,
-            images: [product.image || '/logov2.png'],
+            images: [product.image || '/logov2.webp'],
         },
         alternates: {
             canonical: `https://printbrawl.com/customize/${id}`,
