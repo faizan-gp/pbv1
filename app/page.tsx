@@ -171,14 +171,14 @@ export default async function Home() {
 
                 {/* --- DESKTOP IMAGE (Hidden on Mobile) --- */}
                 <img
-                  src="/design_editor.png"
+                  src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fdesign_editor.webp?alt=media&token=20c0c212-3854-41e8-9534-4c321d797177"
                   alt="Desktop Editor Interface"
                   className="hidden md:block rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
                 />
 
                 {/* --- MOBILE IMAGE (Hidden on Desktop) --- */}
                 <img
-                  src="/design_editor_mobile.png"
+                  src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fdesign_editor_mobile.webp?alt=media&token=3fc8005d-973f-4c68-9155-858c83081f9b"
                   alt="Mobile Editor Interface"
                   className="block md:hidden rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
                 />
@@ -380,7 +380,7 @@ export default async function Home() {
               <div className="absolute inset-0 bg-indigo-500 rounded-3xl rotate-2 group-hover:rotate-1 transition-transform"></div>
               <div className="relative h-[400px] w-full bg-slate-800 rounded-3xl overflow-hidden border border-slate-700">
                 {/* Placeholder for fabric closeup */}
-                <img src="./" alt="Fabric Texture" className="w-full h-full object-cover opacity-80" />
+                <img src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fshirt_sand_dune.webp?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032" alt="Premium Heavyweight Cotton Shirt" className="w-full h-full object-cover opacity-80" />
                 <div className="absolute bottom-6 left-6 right-6 bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="text-green-400" />
