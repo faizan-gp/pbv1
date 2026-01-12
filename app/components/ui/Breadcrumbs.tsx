@@ -43,7 +43,7 @@ export default function Breadcrumbs({ items, className = '' }: BreadcrumbsProps)
             <nav className={`flex text-sm text-gray-500 mb-4 ${className}`} aria-label="Breadcrumb">
                 <ol className="flex items-center space-x-2">
                     <li>
-                        <Link href="/" className="hover:text-indigo-600 flex items-center transition-colors">
+                        <Link href="/" className="hover:text-indigo-600 flex items-center transition-colors" aria-label="Home">
                             <Home size={14} />
                         </Link>
                     </li>

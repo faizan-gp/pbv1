@@ -244,6 +244,7 @@ export default function CategoryClient({ category, products, subcategories, curr
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sort:</span>
                                     </div>
                                     <select
+                                        aria-label="Sort products"
                                         value={sortBy}
                                         onChange={(e) => setSortBy(e.target.value as SortOption)}
                                         className="pl-12 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm appearance-none cursor-pointer hover:border-indigo-300 transition-colors"
@@ -258,10 +259,10 @@ export default function CategoryClient({ category, products, subcategories, curr
 
                                 {/* View Toggles */}
                                 <div className="bg-slate-50 p-1 rounded-xl flex items-center gap-1 border border-slate-100">
-                                    <button onClick={() => setViewMode('grid')} className={cn("p-2 rounded-lg transition-all", viewMode === 'grid' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
+                                    <button aria-label="Grid view" onClick={() => setViewMode('grid')} className={cn("p-2 rounded-lg transition-all", viewMode === 'grid' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
                                         <LayoutGrid size={16} />
                                     </button>
-                                    <button onClick={() => setViewMode('list')} className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
+                                    <button aria-label="List view" onClick={() => setViewMode('list')} className={cn("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600")}>
                                         <ListIcon size={16} />
                                     </button>
                                 </div>
