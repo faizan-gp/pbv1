@@ -161,9 +161,9 @@ export default function CategoryClient({ category, products, subcategories, curr
                     {/* --- 3. SIDEBAR FILTERS (Card Style) --- */}
                     <aside className="hidden lg:block w-72 shrink-0 space-y-8">
                         <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 shadow-sm sticky top-24">
-                            <h3 className="font-black text-slate-900 mb-6 flex items-center gap-2 text-lg">
+                            <h2 className="font-black text-slate-900 mb-6 flex items-center gap-2 text-lg">
                                 <Filter className="text-indigo-600" size={20} /> Filters
-                            </h3>
+                            </h2>
 
                             {/* Search */}
                             <div className="mb-8">

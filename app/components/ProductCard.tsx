@@ -31,9 +31,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             {/* Details */}
             <div className="mt-4 space-y-1">
-                <h3 className="text-base font-bold text-neutral-900 leading-tight group-hover:underline decoration-1 underline-offset-4 decoration-neutral-400">
+                <h2 className="text-base font-bold text-neutral-900 leading-tight group-hover:underline decoration-1 underline-offset-4 decoration-neutral-400">
                     {name}
-                </h3>
+                </h2>
                 <div className="flex items-center justify-between">
                     <p className="text-sm text-neutral-500 font-medium">
                         ${price.toFixed(2)}

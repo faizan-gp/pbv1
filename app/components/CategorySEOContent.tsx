@@ -15,35 +15,57 @@ export default function CategorySEOContent({ categoryName, description }: Catego
             <div className="mx-auto max-w-4xl px-6 lg:px-8">
                 {/* Long Description Content */}
                 <div className="prose prose-lg prose-slate mx-auto max-w-none mb-16">
-                    {description.split('\n').map((line, i) => {
-                        const trimmed = line.trim();
-                        if (trimmed.startsWith('### ')) return <h3 key={i} className="text-2xl font-bold text-slate-900 mt-8 mb-4">{trimmed.replace('### ', '')}</h3>;
-                        if (trimmed.startsWith('## ')) return <h2 key={i} className="text-3xl font-black text-slate-900 mt-12 mb-6">{trimmed.replace('## ', '')}</h2>;
-                        if (trimmed.startsWith('* ')) {
-                            const parts = line.replace(/^\* /, '').split('**');
-                            return (
-                                <li key={i} className="ml-4 list-disc mb-2 marker:text-indigo-500 text-slate-600 pl-2">
-                                    {parts.map((part, idx) => (
-                                        idx % 2 === 1 ? <strong key={idx} className="font-bold text-slate-900">{part}</strong> : part
-                                    ))}
-                                </li>
-                            );
-                        }
+                    <div className="prose prose-lg prose-slate mx-auto max-w-none mb-16">
+                        {(() => {
+                            const lines = description.split('\n');
+                            const elements = [];
+                            let listBuffer: React.ReactNode[] = [];
 
-                        const parts = line.split('**');
-                        if (parts.length > 1) {
-                            return (
-                                <p key={i} className="mb-4 text-slate-600 leading-relaxed">
-                                    {parts.map((part, idx) => (
-                                        idx % 2 === 1 ? <strong key={idx} className="font-bold text-slate-900">{part}</strong> : part
-                                    ))}
-                                </p>
-                            );
-                        }
+                            lines.forEach((line, i) => {
+                                const trimmed = line.trim();
+                                if (trimmed.startsWith('* ')) {
+                                    const parts = line.replace(/^\* /, '').split('**');
+                                    listBuffer.push(
+                                        <li key={`li-${i}`} className="ml-4 list-disc mb-2 marker:text-indigo-500 text-slate-600 pl-2">
+                                            {parts.map((part, idx) => (
+                                                idx % 2 === 1 ? <strong key={idx} className="font-bold text-slate-900">{part}</strong> : part
+                                            ))}
+                                        </li>
+                                    );
+                                } else {
+                                    if (listBuffer.length > 0) {
+                                        elements.push(<ul key={`ul-${i}`} className="my-4 space-y-2">{listBuffer}</ul>);
+                                        listBuffer = [];
+                                    }
 
-                        if (trimmed.length > 0) return <p key={i} className="mb-4 text-slate-600 leading-relaxed">{trimmed}</p>;
-                        return null;
-                    })}
+                                    if (trimmed.startsWith('### ')) {
+                                        elements.push(<h3 key={i} className="text-2xl font-bold text-slate-900 mt-8 mb-4">{trimmed.replace('### ', '')}</h3>);
+                                    } else if (trimmed.startsWith('## ')) {
+                                        elements.push(<h2 key={i} className="text-3xl font-black text-slate-900 mt-12 mb-6">{trimmed.replace('## ', '')}</h2>);
+                                    } else if (trimmed.length > 0) {
+                                        const parts = line.split('**');
+                                        if (parts.length > 1) {
+                                            elements.push(
+                                                <p key={i} className="mb-4 text-slate-600 leading-relaxed">
+                                                    {parts.map((part, idx) => (
+                                                        idx % 2 === 1 ? <strong key={idx} className="font-bold text-slate-900">{part}</strong> : part
+                                                    ))}
+                                                </p>
+                                            );
+                                        } else {
+                                            elements.push(<p key={i} className="mb-4 text-slate-600 leading-relaxed">{trimmed}</p>);
+                                        }
+                                    }
+                                }
+                            });
+
+                            if (listBuffer.length > 0) {
+                                elements.push(<ul key="ul-end" className="my-4 space-y-2">{listBuffer}</ul>);
+                            }
+
+                            return elements;
+                        })()}
+                    </div>
                 </div>
 
                 {/* Why Choose Us Section */}
