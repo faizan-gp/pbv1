@@ -75,7 +75,7 @@ export default function HeroVisual() {
                     <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: activeColor.class === 'bg-white' ? '#f8fafc' : '' }}></div>
                     <div className="absolute inset-0 flex items-center justify-center">
                         <img
-                            src="/products/shirt/colors/shirt_sand_dune.png"
+                            src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fshirt_sand_dune.webp?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032"
                             alt="Custom Hoodie"
                             className="w-full h-full object-cover mix-blend-multiply transition-all duration-500"
                         />

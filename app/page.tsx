@@ -380,7 +380,7 @@ export default async function Home() {
               <div className="absolute inset-0 bg-indigo-500 rounded-3xl rotate-2 group-hover:rotate-1 transition-transform"></div>
               <div className="relative h-[400px] w-full bg-slate-800 rounded-3xl overflow-hidden border border-slate-700">
                 {/* Placeholder for fabric closeup */}
-                <img src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fshirt_sand_dune.webp?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032" alt="Premium Heavyweight Cotton Shirt" className="w-full h-full object-cover opacity-80" />
+                <img src="?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032" alt="Premium Heavyweight Cotton Shirt" className="w-full h-full object-cover opacity-80" />
                 <div className="absolute bottom-6 left-6 right-6 bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
                     <ShieldCheck className="text-green-400" />
