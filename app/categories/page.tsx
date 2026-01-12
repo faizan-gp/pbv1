@@ -48,7 +48,7 @@ const CATEGORY_CONFIG: Record<string, { icon: any, color: string, bg: string, ac
 };
 
 export const metadata = {
-    title: 'Collections | Print Brawl',
+    title: 'Collections',
     description: 'Explore our premium categories ready for your custom designs.'
 };
 

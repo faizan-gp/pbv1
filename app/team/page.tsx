@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Linkedin, Printer, Truck, Palette, Terminal, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
-    title: "Meet the Team | Print Brawl",
+    title: "Meet the Team",
     description: "Meet Faizan, the designer and developer behind Print Brawl, and learn about our partnership with Printify.",
 };
 

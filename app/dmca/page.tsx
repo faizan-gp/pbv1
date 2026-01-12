@@ -2,7 +2,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "DMCA Policy | Print Brawl",
+    title: "DMCA Policy",
     description: "Digital Millennium Copyright Act Notice and Takedown Procedure.",
 };
 

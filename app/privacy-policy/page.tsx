@@ -2,7 +2,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Privacy Policy | Print Brawl",
+    title: "Privacy Policy",
     description: "How we collect, use, and protect your data.",
 };
 

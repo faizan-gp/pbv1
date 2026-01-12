@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import ContactContent from './ContactContent';
 
 export const metadata: Metadata = {
-    title: "Contact Support | Print Brawl",
+    title: "Contact Support",
     description: "Need help with your custom order? Contact our friendly support team for assistance with designing, shipping, or returns.",
     openGraph: {
         title: "Contact Print Brawl",

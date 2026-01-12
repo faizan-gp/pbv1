@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
 
     return {
-        title: category.metaTitle || `${category.name} | Print Brawl`,
+        title: category.metaTitle || `${category.name}`,
         description: category.metaDescription || category.description,
         keywords: category.keywords,
         openGraph: {

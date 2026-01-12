@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import FAQSchema from '@/app/components/seo/FAQSchema';
 
 export const metadata: Metadata = {
-    title: "FAQ | Common Questions - Print Brawl",
+    title: "FAQ | Common Questions",
     description: "Get answers to common questions about shipping, returns, and how to create your own custom products.",
     openGraph: {
         title: "Frequently Asked Questions",

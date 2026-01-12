@@ -2,7 +2,7 @@
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Terms of Service | Print Brawl",
+    title: "Terms of Service",
     description: "Terms and conditions for using Print Brawl services.",
 };
 

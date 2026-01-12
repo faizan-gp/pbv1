@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: {
         };
     }
 
-    const title = `${product.name} - Custom ${product.category} | Print Brawl`;
+    const title = `${product.name} - Custom ${product.category}`;
     const description = product.shortDescription ||
         `Customize ${product.name}. ${product.fullDescription || 'Premium quality custom apparel with our online design studio.'}`;
 

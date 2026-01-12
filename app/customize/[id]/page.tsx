@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const product = await getProduct(id);
     if (!product) return { title: 'Product Not Found | Print Brawl' };
 
-    const title = `Customize ${product.name} - Design Your Own | Print Brawl`;
+    const title = `Customize ${product.name} - Design Your Own`;
     const description = `Create your custom ${product.name} with our easy-to-use design studio. Add text, upload images, and visualization your unique design in real-time.`;
 
     return {
