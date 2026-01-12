@@ -5,7 +5,7 @@ interface NavItem {
 }
 
 export default function SiteNavigationSchema() {
-    const baseUrl = "https://www.printbrawl.com"; // In production this should come from env but standard is ok for now
+    const baseUrl = "https://printbrawl.com"; // In production this should come from env but standard is ok for now
 
     // Define main navigation items matching the Navbar
     const navItems: NavItem[] = [

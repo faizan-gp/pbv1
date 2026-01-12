@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   title: "Design Your Own Custom Apparel | Print Brawl",
   description: "Create unique custom t-shirts, hoodies, and gifts. Upload your photos or use our design tools to make something special.",
   alternates: {
-    canonical: "https://www.printbrawl.com",
+    canonical: "https://printbrawl.com",
   },
 };
 

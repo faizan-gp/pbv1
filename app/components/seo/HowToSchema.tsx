@@ -14,13 +14,13 @@ export default function HowToSchema({ productName, imageUrl }: { productName: st
                 "@type": "HowToStep",
                 "name": "Select Your Product",
                 "text": "Choose the product size, color, and variation that you want to customize.",
-                "url": "https://www.printbrawl.com/categories"
+                "url": "https://printbrawl.com/categories"
             },
             {
                 "@type": "HowToStep",
                 "name": "Upload Your Design",
                 "text": "Upload your logo, artwork, or photo using the 'Upload' button in the design studio.",
-                "image": "https://www.printbrawl.com/images/upload-icon.png"
+                "image": "https://printbrawl.com/images/upload-icon.png"
             },
             {
                 "@type": "HowToStep",

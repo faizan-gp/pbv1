@@ -23,13 +23,13 @@ export default function Breadcrumbs({ items, className = '' }: BreadcrumbsProps)
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Home",
-                "item": "https://www.printbrawl.com"
+                "item": "https://printbrawl.com"
             },
             ...items.map((item, index) => ({
                 "@type": "ListItem",
                 "position": index + 2,
                 "name": item.label,
-                "item": `https://www.printbrawl.com${item.href}`
+                "item": `https://printbrawl.com${item.href}`
             }))
         ]
     };

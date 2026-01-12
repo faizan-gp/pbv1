@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { getAllProducts, Product } from '@/lib/firestore/products';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = 'https://www.printbrawl.com';
+    const baseUrl = 'https://printbrawl.com';
 
     // Get all products dynamically
     let products: Product[] = [];

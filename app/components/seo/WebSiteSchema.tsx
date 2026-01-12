@@ -3,7 +3,7 @@ export default function WebSiteSchema() {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "Print Brawl",
-        "url": "https://www.printbrawl.com",
+        "url": "https://printbrawl.com",
         "potentialAction": {
             "@type": "SearchAction",
             "target": {

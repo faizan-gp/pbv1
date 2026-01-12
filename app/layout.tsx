@@ -21,7 +21,10 @@ import WebSiteSchema from "./components/seo/WebSiteSchema";
 import SiteNavigationSchema from "./components/seo/SiteNavigationSchema";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.printbrawl.com'),
+  metadataBase: new URL('https://printbrawl.com'),
+  alternates: {
+    canonical: './',
+  },
   title: {
     default: "Print Brawl - Design Your Own Custom Apparel & Gifts",
     template: "%s | Print Brawl"
@@ -30,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://www.printbrawl.com",
+    url: "https://printbrawl.com",
     siteName: "Print Brawl",
     title: "Print Brawl - Design Your Own Custom Apparel & Gifts",
     description: "Express your unique style with Print Brawl. Design your own custom t-shirts, hoodies, and accessories.",

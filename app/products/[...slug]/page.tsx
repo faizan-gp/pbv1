@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: {
             images: [product.image],
         },
         alternates: {
-            canonical: `https://www.printbrawl.com/products/${productId}`,
+            canonical: `https://printbrawl.com/products/${productId}`,
         },
     };
 }

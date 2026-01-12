@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
             images: [product.image || '/logov2.png'],
         },
         alternates: {
-            canonical: `https://www.printbrawl.com/customize/${id}`,
+            canonical: `https://printbrawl.com/customize/${id}`,
         }
     };
 }

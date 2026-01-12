@@ -11,7 +11,7 @@ export default function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] })
             "@type": "ListItem",
             "position": index + 1,
             "name": item.name,
-            "item": item.url.startsWith("http") ? item.url : `https://www.printbrawl.com${item.url}`
+            "item": item.url.startsWith("http") ? item.url : `https://printbrawl.com${item.url}`
         }))
     };
 

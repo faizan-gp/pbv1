@@ -3,8 +3,8 @@ export default function OrganizationSchema() {
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "Print Brawl",
-        "url": "https://www.printbrawl.com",
-        "logo": "https://www.printbrawl.com/logov2.png",
+        "url": "https://printbrawl.com",
+        "logo": "https://printbrawl.com/logov2.png",
         "description": "Premium custom apparel and personalized gifts for everyone. Design your own t-shirts, hoodies, and more.",
         "contactPoint": {
             "@type": "ContactPoint",

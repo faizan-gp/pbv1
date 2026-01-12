@@ -7,7 +7,7 @@ export default function ArticleSchema({ guide }: { guide: Guide }) {
         "@type": "Article",
         "headline": guide.title,
         "description": guide.excerpt,
-        "image": "https://www.printbrawl.com/logov2.png", // Ideally guide.image
+        "image": "https://printbrawl.com/logov2.png", // Ideally guide.image
         "datePublished": guide.date,
         "author": {
             "@type": "Organization",
@@ -18,7 +18,7 @@ export default function ArticleSchema({ guide }: { guide: Guide }) {
             "name": "Print Brawl",
             "logo": {
                 "@type": "ImageObject",
-                "url": "https://www.printbrawl.com/logov2.png"
+                "url": "https://printbrawl.com/logov2.png"
             }
         }
     };

@@ -39,7 +39,7 @@ export default function ProductSchema({ product }: { product: Product }) {
             "category": product.category,
             "offers": {
                 "@type": "Offer",
-                "url": `https://www.printbrawl.com/products/${product.id}`,
+                "url": `https://printbrawl.com/products/${product.id}`,
                 "priceCurrency": "USD",
                 "price": product.price ? String(product.price) : "0",
                 "sku": product.id,
