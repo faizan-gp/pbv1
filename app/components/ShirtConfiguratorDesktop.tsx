@@ -93,6 +93,10 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     // Actually, editor will trigger onUpdate when it loads state, so setDesignPreviews will happen naturally.
     const [designPreviews, setDesignPreviews] = useState<Record<string, string>>({});
 
+    // Mockup Generation State
+    const [mockupImages, setMockupImages] = useState<any[]>([]);
+    const [isGeneratingMockups, setIsGeneratingMockups] = useState(false);
+
     const [selectedColor, setSelectedColor] = useState(() => {
         if (localCartItem?.options.color) {
             return product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0];
@@ -203,6 +207,62 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             imgDesign.src = designUrl;
         });
     };
+
+    const generateMockups = async () => {
+        if (!product.printifyBlueprintId) return;
+
+        setIsGeneratingMockups(true);
+        setMockupImages([]);
+
+        try {
+            // 1. Get the current design as high-res image from Editor
+            const designDataUrl = await generateDesignOverlay(activeViewId);
+
+            if (!designDataUrl) {
+                showToast("Design is empty", "error");
+                setIsGeneratingMockups(false);
+                return;
+            }
+
+            // 2. Call API
+            const response = await fetch('/api/mockup/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    design: {
+                        imageBase64: designDataUrl,
+                        printPosition: activeViewId === 'back' ? 'back' : 'front'
+                    },
+                    product: {
+                        blueprintId: product.printifyBlueprintId,
+                        providerId: product.printifyProviderId
+                    }
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                setMockupImages(result.mockups);
+                showToast("Mockups generated!", "success");
+            } else {
+                throw new Error(result.error);
+            }
+
+        } catch (error: any) {
+            console.error("Mockup generation failed:", error);
+            showToast(error.message || "Failed to generate mockups", "error");
+        } finally {
+            setIsGeneratingMockups(false);
+        }
+    };
+
+    // Trigger generation when entering preview mode
+    React.useEffect(() => {
+        if (activeViewMode === 'preview' && mockupImages.length === 0 && product.printifyBlueprintId) {
+            generateMockups();
+        }
+    }, [activeViewMode]);
 
     const handleAddToCart = async (isUpdate: boolean = false) => {
         if (!selectedSize) { showToast('Please select a size', 'error'); return; }
@@ -622,6 +682,19 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     <button onClick={() => setCurrentStep(prev => prev + 1)} className="flex-1 h-14 rounded-xl bg-indigo-600 text-white font-bold text-lg hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-200">Next Step <ChevronRight size={20} /></button>
                                 )}
                             </div>
+
+                            {/* AI Mockup Button */}
+                            {product.printifyBlueprintId && (
+                                <button
+                                    onClick={() => {
+                                        setViewModeOverride('preview');
+                                        generateMockups();
+                                    }}
+                                    className="w-full mt-3 h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
+                                >
+                                    <Sparkles size={16} /> Generate AI Mockups
+                                </button>
+                            )}
                         </div>
                     </>
                 )}
@@ -675,8 +748,33 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                 </div>
                             )}
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
-                                <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200">
-                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
+                                <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 relative">
+                                    {isGeneratingMockups ? (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-50">
+                                            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                                            <p className="text-slate-500 font-medium animate-pulse">Generating AI Mockups...</p>
+                                        </div>
+                                    ) : mockupImages.length > 0 ? (
+                                        <div className="w-full h-full bg-slate-50 overflow-y-auto p-4 custom-scrollbar">
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {mockupImages.map((mock: any, idx) => (
+                                                    <div key={idx} className="aspect-square bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden relative group">
+                                                        <img src={mock.src} className="w-full h-full object-contain" />
+                                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <span className="text-white text-xs font-bold">{mock.position}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="sticky bottom-4 flex justify-center mt-4">
+                                                <button onClick={generateMockups} className="bg-slate-900 text-white px-6 py-2 rounded-full shadow-lg font-bold text-sm hover:bg-slate-800 transition-transform hover:scale-105 flex items-center gap-2">
+                                                    <Sparkles size={14} /> Regenerate Mockups
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
+                                    )}
                                 </div>
                             </div>
                         </div>

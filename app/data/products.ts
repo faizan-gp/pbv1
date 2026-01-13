@@ -47,6 +47,8 @@ export interface Product {
         imperial: { size: string; width: number; length: number }[];
         metric: any[];
     };
+    printifyBlueprintId?: number;
+    printifyProviderId?: number;
 }
 
 export const products: Product[] = [
@@ -57,6 +59,8 @@ export const products: Product[] = [
         trending: true,
         image: '/products/tshirt-black.png',
         canvasSize: 1024,
+        printifyBlueprintId: 706,
+        printifyProviderId: 99,
         colors: [
             { name: 'Black', hex: '#000000', images: { front: '/products/tshirt-black.png', back: '/products/tshirt-black-back.png' } },
             { name: 'White', hex: '#ffffff', images: { front: '/products/tshirt-white.png', back: '/products/tshirt-white-back.png' } },
