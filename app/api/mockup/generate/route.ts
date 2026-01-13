@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
 
         const result = await printifyProxy.generateMockupPreview(design, {
             blueprintId: product?.blueprintId || 706,
-            providerId: product?.providerId || 99,
+            providerId: product?.providerId || 25,
             printPosition: design.printPosition || 'front',
             ...options
         });

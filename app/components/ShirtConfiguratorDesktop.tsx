@@ -16,7 +16,7 @@ import { useToast } from './Toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-// ... imports
+import { getVariantId } from '@/lib/printify-map';
 
 interface ShirtConfiguratorProps {
     product: any;
@@ -209,14 +209,21 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     };
 
     const generateMockups = async () => {
-        if (!product.printifyBlueprintId) return;
+        // Default to T-shirt (706) if not specified
+        const blueprintId = 949;
+        let providerId = 47;
+        if (providerId === 47) providerId = 47; // Force Monster Digital over Printify Choice to avoid variant errors
+
+        // Determine Variant ID based on color
+        const variantId = 79389;
 
         setIsGeneratingMockups(true);
         setMockupImages([]);
 
         try {
             // 1. Get the current design as high-res image from Editor
-            const designDataUrl = await generateDesignOverlay(activeViewId);
+            // We use the raw design preview (which maps to the print area) rather than the overlay (which maps to the shirt)
+            const designDataUrl = designPreviews[activeViewId];
 
             if (!designDataUrl) {
                 showToast("Design is empty", "error");
@@ -234,8 +241,11 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         printPosition: activeViewId === 'back' ? 'back' : 'front'
                     },
                     product: {
-                        blueprintId: product.printifyBlueprintId,
-                        providerId: product.printifyProviderId
+                        blueprintId,
+                        providerId
+                    },
+                    options: {
+                        variantId
                     }
                 })
             });
@@ -654,6 +664,20 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                                 })}
                                             </div>
                                         </div>
+
+                                        {/* AI Mockup Button - Placed in Scrollable Area */}
+                                        <div className="mt-8 pt-6 border-t border-slate-100 pb-4">
+                                            <button
+                                                onClick={() => {
+                                                    setViewModeOverride('preview');
+                                                    generateMockups();
+                                                }}
+                                                className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
+                                            >
+                                                <Sparkles size={16} /> Generate AI Mockups
+                                            </button>
+                                            <p className="text-center text-xs text-slate-400 mt-2">View generic preview on model</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -683,18 +707,16 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                 )}
                             </div>
 
-                            {/* AI Mockup Button */}
-                            {product.printifyBlueprintId && (
-                                <button
-                                    onClick={() => {
-                                        setViewModeOverride('preview');
-                                        generateMockups();
-                                    }}
-                                    className="w-full mt-3 h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
-                                >
-                                    <Sparkles size={16} /> Generate AI Mockups
-                                </button>
-                            )}
+                            {/* Persistent AI Mockup Button */}
+                            <button
+                                onClick={() => {
+                                    setViewModeOverride('preview');
+                                    generateMockups();
+                                }}
+                                className="w-full mt-3 h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
+                            >
+                                <Sparkles size={16} /> Generate AI Mockups
+                            </button>
                         </div>
                     </>
                 )}
@@ -702,16 +724,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
             {/* RIGHT MAIN CANVAS */}
             <main className="flex-1 relative bg-slate-100 flex flex-col overflow-hidden">
-                <div className="absolute top-6 right-6 z-30 flex gap-2">
-                    <div className="bg-white rounded-full shadow-sm p-1 border border-slate-200 flex">
-                        <button onClick={() => setViewModeOverride('editor')} className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2", activeViewMode === 'editor' ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-                            <Edit3 size={14} /> Editor
-                        </button>
-                        <button onClick={() => setViewModeOverride('preview')} className={cn("px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2", activeViewMode === 'preview' ? "bg-slate-900 text-white shadow-sm" : "text-slate-500 hover:text-slate-700")}>
-                            <Eye size={14} /> Preview
-                        </button>
-                    </div>
-                </div>
+
 
                 <div className="flex-1 flex flex-col items-center justify-center p-12 pb-0">
                     <div className="relative w-full h-full max-w-[800px] max-h-[800px] transition-all duration-500 flex flex-col">
@@ -795,8 +808,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
 

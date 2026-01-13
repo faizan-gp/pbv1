@@ -92,7 +92,7 @@ export async function getProductById(id: string): Promise<Product | null> {
         // Temporary: Inject Printify IDs for relevant products if missing
         if (!data.printifyBlueprintId && (data.id.includes('tee') || data.id.includes('shirt') || data.id === 'comfort-colors-1717')) {
             data.printifyBlueprintId = 706; // Comfort Colors / Bella Canvas Blueprint
-            data.printifyProviderId = 99;   // Printify Choice
+            data.printifyProviderId = 25;   // Monster Digital (Better Variant Support)
         }
         return data;
     }

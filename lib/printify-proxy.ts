@@ -196,6 +196,21 @@ class PrintifyProxyService {
         const { blueprintId = 706, variantId = 73207, printPosition = 'front' } = options;
         const client = this.getClient();
 
+        // Auto-upload if we only have base64
+        if (design.imageBase64 && !design.printifyImageId) {
+            try {
+                console.log('🔄 Auto-uploading base64 image to Printify...');
+                const imageBuffer = Buffer.from(design.imageBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+                const uploadResult = await this.uploadImage(imageBuffer);
+                design.printifyImageId = uploadResult.id;
+                design.imageUrl = uploadResult.uri; // Also set URL just in case
+                console.log(`✅ Uploaded image: ${uploadResult.id}`);
+            } catch (e: any) {
+                console.error('❌ Failed to auto-upload image:', e.message);
+                throw new Error(`Failed to upload image: ${e.message}`);
+            }
+        }
+
         // Hardcoded cameras for 706/99
         let targetCameras = [
             { id: 98445, label: 'Front', position: 'front' },
@@ -237,7 +252,15 @@ class PrintifyProxyService {
                     validateStatus: (status) => status < 500
                 });
 
-                if (response.status !== 200) return null;
+                if (response.status !== 200) {
+                    console.error(`❌ Mockup failed for camera ${camera.id} with status ${response.status}`);
+                    try {
+                        console.error('Response:', Buffer.from(response.data).toString());
+                    } catch (err) {
+                        console.error('Could not read response body');
+                    }
+                    return null;
+                }
 
                 const imageBuffer = Buffer.from(response.data);
                 const base64Image = imageBuffer.toString('base64');
@@ -249,7 +272,8 @@ class PrintifyProxyService {
                     blueprintId: blueprintId,
                     position: camera.label
                 };
-            } catch (e) {
+            } catch (e: any) {
+                console.error(`❌ Mockup failed for camera ${camera.id}:`, e.message, e.response?.data?.toString());
                 return null;
             }
         });
