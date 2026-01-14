@@ -10,6 +10,7 @@ export interface DesignEditorRef {
     updateObject: (key: string, value: any) => void;
     modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => void;
     deselect: () => void;
+    exportState: () => { jsonState: any; dataUrl: string } | null;
 }
 
 interface DesignEditorProps {
@@ -323,6 +324,36 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         deselect: () => {
             fabricCanvas?.discardActiveObject();
             fabricCanvas?.requestRenderAll();
+        },
+        exportState: () => {
+            if (!fabricCanvas || !designZoneRef.current) return null;
+            // 1. Hide Overlay
+            designZoneRef.current.set('visible', false);
+
+            // 2. RESIZE CANVAS AND RESET VIEWPORT
+            const originalVpt = fabricCanvas.viewportTransform;
+            const originalWidth = fabricCanvas.width;
+            const originalHeight = fabricCanvas.height;
+
+            fabricCanvas.setDimensions({ width: product.canvasSize, height: product.canvasSize });
+            fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+            fabricCanvas.renderAll();
+
+            // 3. Capture State
+            const jsonState = (fabricCanvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
+            const dataUrl = fabricCanvas.toDataURL({
+                format: 'png', multiplier: 2,
+                left: currentDesignZone.left, top: currentDesignZone.top,
+                width: currentDesignZone.width, height: currentDesignZone.height
+            });
+
+            // 4. Restore
+            fabricCanvas.setDimensions({ width: originalWidth, height: originalHeight });
+            if (originalVpt) fabricCanvas.setViewportTransform(originalVpt);
+            designZoneRef.current.set('visible', true);
+            fabricCanvas.requestRenderAll();
+
+            return { jsonState, dataUrl };
         }
     }));
 

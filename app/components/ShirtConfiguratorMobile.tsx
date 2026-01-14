@@ -159,9 +159,30 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
         setMockupImages([]); // Clear previous
 
         try {
-            // 1. Get current design state (using active view logic like Desktop)
-            // Note: Mobile saves state to designStates on update, so we use that.
-            // We might want to ensure the current editor state is synced before generation.
+            // 1. Force capture current state from Editor
+            const currentState = editorRef.current?.exportState();
+            let currentDesignStates = { ...designStates };
+            let designDataUrl = designPreviews[activeViewId];
+
+            if (currentState) {
+                console.log("DEBUG: Captured fresh state for", activeViewId);
+                currentDesignStates = {
+                    ...currentDesignStates,
+                    [activeViewId]: currentState.jsonState
+                };
+                // Use fresh data URL
+                designDataUrl = currentState.dataUrl;
+
+                // Also update local preview state to stay in sync
+                setDesignStates(prev => ({ ...prev, [activeViewId]: currentState.jsonState }));
+                setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
+            }
+
+            if (!designDataUrl) {
+                showToast("Design is empty", "error");
+                setIsGeneratingMockups(false);
+                return;
+            }
 
             // Get blueprint/provider IDs
             const blueprintId = product.printifyBlueprintId || 949; // Fallback to Pacific Tee
@@ -182,17 +203,25 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    blueprintId,
-                    providerId,
-                    variantId,
-                    print_areas: {
-                        front: designStates['front'],
-                        back: designStates['back']
+                    design: {
+                        imageBase64: designDataUrl,
+                        printPosition: activeViewId === 'back' ? 'back' : 'front'
+                    },
+                    product: {
+                        blueprintId,
+                        providerId
+                    },
+                    options: {
+                        variantId
                     }
                 })
             });
 
-            if (!response.ok) throw new Error("Mockup API Failed");
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Mockup API Failed");
+            }
+
             const data = await response.json();
 
             if (data.mockups) {
@@ -373,23 +402,29 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
                     {/* View Switcher */}
                     <div className="flex flex-col gap-2 pointer-events-auto">
-                        <div className="bg-white/90 backdrop-blur shadow-sm rounded-lg p-1 flex">
-                            <button onClick={() => setViewMode('editor')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'editor' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
+                        <div className="bg-white/90 backdrop-blur shadow-sm rounded-lg p-1 flex items-center gap-1">
+                            {/* Editor Toggle (Optional now since we are always in editor mostly? Or keep it to toggle controls?) 
+                                Actually, if we remove 'Preview' mode button, we might just want to be in Editor mode always 
+                                until 'Preview Mockups' is clicked. 
+                                User asked to "remove the preview button". 
+                                I'll keep "Edit" as a visual indicator or reset, but remove the toggle to the old preview.
+                            */}
+                            <div className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-900 bg-white shadow-sm flex items-center gap-1")}>
+                                <Edit3 size={12} />
                                 Edit
-                            </button>
-                            <button onClick={() => setViewMode('preview')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'preview' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
-                                Preview
-                            </button>
+                            </div>
+
                             <div className="w-px bg-slate-200 mx-1 my-0.5" />
+
                             <button
                                 onClick={() => {
-                                    // If we have mockups, just open modal. If not, generate.
                                     if (mockupImages.length === 0) generateMockups();
                                     setIsMockupModalOpen(true);
                                 }}
-                                className="px-2 py-1.5 rounded-md text-indigo-600 hover:bg-slate-50 transition-colors flex items-center justify-center"
+                                className="px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
                             >
-                                <Sparkles size={16} />
+                                <Sparkles size={12} />
+                                Preview
                             </button>
                         </div>
                     </div>
