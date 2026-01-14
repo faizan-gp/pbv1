@@ -58,6 +58,7 @@ interface ProductColor {
     name: string;
     hex: string;
     images: Record<string, string>; // Map viewId -> imageUrl
+    printifyVariantIds?: number[];
 }
 
 interface ProductCreatorProps {
@@ -132,7 +133,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
     const [productColors, setProductColors] = useState<ProductColor[]>(() => {
         if (initialData?.colors && initialData.colors.length > 0) {
-            return initialData.colors.map((c: any) => ({ name: c.name, hex: c.hex, images: c.images || {} }));
+            return initialData.colors.map((c: any) => ({
+                name: c.name,
+                hex: c.hex,
+                images: c.images || {},
+                printifyVariantIds: c.printifyVariantIds || []
+            }));
         }
         return [{ name: 'Default', hex: '#ffffff', images: {} }];
     });
@@ -372,7 +378,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 images: {
                     ...views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {}),
                     ...(c.images || {})
-                }
+                },
+                printifyVariantIds: c.printifyVariantIds || []
             })),
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
@@ -939,7 +946,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         setProductColors(prev => [...prev, { name: 'New Color', hex: '#000000', images: {} }]);
     };
 
-    const updateProductColor = (index: number, field: keyof ProductColor, value: string) => {
+    const updateProductColor = (index: number, field: keyof ProductColor, value: any) => {
         setProductColors(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
     };
 
@@ -1334,6 +1341,27 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                                 onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
                                                 placeholder="HEX"
                                                 className="w-full bg-transparent outline-none text-sm uppercase font-mono"
+                                            />
+                                        </div>
+                                        {/* Variant IDs Input */}
+                                        <div className="flex-1 min-w-[120px]">
+                                            <input
+                                                type="text"
+                                                value={color.printifyVariantIds?.join(', ') || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    // Allow user to type, only convert to array for storage
+                                                    // Simplified: Just store comma separate in state logic? 
+                                                    // No, our interface says number[].
+                                                    // Improved: Parse on change but handle trailing comma or partials? 
+                                                    // Actually, storing as string temporarily might be better or parse robustly.
+                                                    // Let's parse robustly:
+                                                    const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                    updateProductColor(idx, 'printifyVariantIds', ids);
+                                                }}
+                                                placeholder="Variant IDs (e.g. 123, 456)"
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                title="Comma-separated Printify Variant IDs"
                                             />
                                         </div>
                                         <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
