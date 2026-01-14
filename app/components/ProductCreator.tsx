@@ -93,6 +93,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [productionTime, setProductionTime] = useState(initialData?.productionTime || '');
     const [previewExpectationImage, setPreviewExpectationImage] = useState(initialData?.previewExpectationImage || '');
     const [realExpectationImage, setRealExpectationImage] = useState(initialData?.realExpectationImage || '');
+    const [printifyBlueprintId, setPrintifyBlueprintId] = useState(initialData?.printifyBlueprintId || '');
+    const [printifyProviderId, setPrintifyProviderId] = useState(initialData?.printifyProviderId || '');
 
     // Fetch Categories
     useEffect(() => {
@@ -382,10 +384,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 shadowMap: v.shadowMap,
                 editorCutout: v.editorImage,
                 cssTransform: v.cssTransform
-            }))
+            })),
+            printifyBlueprintId: Number(printifyBlueprintId),
+            printifyProviderId: Number(printifyProviderId)
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId]);
 
 
     const handleSave = async () => {
@@ -1263,6 +1267,32 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             placeholder="e.g. 1-3 Business Days"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Printify Integration */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100 mt-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Printify Blueprint ID</label>
+                                    <input
+                                        type="number"
+                                        value={printifyBlueprintId}
+                                        onChange={(e) => setPrintifyBlueprintId(e.target.value)}
+                                        placeholder="e.g. 1097"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">Found in Printify URL when editing product</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Printify Provider ID</label>
+                                    <input
+                                        type="number"
+                                        value={printifyProviderId}
+                                        onChange={(e) => setPrintifyProviderId(e.target.value)}
+                                        placeholder="e.g. 29"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">Provider ID for fulfillment</p>
                                 </div>
                             </div>
                         </div>
