@@ -210,12 +210,23 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
     const generateMockups = async () => {
         // Default to T-shirt (706) if not specified
-        const blueprintId = 949;
-        let providerId = 47;
-        if (providerId === 47) providerId = 47; // Force Monster Digital over Printify Choice to avoid variant errors
+        const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
+        const providerId = product?.printifyProviderId || 47; // Default 25 (Monster Digital) or 47
 
         // Determine Variant ID based on color
-        const variantId = 79389;
+        // 1. Try DB (Specific IDs entered in ProductCreator)
+        // 2. Try Map Helper (Legacy/hardcoded map)
+        // 3. Fallback to default
+        let variantId = 79389; // Default fallback
+
+        if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
+            variantId = selectedColor.printifyVariantIds[0];
+        } else {
+            const mappedId = getVariantId(blueprintId, selectedColor.name);
+            if (mappedId) variantId = mappedId;
+        }
+
+        console.log("DEBUG: Generating Mockups with Config", { blueprintId, providerId, variantId, color: selectedColor.name });
 
         setIsGeneratingMockups(true);
         setMockupImages([]);
