@@ -19,7 +19,6 @@ export const PRINTIFY_VARIANT_MAP: Record<number, Record<string, number>> = {
     },
     // Comfort Colors 1717
     1296: {
-        'White': 12961, // Placeholder / Guess if needed, but CC doesn't always use same logic. 
         // Let's use known ones if possible. 
         // For CC 1717 (Provider 99 doesn't typically do CC 1717? Maybe Provider 25/Monster Digital or others)
         // Actually, Blueprint 1296 is Comfort Colors 1717.

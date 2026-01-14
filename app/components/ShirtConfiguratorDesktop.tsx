@@ -96,6 +96,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     // Mockup Generation State
     const [mockupImages, setMockupImages] = useState<any[]>([]);
     const [isGeneratingMockups, setIsGeneratingMockups] = useState(false);
+    const [isMockupModalOpen, setIsMockupModalOpen] = useState(false);
 
     const [selectedColor, setSelectedColor] = useState(() => {
         if (localCartItem?.options.color) {
@@ -121,6 +122,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         console.log("DEBUG: handleDesignUpdate in ShirtConfigurator", { viewId: activeViewId, dataUrlLength: data.dataUrl?.length });
         setDesignPreviews(prev => ({ ...prev, [activeViewId]: data.dataUrl }));
         setDesignStates(prev => ({ ...prev, [activeViewId]: data.jsonState }));
+        // Invalidate mockups when design changes so "Preview" always regenerates
+        setMockupImages([]);
     }, [activeViewId]);
 
     // --- Selection & Properties Logic ---
@@ -680,12 +683,12 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                         <div className="mt-8 pt-6 border-t border-slate-100 pb-4">
                                             <button
                                                 onClick={() => {
-                                                    setViewModeOverride('preview');
-                                                    generateMockups();
+                                                    if (mockupImages.length === 0) generateMockups();
+                                                    setIsMockupModalOpen(true);
                                                 }}
-                                                className="w-full h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
+                                                className="w-full h-12 rounded-xl bg-white border border-indigo-200 text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 shadow-sm"
                                             >
-                                                <Sparkles size={16} /> Generate AI Mockups
+                                                <Sparkles size={16} /> Preview Mockups
                                             </button>
                                             <p className="text-center text-xs text-slate-400 mt-2">View generic preview on model</p>
                                         </div>
@@ -718,16 +721,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                 )}
                             </div>
 
-                            {/* Persistent AI Mockup Button */}
-                            <button
-                                onClick={() => {
-                                    setViewModeOverride('preview');
-                                    generateMockups();
-                                }}
-                                className="w-full mt-3 h-12 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-bold text-sm hover:from-violet-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-200/50"
-                            >
-                                <Sparkles size={16} /> Generate AI Mockups
-                            </button>
+                            {/* Persistent AI Mockup Button - Removed as duplicate */}
                         </div>
                     </>
                 )}
@@ -736,6 +730,32 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             {/* RIGHT MAIN CANVAS */}
             <main className="flex-1 relative bg-slate-100 flex flex-col overflow-hidden">
 
+                {/* Top Toolbar (Desktop) */}
+                <div className="absolute top-4 right-4 z-40 flex gap-2">
+                    <button
+                        onClick={() => {
+                            if (mockupImages.length === 0) generateMockups();
+                            setIsMockupModalOpen(true);
+                        }}
+                        className="h-10 px-4 bg-white/90 backdrop-blur border border-slate-200 shadow-sm rounded-lg text-slate-700 font-bold text-xs hover:bg-white hover:text-indigo-600 transition-all flex items-center gap-2"
+                    >
+                        <Sparkles size={14} /> Preview Mockups
+                    </button>
+                    {(cartUserId || viewOnly) && (
+                        <button
+                            onClick={() => setIsReadOnly(!isReadOnly)}
+                            className={cn(
+                                "flex items-center gap-2 px-4 h-10 rounded-lg font-bold text-xs shadow-lg transition-all",
+                                isReadOnly
+                                    ? "bg-slate-900 text-white hover:bg-slate-800"
+                                    : "bg-red-500 text-white hover:bg-red-600 animate-pulse"
+                            )}
+                        >
+                            {isReadOnly ? <Lock size={14} /> : <Unlock size={14} />}
+                            {isReadOnly ? "Locked" : "Editing"}
+                        </button>
+                    )}
+                </div>
 
                 <div className="flex-1 flex flex-col items-center justify-center p-12 pb-0">
                     <div className="relative w-full h-full max-w-[800px] max-h-[800px] transition-all duration-500 flex flex-col">
@@ -754,56 +774,15 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                 />
                             </div>
 
-                            {/* ADMIN CONTROLS */}
-                            {(cartUserId || viewOnly) && (
-                                <div className="absolute top-4 right-4 z-50">
-                                    <button
-                                        onClick={() => setIsReadOnly(!isReadOnly)}
-                                        className={cn(
-                                            "flex items-center gap-2 px-4 py-2 rounded-full font-bold text-xs shadow-lg transition-all",
-                                            isReadOnly
-                                                ? "bg-slate-900 text-white hover:bg-slate-800"
-                                                : "bg-red-500 text-white hover:bg-red-600 animate-pulse"
-                                        )}
-                                    >
-                                        {isReadOnly ? <Lock size={14} /> : <Unlock size={14} />}
-                                        {isReadOnly ? "Design Locked (Admin)" : "Editing Enabled"}
-                                    </button>
-                                </div>
-                            )}
+                            {/* Standard Preview (Not AI) */}
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                                 <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 relative">
-                                    {isGeneratingMockups ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white z-50">
-                                            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-                                            <p className="text-slate-500 font-medium animate-pulse">Generating AI Mockups...</p>
-                                        </div>
-                                    ) : mockupImages.length > 0 ? (
-                                        <div className="w-full h-full bg-slate-50 overflow-y-auto p-4 custom-scrollbar">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                {mockupImages.map((mock: any, idx) => (
-                                                    <div key={idx} className="aspect-square bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden relative group">
-                                                        <img src={mock.src} className="w-full h-full object-contain" />
-                                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <span className="text-white text-xs font-bold">{mock.position}</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <div className="sticky bottom-4 flex justify-center mt-4">
-                                                <button onClick={generateMockups} className="bg-slate-900 text-white px-6 py-2 rounded-full shadow-lg font-bold text-sm hover:bg-slate-800 transition-transform hover:scale-105 flex items-center gap-2">
-                                                    <Sparkles size={14} /> Regenerate Mockups
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
-                                    )}
+                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
                                 </div>
                             </div>
                         </div>
 
-                        {/* --- VIEW THUMBNAIL STRIP (Replaces Dots) --- */}
+                        {/* --- VIEW THUMBNAIL STRIP --- */}
                         <div className="h-28 flex items-center justify-center gap-4 py-6 z-20">
                             {product.previews.map((view: any) => (
                                 <button key={view.id} onClick={() => {
@@ -820,6 +799,77 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     </div>
                 </div>
             </main >
+
+            {/* MOCKUP MODAL OVERLAY */}
+            {isMockupModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    {/* Modal Content */}
+                    <div className="bg-white w-full max-w-5xl h-[85vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20">
+                        {/* Header */}
+                        <div className="h-16 border-b border-slate-100 flex items-center justify-between px-8 bg-white shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><Sparkles size={20} /></div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800">AI Mockups</h3>
+                                    <p className="text-xs text-slate-400">High-resolution realistic previews</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsMockupModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-800 transition-colors">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="flex-1 bg-slate-50 relative overflow-hidden">
+                            {isGeneratingMockups ? (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6" />
+                                    <h4 className="text-lg font-bold text-slate-700 mb-2">Generating Mockups...</h4>
+                                    <p className="text-slate-400 text-sm max-w-xs text-center">This may take a few seconds. We are mapping your design onto realistic 3D models.</p>
+                                </div>
+                            ) : mockupImages.length > 0 ? (
+                                <div className="h-full overflow-y-auto p-8 custom-scrollbar">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                        {mockupImages.map((mock: any, idx) => (
+                                            <div key={idx} className="group relative aspect-square bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden cursor-zoom-in">
+                                                <img src={mock.src} className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" />
+
+                                                {/* Label */}
+                                                <div className="absolute top-3 left-3 px-3 py-1 bg-white/90 backdrop-blur rounded-full text-[10px] font-bold uppercase tracking-wider text-slate-600 shadow-sm">
+                                                    {mock.position}
+                                                </div>
+
+                                                {/* Actions */}
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                                                    <a href={mock.src} download={`mockup-${idx}.png`} className="p-3 bg-white text-slate-900 rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg" title="Download">
+                                                        <Share2 size={20} />
+                                                    </a>
+                                                    <button onClick={() => window.open(mock.src, '_blank')} className="p-3 bg-white text-slate-900 rounded-full hover:scale-110 active:scale-95 transition-all shadow-lg" title="View Full">
+                                                        <Eye size={20} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Action Footer utilized for Regen */}
+                                    <div className="mt-12 flex justify-center pb-8">
+                                        <button onClick={generateMockups} className="bg-slate-900 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-indigo-500/30 hover:bg-indigo-600 transition-all font-bold flex items-center gap-3 active:scale-95">
+                                            <Sparkles size={18} /> Regenerate All Views
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
+                                    <Sparkles size={48} className="text-slate-300 mb-4" />
+                                    <p className="text-slate-500 font-medium">No mockups generated yet.</p>
+                                    <button onClick={generateMockups} className="mt-4 text-indigo-600 font-bold hover:underline">Try Generating Now</button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }

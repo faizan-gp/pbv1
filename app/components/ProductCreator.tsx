@@ -1084,8 +1084,44 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         reader.onload = (event) => {
             try {
                 const json = JSON.parse(event.target?.result as string);
+
+                // MODE 1: Advanced Options Import (options.json structure)
+                // Structure: { "color": [ { "label": "White", "variant_id": 123 }, ... ] }
+                if (json.color && Array.isArray(json.color)) {
+                    const optionsList = json.color;
+                    let updatedCount = 0;
+
+                    setProductColors(prev => {
+                        const newColors = [...prev];
+
+                        optionsList.forEach((opt: any) => {
+                            // Match by label (case-insensitive)
+                            if (opt.label && opt.variant_id) {
+                                const idx = newColors.findIndex(c => c.name.toLowerCase() === opt.label.trim().toLowerCase());
+                                if (idx !== -1) {
+                                    // Update variant IDs (store as array of numbers)
+                                    newColors[idx] = {
+                                        ...newColors[idx],
+                                        printifyVariantIds: [Number(opt.variant_id)]
+                                    };
+                                    updatedCount++;
+                                }
+                            }
+                        });
+                        return newColors;
+                    });
+
+                    if (updatedCount > 0) {
+                        showToast(`Updated Printify IDs for ${updatedCount} colors`, 'success');
+                    } else {
+                        showToast('No matching color labels found in options.json', 'warning');
+                    }
+                    return; // EXIT after handling options.json
+                }
+
+                // MODE 2: Legacy/Simple Import (Replace all colors)
                 if (!Array.isArray(json)) {
-                    showToast('Invalid JSON format: Expected an array', 'error');
+                    showToast('Invalid JSON format: Expected an array or options object', 'error');
                     return;
                 }
 
@@ -1097,7 +1133,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         newColors.push({
                             name: item.name,
                             hex: item.hex,
-                            images: {}
+                            images: {},
+                            printifyVariantIds: item.printifyVariantIds || []
                         });
                     } else {
                         invalidCount++;
@@ -1109,15 +1146,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     return;
                 }
 
-                setProductColors(prev => {
-                    // Filter out "Default" if it's the only one and untouched? 
-                    // Or just append. Let's append, user can delete.
-                    // Actually, if we are doing a bulk load, maybe we want to avoid duplicates?
-                    // Let's just append for now as per plan.
-                    return [...prev, ...newColors];
-                });
+                setProductColors(newColors); // Replace existing colors
+                showToast(`Imported ${newColors.length} colors`, 'success');
 
-                showToast(`Added ${newColors.length} colors${invalidCount > 0 ? ` (${invalidCount} invalid skipped)` : ''}`, 'success');
+                if (invalidCount > 0) {
+                    console.warn(`Skipped ${invalidCount} invalid color items`);
+                }
 
             } catch (error) {
                 console.error("JSON parse error", error);
