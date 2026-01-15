@@ -132,14 +132,22 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
         const initOverlays = () => {
             if (!isMounted) return;
+            // Cleanup any existing ghost design zones
+            canvas.getObjects().forEach(obj => {
+                if ((obj as any).id === 'design-zone' || ((obj as any).width === currentDesignZone.width && (obj as any).height === currentDesignZone.height && obj.type === 'rect' && !obj.selectable)) {
+                    canvas.remove(obj);
+                }
+            });
+
             const designZone = new fabric.Rect({
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
                 fill: 'transparent', stroke: 'transparent',
                 strokeWidth: 0, strokeDashArray: [10, 10],
                 selectable: false, evented: false, excludeFromExport: true,
-                visible: false
-            });
+                visible: false,
+                data: { id: 'design-zone' } // Mark it
+            } as any);
             canvas.add(designZone);
             designZoneRef.current = designZone;
         };
