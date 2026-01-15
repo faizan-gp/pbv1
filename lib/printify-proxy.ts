@@ -227,15 +227,11 @@ class PrintifyProxyService {
         });
 
 
-        // Simple heuristic: If printPosition is front, prioritize front cameras
-        if (printPosition === 'front') {
-            // Keep front + persons (usually front)
-            // Actually, keep all for variety? Or filter to save time?
-            // Let's filter slightly to be faster.
-            targetCameras = targetCameras.filter(c => !c.label.toLowerCase().includes('back'));
-        } else if (printPosition === 'back') {
-            targetCameras = targetCameras.filter(c => c.label.toLowerCase().includes('back'));
-        }
+        // Generate for ALL cameras regardless of print position
+        // This satisfies the user request to "show all mockups" (e.g. show back view even if printing on front)
+        // Since printPosition correctly places the design on the placeholder, the other views will just be blank/appropriate.
+
+        // Removed filter logic here.
 
         console.log(`📸 Generating mockups for ${targetCameras.length} views...`);
 

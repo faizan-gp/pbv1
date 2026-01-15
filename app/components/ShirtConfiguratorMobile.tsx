@@ -328,7 +328,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: product.price, quantity: 1,
-                image: compositePreview || baseImage,
+                image: (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : (compositePreview || baseImage),
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates,
                 options: { color: selectedColor.name, size: selectedSize },

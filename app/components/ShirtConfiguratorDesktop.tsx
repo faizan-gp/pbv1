@@ -306,7 +306,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: product.price, quantity: 1,
-                image: compositePreview || baseImage, // Use composite if available
+                image: (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : (compositePreview || baseImage),
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates, // Save full design state
                 options: { color: selectedColor.name, size: selectedSize },
