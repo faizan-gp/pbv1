@@ -18,7 +18,11 @@ export interface DesignEditorRef {
     updateObject: (key: string, value: any) => void;
     modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => void;
     deselect: () => void;
+    exportState: () => { dataUrl: string; jsonState: any } | null;
 }
+
+
+
 
 interface DesignEditorProps {
     onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
@@ -507,6 +511,36 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
         deselect: () => {
             fabricCanvas?.discardActiveObject();
             fabricCanvas?.requestRenderAll();
+        },
+        exportState: () => {
+            if (!fabricCanvas || !designZoneRef.current) return null;
+
+            console.log("DEBUG: exportState called", {
+                hasCanvas: !!fabricCanvas,
+                hasZone: !!designZoneRef.current,
+                objects: fabricCanvas?.getObjects().length
+            });
+
+            // Hide design zone border for capture
+            designZoneRef.current.set('visible', false);
+            fabricCanvas.requestRenderAll(); // Ensure render
+
+            const dataUrl = fabricCanvas.toDataURL({
+                format: 'png',
+                multiplier: 2,
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height
+            });
+
+            const jsonState = (fabricCanvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
+
+            // Restore visibility
+            designZoneRef.current.set('visible', true);
+            fabricCanvas.requestRenderAll();
+
+            return { dataUrl, jsonState };
         }
     }));
 

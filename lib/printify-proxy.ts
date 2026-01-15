@@ -71,16 +71,7 @@ class PrintifyProxyService {
         }
     }
 
-    private buildDesignPayload(design: any, options: any = {}) {
-        const {
-            imageUrl,
-            imageBase64,
-            position = { x: 0.5, y: 0.5 },
-            scale = 1,
-            rotation = 0,
-            printPosition = 'front'
-        } = design;
-
+    private buildDesignPayload(designs: Record<string, any>, options: any = {}) {
         const {
             blueprintId = 706,
             providerId = 99,
@@ -89,55 +80,76 @@ class PrintifyProxyService {
             cameraId = 112433
         } = options;
 
-        const layerId = generateObjectId();
-        const imageId = `${layerId}_${generateObjectId()}`;
+        const placeholders: any[] = [];
 
-        const imageLayer: any = {
-            id: layerId,
-            type: 'image/png',
-            scale: scale,
-            angle: rotation,
-            x: position.x,
-            y: position.y,
-            flipX: false,
-            flipY: false,
-            layerType: 'image',
-            imageId: imageId,
-            name: 'upload.png',
-            sourceMimeType: 'image/png',
-            isShutterstock: false
+        // Helper to create image layer
+        const createImageLayer = (design: any) => {
+            if (!design) return null;
+
+            const {
+                imageUrl,
+                imageBase64,
+                position = { x: 0.5, y: 0.5 },
+                scale = 1,
+                rotation = 0
+            } = design;
+
+            const layerId = generateObjectId();
+            const imageId = `${layerId}_${generateObjectId()}`;
+
+            const imageLayer: any = {
+                id: layerId,
+                type: 'image/png',
+                scale: scale,
+                angle: rotation,
+                x: position.x,
+                y: position.y,
+                flipX: false,
+                flipY: false,
+                layerType: 'image',
+                imageId: imageId,
+                name: 'upload.png',
+                sourceMimeType: 'image/png',
+                isShutterstock: false
+            };
+
+            if (design.printifyImageId) {
+                imageLayer.id = design.printifyImageId;
+                imageLayer.imageId = `${design.printifyImageId}_${generateObjectId()}`;
+                imageLayer.src = design.imageUrl;
+                imageLayer.source = 'computer';
+                imageLayer.fileName = 'upload.png';
+            } else if (imageUrl) {
+                imageLayer.source = 'url';
+                imageLayer.src = imageUrl;
+            } else if (imageBase64) {
+                imageLayer.source = 'base64';
+                imageLayer.data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+            }
+            return imageLayer;
         };
 
-        if (design.printifyImageId) {
-            imageLayer.id = design.printifyImageId;
-            imageLayer.imageId = `${design.printifyImageId}_${generateObjectId()}`;
-            imageLayer.src = design.imageUrl;
-            imageLayer.source = 'computer';
-            imageLayer.fileName = 'upload.png';
-        } else if (imageUrl) {
-            imageLayer.source = 'url';
-            imageLayer.src = imageUrl;
-        } else if (imageBase64) {
-            imageLayer.source = 'base64';
-            imageLayer.data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        }
+        // Front Placeholder
+        const frontDesign = designs['front'];
+        const frontLayer = createImageLayer(frontDesign);
+        placeholders.push({
+            dom_id: ['#placeholder_front'],
+            images: frontLayer ? [frontLayer] : [],
+            position: 'front',
+            printable: true,
+            decoration_method: 'dtg'
+        });
 
-        const placeholders = [
-            {
-                dom_id: ['#placeholder_back'],
-                images: printPosition === 'back' ? [imageLayer] : [],
-                position: 'back',
-                printable: true,
-                decoration_method: 'dtg'
-            },
-            {
-                dom_id: ['#placeholder_front'],
-                images: printPosition === 'front' ? [imageLayer] : [],
-                position: 'front',
-                printable: true,
-                decoration_method: 'dtg'
-            }
-        ];
+        // Back Placeholder
+        const backDesign = designs['back'];
+        const backLayer = createImageLayer(backDesign);
+        placeholders.push({
+            dom_id: ['#placeholder_back'],
+            images: backLayer ? [backLayer] : [],
+            position: 'back',
+            printable: true,
+            decoration_method: 'dtg'
+        });
 
         return {
             blueprint_id: blueprintId,
@@ -188,26 +200,29 @@ class PrintifyProxyService {
         }
     }
 
-    public async generateMockupPreview(design: any, options: any = {}) {
+    public async generateMockupPreview(designs: Record<string, any>, options: any = {}) {
         if (!isProxyConfigured()) {
             throw new Error('Proxy not configured. Set PRINTIFY_SESSION_COOKIES in .env');
         }
 
-        const { blueprintId = 706, variantId = 73207, printPosition = 'front' } = options;
+        const { blueprintId = 706, variantId = 73207 } = options;
         const client = this.getClient();
 
-        // Auto-upload if we only have base64
-        if (design.imageBase64 && !design.printifyImageId) {
-            try {
-                console.log('🔄 Auto-uploading base64 image to Printify...');
-                const imageBuffer = Buffer.from(design.imageBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
-                const uploadResult = await this.uploadImage(imageBuffer);
-                design.printifyImageId = uploadResult.id;
-                design.imageUrl = uploadResult.uri; // Also set URL just in case
-                console.log(`✅ Uploaded image: ${uploadResult.id}`);
-            } catch (e: any) {
-                console.error('❌ Failed to auto-upload image:', e.message);
-                throw new Error(`Failed to upload image: ${e.message}`);
+        // Auto-upload images if needed
+        for (const key of Object.keys(designs)) {
+            const design = designs[key];
+            if (design.imageBase64 && !design.printifyImageId) {
+                try {
+                    console.log(`🔄 Auto-uploading ${key} base64 image to Printify...`);
+                    const imageBuffer = Buffer.from(design.imageBase64.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+                    const uploadResult = await this.uploadImage(imageBuffer);
+                    design.printifyImageId = uploadResult.id;
+                    design.imageUrl = uploadResult.uri;
+                    console.log(`✅ Uploaded ${key} image: ${uploadResult.id}`);
+                } catch (e: any) {
+                    console.error(`❌ Failed to auto-upload ${key} image:`, e.message);
+                    // allow continuing, maybe base64 works directly for preview?
+                }
             }
         }
 
@@ -220,23 +235,17 @@ class PrintifyProxyService {
             { id: 98448, label: 'Person 2', position: 'other' },
             { id: 100630, label: 'Person 3 Front', position: 'other' },
             { id: 110640, label: 'Person 3 Back', position: 'other' }
-        ].filter(c => {
-            // Basic filter: keep all if not specified, or prioritize relevant ones
-            // For now, let's just generate all and let frontend decide
-            return true;
-        });
+        ];
 
 
         // Generate for ALL cameras regardless of print position
         // This satisfies the user request to "show all mockups" (e.g. show back view even if printing on front)
         // Since printPosition correctly places the design on the placeholder, the other views will just be blank/appropriate.
 
-        // Removed filter logic here.
-
         console.log(`📸 Generating mockups for ${targetCameras.length} views...`);
 
         const mockupPromises = targetCameras.map(async (camera) => {
-            const payload = this.buildDesignPayload(design, {
+            const payload = this.buildDesignPayload(designs, {
                 ...options,
                 cameraId: camera.id
             });

@@ -235,25 +235,66 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         setMockupImages([]);
 
         try {
-            // 1. Get the current design as high-res image from Editor
-            // We use the raw design preview (which maps to the print area) rather than the overlay (which maps to the shirt)
-            const designDataUrl = designPreviews[activeViewId];
+            // 1. Force capture current state from Editor
+            const currentState = editorRef.current?.exportState();
+            let currentDesignPreviews = { ...designPreviews };
 
-            if (!designDataUrl) {
+            console.log("DEBUG: generateMockups Start", {
+                activeViewId,
+                currentPreviewsKeys: Object.keys(currentDesignPreviews),
+                editorExport: currentState ? "Captured" : "Null"
+            });
+
+            if (currentState) {
+                // Update the preview for the active view with fresh data
+                currentDesignPreviews[activeViewId] = currentState.dataUrl;
+
+                // Also update local React state to stay in sync
+                setDesignStates(prev => ({ ...prev, [activeViewId]: currentState.jsonState }));
+                setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
+            }
+
+            // 1b. Get designs for Front and Back
+            // We iterate over keys 'front' and 'back' and check if we have data
+            const designsMap: Record<string, any> = {};
+
+            // Check Front
+            if (currentDesignPreviews['front']) {
+                designsMap['front'] = {
+                    imageBase64: currentDesignPreviews['front'],
+                    printPosition: 'front'
+                };
+            }
+            // Check Back
+            if (currentDesignPreviews['back']) {
+                designsMap['back'] = {
+                    imageBase64: currentDesignPreviews['back'],
+                    printPosition: 'back'
+                };
+            }
+
+            // Debug: Check if we have what we expect
+            console.log("DEBUG: DesignsMap Construction", {
+                activeViewId,
+                hasFront: !!currentDesignPreviews['front'],
+                hasBack: !!currentDesignPreviews['back'],
+                designsMapKeys: Object.keys(designsMap),
+                designsMap: designsMap
+            });
+
+            if (Object.keys(designsMap).length === 0) {
                 showToast("Design is empty", "error");
                 setIsGeneratingMockups(false);
                 return;
             }
 
-            // 2. Call API
+            console.log("Generating Mockups", { blueprintId, providerId, variantId, designCount: Object.keys(designsMap).length });
+
             const response = await fetch('/api/mockup/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    design: {
-                        imageBase64: designDataUrl,
-                        printPosition: activeViewId === 'back' ? 'back' : 'front'
-                    },
+                    designs: designsMap,
                     product: {
                         blueprintId,
                         providerId
@@ -786,6 +827,13 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         <div className="h-28 flex items-center justify-center gap-4 py-6 z-20">
                             {product.previews.map((view: any) => (
                                 <button key={view.id} onClick={() => {
+                                    // Capture current state before switching
+                                    const currentState = editorRef.current?.exportState();
+                                    if (currentState) {
+                                        console.log("DEBUG: Saving state before switch", activeViewId);
+                                        setDesignStates(prev => ({ ...prev, [activeViewId]: currentState.jsonState }));
+                                        setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
+                                    }
                                     setActiveViewId(view.id);
                                     setSelectedElement(null);
                                 }} className={cn("group flex flex-col items-center gap-2 transition-all opacity-70 hover:opacity-100", activeViewId === view.id ? "opacity-100 scale-105" : "")}>
