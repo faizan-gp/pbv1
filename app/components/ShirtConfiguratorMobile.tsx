@@ -159,26 +159,47 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
         setMockupImages([]); // Clear previous
 
         try {
-            // 1. Force capture current state from Editor
+            // 1. Force capture current state from Editor (Sync)
             const currentState = editorRef.current?.exportState();
-            let currentDesignStates = { ...designStates };
-            let designDataUrl = designPreviews[activeViewId];
+            let finalDesignPreviews = { ...designPreviews };
 
             if (currentState) {
                 console.log("DEBUG: Captured fresh state for", activeViewId);
-                currentDesignStates = {
-                    ...currentDesignStates,
-                    [activeViewId]: currentState.jsonState
-                };
-                // Use fresh data URL
-                designDataUrl = currentState.dataUrl;
+                // Update local loop var
+                finalDesignPreviews[activeViewId] = currentState.dataUrl;
 
-                // Also update local preview state to stay in sync
+                // Sync State
                 setDesignStates(prev => ({ ...prev, [activeViewId]: currentState.jsonState }));
                 setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
             }
 
-            if (!designDataUrl) {
+            // Build Designs Map
+            const designsMap: Record<string, any> = {};
+
+            // Front
+            if (finalDesignPreviews['front']) {
+                designsMap['front'] = {
+                    imageBase64: finalDesignPreviews['front'],
+                    printPosition: 'front'
+                };
+            }
+            // Back
+            if (finalDesignPreviews['back']) {
+                designsMap['back'] = {
+                    imageBase64: finalDesignPreviews['back'],
+                    printPosition: 'back'
+                };
+            }
+
+            // Fallback: If map empty but we have active view data
+            if (Object.keys(designsMap).length === 0 && finalDesignPreviews[activeViewId]) {
+                designsMap[activeViewId] = {
+                    imageBase64: finalDesignPreviews[activeViewId],
+                    printPosition: activeViewId === 'back' ? 'back' : 'front'
+                };
+            }
+
+            if (Object.keys(designsMap).length === 0) {
                 showToast("Design is empty", "error");
                 setIsGeneratingMockups(false);
                 return;
@@ -192,21 +213,15 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             let variantId = 79389; // Default
             if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
                 variantId = selectedColor.printifyVariantIds[0];
-            } else {
-                // Fallback map logic (simplified here or duplicated from desktop if needed)
-                // For now assuming the color object has the IDs or we use default
             }
 
-            console.log("Generating Mobile Mockups", { blueprintId, providerId, variantId });
+            console.log("Generating Mobile Mockups", { blueprintId, providerId, variantId, views: Object.keys(designsMap) });
 
             const response = await fetch('/api/mockup/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    design: {
-                        imageBase64: designDataUrl,
-                        printPosition: activeViewId === 'back' ? 'back' : 'front'
-                    },
+                    designs: designsMap,
                     product: {
                         blueprintId,
                         providerId

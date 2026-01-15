@@ -84,9 +84,10 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             const designZone = new fabric.Rect({
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
-                fill: 'transparent', stroke: 'rgba(99, 102, 241, 0.3)',
-                strokeWidth: 2, strokeDashArray: [8, 6],
+                fill: 'transparent', stroke: 'transparent',
+                strokeWidth: 0, strokeDashArray: [8, 6],
                 selectable: false, evented: false, excludeFromExport: true,
+                visible: false
             });
             canvas.add(designZone);
             designZoneRef.current = designZone;
@@ -113,9 +114,6 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             const handleUpdate = () => {
                 if (!isMounted || !designZoneRef.current) return;
 
-                // 1. Hide Overlay
-                designZoneRef.current.set('visible', false);
-
                 // 2. RESIZE CANVAS AND RESET VIEWPORT (Critical Force Capture)
                 const originalVpt = canvas.viewportTransform;
                 const originalWidth = canvas.width;
@@ -136,7 +134,6 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
                 // 4. Restore Overlay, Viewport & Dimensions
                 canvas.setDimensions({ width: originalWidth, height: originalHeight });
                 if (originalVpt) canvas.setViewportTransform(originalVpt);
-                designZoneRef.current.set('visible', true);
                 canvas.requestRenderAll();
 
                 if (isMounted) onUpdate({ dataUrl, jsonState });

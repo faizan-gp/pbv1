@@ -838,6 +838,14 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     setSelectedElement(null);
                                 }} className={cn("group flex flex-col items-center gap-2 transition-all opacity-70 hover:opacity-100", activeViewId === view.id ? "opacity-100 scale-105" : "")}>
                                     <div className={cn("w-14 h-14 rounded-xl border-2 overflow-hidden bg-white shadow-sm transition-colors", activeViewId === view.id ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-slate-200 group-hover:border-slate-300")}>
+                                        {/* DEBUG: Thumbnail Render */}
+                                        {console.warn("DEBUG: Thumbnail Render", {
+                                            viewId: view.id,
+                                            hasColorImage: !!selectedColor.images?.[view.id],
+                                            colorImageKeys: Object.keys(selectedColor.images || {}),
+                                            fallbackViewImage: view.image,
+                                            finalSrc: selectedColor.images?.[view.id] || view.image || product.image
+                                        }) as any}
                                         <img src={selectedColor.images?.[view.id] || view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
                                     </div>
                                     <span className={cn("text-[10px] font-bold uppercase tracking-wider", activeViewId === view.id ? "text-indigo-600" : "text-slate-400")}>{view.name}</span>
