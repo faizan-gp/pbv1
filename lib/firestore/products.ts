@@ -26,6 +26,7 @@ export interface IProductColor {
     name: string;
     hex: string;
     images: Record<string, string>;
+    printifyVariantIds?: number[];
 }
 
 export interface IProductFeature {
@@ -71,6 +72,8 @@ export interface Product {
     tags?: string[]; // SEO Tags (e.g. category:mens-clothing, material:cotton)
     faq?: { question: string; answer: string }[];
     updatedAt?: string; // ISO Date string for SEO lastMod
+    printifyBlueprintId?: number;
+    printifyProviderId?: number;
 }
 
 export const PRODUCTS_COLLECTION = "products";
@@ -86,7 +89,13 @@ export async function getProductById(id: string): Promise<Product | null> {
     const snapshot = await getDoc(productRef);
 
     if (snapshot.exists()) {
-        return snapshot.data() as Product;
+        const data = snapshot.data() as Product;
+        // Temporary: Inject Printify IDs for relevant products if missing
+        if (!data.printifyBlueprintId && (data.id.includes('tee') || data.id.includes('shirt') || data.id === 'comfort-colors-1717')) {
+            data.printifyBlueprintId = 706; // Comfort Colors / Bella Canvas Blueprint
+            data.printifyProviderId = 25;   // Monster Digital (Better Variant Support)
+        }
+        return data;
     }
     return null;
 }

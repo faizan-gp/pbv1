@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
-type ToastType = 'success' | 'error' | 'info';
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface Toast {
     id: string;
@@ -37,9 +37,11 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     <div
                         key={toast.id}
                         className={`pointer-events-auto min-w-[300px] px-4 py-3 rounded-lg shadow-lg border text-sm font-medium animate-in slide-in-from-right-full fade-in duration-300 ${toast.type === 'success'
-                                ? 'bg-white border-green-200 text-green-800'
-                                : toast.type === 'error'
-                                    ? 'bg-white border-red-200 text-red-800'
+                            ? 'bg-white border-green-200 text-green-800'
+                            : toast.type === 'error'
+                                ? 'bg-white border-red-200 text-red-800'
+                                : toast.type === 'warning'
+                                    ? 'bg-white border-yellow-200 text-yellow-800'
                                     : 'bg-white border-gray-200 text-gray-800'
                             }`}
                     >
@@ -49,6 +51,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             )}
                             {toast.type === 'error' && (
                                 <div className="w-2 h-2 rounded-full bg-red-500" />
+                            )}
+                            {toast.type === 'warning' && (
+                                <div className="w-2 h-2 rounded-full bg-yellow-500" />
                             )}
                             {toast.type === 'info' && (
                                 <div className="w-2 h-2 rounded-full bg-blue-500" />

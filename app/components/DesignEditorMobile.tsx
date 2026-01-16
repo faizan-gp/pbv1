@@ -10,6 +10,7 @@ export interface DesignEditorRef {
     updateObject: (key: string, value: any) => void;
     modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => void;
     deselect: () => void;
+    exportState: () => { jsonState: any; dataUrl: string } | null;
 }
 
 interface DesignEditorProps {
@@ -80,13 +81,22 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
 
         const initOverlays = () => {
             if (!isMounted) return;
+            // Cleanup ghosts
+            canvas.getObjects().forEach(obj => {
+                if ((obj as any).id === 'design-zone' || ((obj as any).width === currentDesignZone.width && (obj as any).height === currentDesignZone.height && obj.type === 'rect' && !obj.selectable)) {
+                    canvas.remove(obj);
+                }
+            });
+
             const designZone = new fabric.Rect({
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
-                fill: 'transparent', stroke: 'rgba(99, 102, 241, 0.3)',
-                strokeWidth: 2, strokeDashArray: [8, 6],
+                fill: 'transparent', stroke: 'transparent',
+                strokeWidth: 0, strokeDashArray: [8, 6],
                 selectable: false, evented: false, excludeFromExport: true,
-            });
+                visible: false,
+                data: { id: 'design-zone' }
+            } as any);
             canvas.add(designZone);
             designZoneRef.current = designZone;
 
@@ -112,9 +122,6 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             const handleUpdate = () => {
                 if (!isMounted || !designZoneRef.current) return;
 
-                // 1. Hide Overlay
-                designZoneRef.current.set('visible', false);
-
                 // 2. RESIZE CANVAS AND RESET VIEWPORT (Critical Force Capture)
                 const originalVpt = canvas.viewportTransform;
                 const originalWidth = canvas.width;
@@ -135,7 +142,6 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
                 // 4. Restore Overlay, Viewport & Dimensions
                 canvas.setDimensions({ width: originalWidth, height: originalHeight });
                 if (originalVpt) canvas.setViewportTransform(originalVpt);
-                designZoneRef.current.set('visible', true);
                 canvas.requestRenderAll();
 
                 if (isMounted) onUpdate({ dataUrl, jsonState });
@@ -323,6 +329,36 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         deselect: () => {
             fabricCanvas?.discardActiveObject();
             fabricCanvas?.requestRenderAll();
+        },
+        exportState: () => {
+            if (!fabricCanvas || !designZoneRef.current) return null;
+            // 1. Hide Overlay
+            designZoneRef.current.set('visible', false);
+
+            // 2. RESIZE CANVAS AND RESET VIEWPORT
+            const originalVpt = fabricCanvas.viewportTransform;
+            const originalWidth = fabricCanvas.width;
+            const originalHeight = fabricCanvas.height;
+
+            fabricCanvas.setDimensions({ width: product.canvasSize, height: product.canvasSize });
+            fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
+            fabricCanvas.renderAll();
+
+            // 3. Capture State
+            const jsonState = (fabricCanvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
+            const dataUrl = fabricCanvas.toDataURL({
+                format: 'png', multiplier: 2,
+                left: currentDesignZone.left, top: currentDesignZone.top,
+                width: currentDesignZone.width, height: currentDesignZone.height
+            });
+
+            // 4. Restore
+            fabricCanvas.setDimensions({ width: originalWidth, height: originalHeight });
+            if (originalVpt) fabricCanvas.setViewportTransform(originalVpt);
+            designZoneRef.current.set('visible', true);
+            fabricCanvas.requestRenderAll();
+
+            return { jsonState, dataUrl };
         }
     }));
 

@@ -18,7 +18,11 @@ export interface DesignEditorRef {
     updateObject: (key: string, value: any) => void;
     modify: (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => void;
     deselect: () => void;
+    exportState: () => { dataUrl: string; jsonState: any } | null;
 }
+
+
+
 
 interface DesignEditorProps {
     onUpdate: (data: { dataUrl: string; jsonState: any }) => void;
@@ -103,7 +107,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
     useEffect(() => {
         if (!canvasRef.current) return;
         let isMounted = true;
-        if (fabricCanvas) try { fabricCanvas.dispose(); } catch (e) { }
+        if (!canvasRef.current) return;
 
         const canvas = new fabric.Canvas(canvasRef.current, {
             width: product.canvasSize,
@@ -128,30 +132,25 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
         const initOverlays = () => {
             if (!isMounted) return;
+            // Cleanup any existing ghost design zones
+            canvas.getObjects().forEach(obj => {
+                if ((obj as any).id === 'design-zone' || ((obj as any).width === currentDesignZone.width && (obj as any).height === currentDesignZone.height && obj.type === 'rect' && !obj.selectable)) {
+                    canvas.remove(obj);
+                }
+            });
+
             const designZone = new fabric.Rect({
                 left: currentDesignZone.left, top: currentDesignZone.top,
                 width: currentDesignZone.width, height: currentDesignZone.height,
-                fill: 'transparent', stroke: 'rgba(99, 102, 241, 0.2)',
-                strokeWidth: 2, strokeDashArray: [10, 10],
+                fill: 'transparent', stroke: 'transparent',
+                strokeWidth: 0, strokeDashArray: [10, 10],
                 selectable: false, evented: false, excludeFromExport: true,
-            });
+                visible: false,
+                data: { id: 'design-zone' } // Mark it
+            } as any);
             canvas.add(designZone);
             designZoneRef.current = designZone;
-
-            // Global clip path removed to allow background to be full size.
-            // We will apply clipping to individual user objects instead.
         };
-
-        const createClipRect = () => {
-            return new fabric.Rect({
-                left: currentDesignZone.left, top: currentDesignZone.top,
-                width: currentDesignZone.width, height: currentDesignZone.height,
-                absolutePositioned: true,
-                originX: 'left', originY: 'top' // Ensure explicit origin
-            });
-        };
-
-
 
         const initializeCanvas = async () => {
             // Load state first
@@ -161,7 +160,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             if (!isMounted) return;
 
-            // --- LOAD BACKGROUND IMAGE (PRODUCT VARIANT) ---
+            // --- LOAD BACKGROUND IMAGE ---
             let imageUrl = product.image; // default fallback
             if (selectedColor && selectedColor.images && selectedColor.images[activeViewId]) {
                 imageUrl = selectedColor.images[activeViewId];
@@ -176,16 +175,10 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             const setupBackgroundObject = (obj: fabric.Object) => {
                 obj.set({
-                    selectable: false,
-                    evented: false,
-                    excludeFromExport: true,
-                    left: 0,
-                    top: 0,
-                    originX: 'left',
-                    originY: 'top'
+                    selectable: false, evented: false, excludeFromExport: true,
+                    left: 0, top: 0, originX: 'left', originY: 'top'
                 });
 
-                // Scale to fit canvas
                 if (obj.width) {
                     const scale = product.canvasSize / obj.width;
                     obj.scale(scale);
@@ -193,13 +186,10 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
                 canvas.add(obj);
 
-                // Safe handling for Z-index across fabric versions
                 if (typeof (canvas as any).moveObjectTo === 'function') {
                     (canvas as any).moveObjectTo(obj, 0);
                 } else if (typeof (canvas as any).sendToBack === 'function') {
                     (canvas as any).sendToBack(obj);
-                } else if (typeof (canvas as any).moveTo === 'function') {
-                    (canvas as any).moveTo(obj, 0);
                 }
             };
 
@@ -207,22 +197,17 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 if (isSvg) {
                     const { objects, options } = await fabric.loadSVGFromURL(imageUrl);
                     if (!isMounted) return;
-
                     const validObjects = objects.filter((o): o is fabric.FabricObject => o !== null);
                     const svgGroup = fabric.util.groupSVGElements(validObjects, options) as fabric.Group;
 
-                    // Apply Dynamic Color
                     if (selectedColor && selectedColor.hex) {
-                        // Apply to all children
                         svgGroup.getObjects().forEach((obj: any) => {
                             if (obj.fill && obj.fill !== 'none' && obj.fill !== 'transparent') {
                                 obj.set('fill', selectedColor.hex);
                             }
                         });
                     }
-
                     setupBackgroundObject(svgGroup);
-
                 } else {
                     const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
                     if (!isMounted) return;
@@ -234,34 +219,28 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             initOverlays();
 
-            // Define handleUpdate here so we can call it initially
             const handleUpdate = () => {
-                if (!designZoneRef.current) return;
+                if (!isMounted || !designZoneRef.current) return;
 
-                // Hide design zone border for the screenshot
-                designZoneRef.current.set('visible', false);
+                try {
+                    const dataUrl = canvas.toDataURL({
+                        format: 'png', multiplier: 2,
+                        left: currentDesignZone.left, top: currentDesignZone.top,
+                        width: currentDesignZone.width, height: currentDesignZone.height
+                    });
 
-                // Generate Data URL focusing on the Design Zone area
-                const dataUrl = canvas.toDataURL({
-                    format: 'png',
-                    multiplier: 2,
-                    left: currentDesignZone.left,
-                    top: currentDesignZone.top,
-                    width: currentDesignZone.width,
-                    height: currentDesignZone.height
-                });
+                    const jsonState = (canvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
 
-                const jsonState = (canvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
-
-                designZoneRef.current.set('visible', true);
-                if (isMounted) onUpdate({ dataUrl, jsonState });
+                    if (isMounted) onUpdate({ dataUrl, jsonState });
+                } catch (err) {
+                    // Ignore errors during update if canvas is disposing
+                }
             };
 
             const handleSelection = (e: any) => {
                 const selected = e.selected?.[0];
                 if (isMounted) setSelectedObject(selected || null);
 
-                // Lift state up
                 if (onSelectionChange) {
                     if (selected) {
                         onSelectionChange({
@@ -281,6 +260,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                 }
             };
 
+            // Bind Events
             canvas.on('object:modified', handleUpdate);
             canvas.on('object:added', handleUpdate);
             canvas.on('object:removed', handleUpdate);
@@ -289,22 +269,43 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             canvas.on('selection:cleared', () => {
                 if (isMounted) {
                     setSelectedObject(null);
-                    if (onSelectionChange) onSelectionChange(null);
+                    onSelectionChange?.(null);
                 }
             });
 
             canvas.requestRenderAll();
-
-            // Initial Preview Generation
-            setTimeout(handleUpdate, 100);
+            setTimeout(handleUpdate, 100); // Initial preview
         };
 
+        // Initialize wrapper
+        const init = async () => {
+            try {
+                await initializeCanvas();
+                if (isMounted) setFabricCanvas(canvas);
+            } catch (error: any) {
+                // Robustly ignore abort errors
+                const scriptError = String(error);
+                if (
+                    scriptError.includes('aborted') ||
+                    error?.message?.includes('aborted') ||
+                    error?.name === 'AbortError'
+                ) return;
 
+                console.warn("Canvas init error:", error);
+            }
+        };
 
-        initializeCanvas();
-        setFabricCanvas(canvas);
-        return () => { isMounted = false; try { canvas.dispose(); } catch (e) { } };
-    }, [product.id, activeViewId, onUpdate, selectedColor, onSelectionChange]);
+        init();
+
+        return () => {
+            isMounted = false;
+            try {
+                canvas.off();
+                canvas.dispose();
+            } catch (e) { }
+            setFabricCanvas(null);
+        };
+    }, [product.id, activeViewId]);
 
     // --- Expose API ---
     useImperativeHandle(ref, () => ({
@@ -507,6 +508,36 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
         deselect: () => {
             fabricCanvas?.discardActiveObject();
             fabricCanvas?.requestRenderAll();
+        },
+        exportState: () => {
+            if (!fabricCanvas || !designZoneRef.current) return null;
+
+            console.log("DEBUG: exportState called", {
+                hasCanvas: !!fabricCanvas,
+                hasZone: !!designZoneRef.current,
+                objects: fabricCanvas?.getObjects().length
+            });
+
+            // Hide design zone border for capture
+            designZoneRef.current.set('visible', false);
+            fabricCanvas.requestRenderAll(); // Ensure render
+
+            const dataUrl = fabricCanvas.toDataURL({
+                format: 'png',
+                multiplier: 2,
+                left: currentDesignZone.left,
+                top: currentDesignZone.top,
+                width: currentDesignZone.width,
+                height: currentDesignZone.height
+            });
+
+            const jsonState = (fabricCanvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
+
+            // Restore visibility
+            designZoneRef.current.set('visible', true);
+            fabricCanvas.requestRenderAll();
+
+            return { dataUrl, jsonState };
         }
     }));
 

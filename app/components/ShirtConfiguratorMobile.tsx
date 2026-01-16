@@ -10,7 +10,7 @@ import {
     ArrowLeft, Check, Palette, Type, Image as ImageIcon, Ruler,
     ChevronRight, ShoppingBag, Trash2, X, RefreshCw,
     ArrowUp, ArrowDown, ArrowRight, ArrowLeft as ArrowL, ArrowRight as ArrowR, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RotateCcw,
-    Bold, Italic, Underline, Sliders, Eye, Edit3, Keyboard, Layers, Truck
+    Bold, Italic, Underline, Sliders, Eye, Edit3, Keyboard, Layers, Truck, Sparkles, Share2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -131,6 +131,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
         });
         setDesignPreviews(prev => ({ ...prev, [activeViewId]: data.dataUrl }));
         setDesignStates(prev => ({ ...prev, [activeViewId]: data.jsonState }));
+        setMockupImages([]); // Invalidate mockups
     }, [activeViewId]);
 
     const handleSelectionChange = useCallback((selection: any | null) => {
@@ -146,6 +147,109 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
     const modifySelection = (action: 'move' | 'scale' | 'rotate' | 'delete', val?: number, y?: number) => {
         editorRef.current?.modify(action, val, y);
         if (action === 'delete') setSelectedElement(null);
+    };
+
+    // --- MOCKUP GENERATION ---
+    const [mockupImages, setMockupImages] = useState<any[]>([]);
+    const [isGeneratingMockups, setIsGeneratingMockups] = useState(false);
+    const [isMockupModalOpen, setIsMockupModalOpen] = useState(false);
+
+    const generateMockups = async () => {
+        setIsGeneratingMockups(true);
+        setMockupImages([]); // Clear previous
+
+        try {
+            // 1. Force capture current state from Editor (Sync)
+            const currentState = editorRef.current?.exportState();
+            let finalDesignPreviews = { ...designPreviews };
+
+            if (currentState) {
+                console.log("DEBUG: Captured fresh state for", activeViewId);
+                // Update local loop var
+                finalDesignPreviews[activeViewId] = currentState.dataUrl;
+
+                // Sync State
+                setDesignStates(prev => ({ ...prev, [activeViewId]: currentState.jsonState }));
+                setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
+            }
+
+            // Build Designs Map
+            const designsMap: Record<string, any> = {};
+
+            // Front
+            if (finalDesignPreviews['front']) {
+                designsMap['front'] = {
+                    imageBase64: finalDesignPreviews['front'],
+                    printPosition: 'front'
+                };
+            }
+            // Back
+            if (finalDesignPreviews['back']) {
+                designsMap['back'] = {
+                    imageBase64: finalDesignPreviews['back'],
+                    printPosition: 'back'
+                };
+            }
+
+            // Fallback: If map empty but we have active view data
+            if (Object.keys(designsMap).length === 0 && finalDesignPreviews[activeViewId]) {
+                designsMap[activeViewId] = {
+                    imageBase64: finalDesignPreviews[activeViewId],
+                    printPosition: activeViewId === 'back' ? 'back' : 'front'
+                };
+            }
+
+            if (Object.keys(designsMap).length === 0) {
+                showToast("Design is empty", "error");
+                setIsGeneratingMockups(false);
+                return;
+            }
+
+            // Get blueprint/provider IDs
+            const blueprintId = product.printifyBlueprintId || 949; // Fallback to Pacific Tee
+            const providerId = product.printifyProviderId || 47; // Fallback to Print Geek
+
+            // Variant logic similar to Desktop
+            let variantId = 79389; // Default
+            if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
+                variantId = selectedColor.printifyVariantIds[0];
+            }
+
+            console.log("Generating Mobile Mockups", { blueprintId, providerId, variantId, views: Object.keys(designsMap) });
+
+            const response = await fetch('/api/mockup/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    designs: designsMap,
+                    product: {
+                        blueprintId,
+                        providerId
+                    },
+                    options: {
+                        variantId
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Mockup API Failed");
+            }
+
+            const data = await response.json();
+
+            if (data.mockups) {
+                setMockupImages(data.mockups);
+                setIsMockupModalOpen(true); // Auto open modal on success
+            }
+
+        } catch (error) {
+            console.error("Mobile Mockup Generation Error", error);
+            showToast("Failed to generate mockups. Check console.", "error");
+        } finally {
+            setIsGeneratingMockups(false);
+        }
     };
 
     const generateDesignOverlay = async (viewId: string) => {
@@ -239,7 +343,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: product.price, quantity: 1,
-                image: compositePreview || baseImage,
+                image: (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : (compositePreview || baseImage),
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates,
                 options: { color: selectedColor.name, size: selectedSize },
@@ -313,11 +417,28 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
                     {/* View Switcher */}
                     <div className="flex flex-col gap-2 pointer-events-auto">
-                        <div className="bg-white/90 backdrop-blur shadow-sm rounded-lg p-1 flex">
-                            <button onClick={() => setViewMode('editor')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'editor' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
+                        <div className="bg-white/90 backdrop-blur shadow-sm rounded-lg p-1 flex items-center gap-1">
+                            {/* Editor Toggle (Optional now since we are always in editor mostly? Or keep it to toggle controls?) 
+                                Actually, if we remove 'Preview' mode button, we might just want to be in Editor mode always 
+                                until 'Preview Mockups' is clicked. 
+                                User asked to "remove the preview button". 
+                                I'll keep "Edit" as a visual indicator or reset, but remove the toggle to the old preview.
+                            */}
+                            <div className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-900 bg-white shadow-sm flex items-center gap-1")}>
+                                <Edit3 size={12} />
                                 Edit
-                            </button>
-                            <button onClick={() => setViewMode('preview')} className={cn("px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all", viewMode === 'preview' ? "bg-slate-900 text-white shadow-sm" : "text-slate-400")}>
+                            </div>
+
+                            <div className="w-px bg-slate-200 mx-1 my-0.5" />
+
+                            <button
+                                onClick={() => {
+                                    if (mockupImages.length === 0) generateMockups();
+                                    setIsMockupModalOpen(true);
+                                }}
+                                className="px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-wider text-indigo-600 hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+                            >
+                                <Sparkles size={12} />
                                 Preview
                             </button>
                         </div>
@@ -742,6 +863,61 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                     </div>
                 )}
             </div>
+
+            {/* MOBILE MOCKUP MODAL */}
+            {isMockupModalOpen && (
+                <div className="fixed inset-0 z-[150] bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300">
+                    {/* Header */}
+                    <div className="shrink-0 h-14 border-b border-slate-100 flex items-center justify-between px-4 bg-white/90 backdrop-blur top-0 sticky z-10">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg"><Sparkles size={16} /></div>
+                            <span className="font-bold text-slate-800">AI Mockups</span>
+                        </div>
+                        <button onClick={() => setIsMockupModalOpen(false)} className="p-2 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200">
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto bg-slate-50 p-4 pb-20">
+                        {isGeneratingMockups ? (
+                            <div className="h-full flex flex-col items-center justify-center pb-20">
+                                <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+                                <h4 className="font-bold text-slate-800">Animating...</h4>
+                                <p className="text-xs text-slate-400 mt-2">Generating realistic previews</p>
+                            </div>
+                        ) : mockupImages.length > 0 ? (
+                            <div className="space-y-4">
+                                {mockupImages.map((mock: any, idx) => (
+                                    <div key={idx} className="aspect-square bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative group">
+                                        <img src={mock.src} className="w-full h-full object-contain p-4" />
+                                        <div className="absolute top-3 left-3 px-2 py-1 bg-white/90 backdrop-blur rounded-md text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                                            {mock.position}
+                                        </div>
+                                        <div className="absolute bottom-3 right-3 flex gap-2">
+                                            <a href={mock.src} download={`mockup-${idx}.png`} className="p-2 bg-white text-slate-800 rounded-full shadow-md active:scale-90 transition-transform">
+                                                <Share2 size={16} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+
+                                <div className="pt-8 pb-8 px-4">
+                                    <button onClick={generateMockups} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-200 active:scale-95 transition-all flex items-center justify-center gap-2">
+                                        <Sparkles size={16} /> Regenerate
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center opacity-60 pb-20">
+                                <Sparkles size={32} className="text-slate-300 mb-2" />
+                                <p className="text-sm">No mockups yet</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

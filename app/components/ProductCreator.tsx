@@ -58,6 +58,7 @@ interface ProductColor {
     name: string;
     hex: string;
     images: Record<string, string>; // Map viewId -> imageUrl
+    printifyVariantIds?: number[];
 }
 
 interface ProductCreatorProps {
@@ -93,6 +94,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [productionTime, setProductionTime] = useState(initialData?.productionTime || '');
     const [previewExpectationImage, setPreviewExpectationImage] = useState(initialData?.previewExpectationImage || '');
     const [realExpectationImage, setRealExpectationImage] = useState(initialData?.realExpectationImage || '');
+    const [printifyBlueprintId, setPrintifyBlueprintId] = useState(initialData?.printifyBlueprintId || '');
+    const [printifyProviderId, setPrintifyProviderId] = useState(initialData?.printifyProviderId || '');
 
     // Fetch Categories
     useEffect(() => {
@@ -130,7 +133,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
     const [productColors, setProductColors] = useState<ProductColor[]>(() => {
         if (initialData?.colors && initialData.colors.length > 0) {
-            return initialData.colors.map((c: any) => ({ name: c.name, hex: c.hex, images: c.images || {} }));
+            return initialData.colors.map((c: any) => ({
+                name: c.name,
+                hex: c.hex,
+                images: c.images || {},
+                printifyVariantIds: c.printifyVariantIds || []
+            }));
         }
         return [{ name: 'Default', hex: '#ffffff', images: {} }];
     });
@@ -370,7 +378,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 images: {
                     ...views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {}),
                     ...(c.images || {})
-                }
+                },
+                printifyVariantIds: c.printifyVariantIds || []
             })),
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
@@ -382,10 +391,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 shadowMap: v.shadowMap,
                 editorCutout: v.editorImage,
                 cssTransform: v.cssTransform
-            }))
+            })),
+            printifyBlueprintId: Number(printifyBlueprintId),
+            printifyProviderId: Number(printifyProviderId)
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId]);
 
 
     const handleSave = async () => {
@@ -935,7 +946,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         setProductColors(prev => [...prev, { name: 'New Color', hex: '#000000', images: {} }]);
     };
 
-    const updateProductColor = (index: number, field: keyof ProductColor, value: string) => {
+    const updateProductColor = (index: number, field: keyof ProductColor, value: any) => {
         setProductColors(prev => prev.map((c, i) => i === index ? { ...c, [field]: value } : c));
     };
 
@@ -1073,8 +1084,44 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         reader.onload = (event) => {
             try {
                 const json = JSON.parse(event.target?.result as string);
+
+                // MODE 1: Advanced Options Import (options.json structure)
+                // Structure: { "color": [ { "label": "White", "variant_id": 123 }, ... ] }
+                if (json.color && Array.isArray(json.color)) {
+                    const optionsList = json.color;
+                    let updatedCount = 0;
+
+                    setProductColors(prev => {
+                        const newColors = [...prev];
+
+                        optionsList.forEach((opt: any) => {
+                            // Match by label (case-insensitive)
+                            if (opt.label && opt.variant_id) {
+                                const idx = newColors.findIndex(c => c.name.toLowerCase() === opt.label.trim().toLowerCase());
+                                if (idx !== -1) {
+                                    // Update variant IDs (store as array of numbers)
+                                    newColors[idx] = {
+                                        ...newColors[idx],
+                                        printifyVariantIds: [Number(opt.variant_id)]
+                                    };
+                                    updatedCount++;
+                                }
+                            }
+                        });
+                        return newColors;
+                    });
+
+                    if (updatedCount > 0) {
+                        showToast(`Updated Printify IDs for ${updatedCount} colors`, 'success');
+                    } else {
+                        showToast('No matching color labels found in options.json', 'warning');
+                    }
+                    return; // EXIT after handling options.json
+                }
+
+                // MODE 2: Legacy/Simple Import (Replace all colors)
                 if (!Array.isArray(json)) {
-                    showToast('Invalid JSON format: Expected an array', 'error');
+                    showToast('Invalid JSON format: Expected an array or options object', 'error');
                     return;
                 }
 
@@ -1086,7 +1133,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         newColors.push({
                             name: item.name,
                             hex: item.hex,
-                            images: {}
+                            images: {},
+                            printifyVariantIds: item.printifyVariantIds || []
                         });
                     } else {
                         invalidCount++;
@@ -1098,15 +1146,12 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     return;
                 }
 
-                setProductColors(prev => {
-                    // Filter out "Default" if it's the only one and untouched? 
-                    // Or just append. Let's append, user can delete.
-                    // Actually, if we are doing a bulk load, maybe we want to avoid duplicates?
-                    // Let's just append for now as per plan.
-                    return [...prev, ...newColors];
-                });
+                setProductColors(newColors); // Replace existing colors
+                showToast(`Imported ${newColors.length} colors`, 'success');
 
-                showToast(`Added ${newColors.length} colors${invalidCount > 0 ? ` (${invalidCount} invalid skipped)` : ''}`, 'success');
+                if (invalidCount > 0) {
+                    console.warn(`Skipped ${invalidCount} invalid color items`);
+                }
 
             } catch (error) {
                 console.error("JSON parse error", error);
@@ -1265,6 +1310,32 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Printify Integration */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100 mt-6">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Printify Blueprint ID</label>
+                                    <input
+                                        type="number"
+                                        value={printifyBlueprintId}
+                                        onChange={(e) => setPrintifyBlueprintId(e.target.value)}
+                                        placeholder="e.g. 1097"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">Found in Printify URL when editing product</p>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Printify Provider ID</label>
+                                    <input
+                                        type="number"
+                                        value={printifyProviderId}
+                                        onChange={(e) => setPrintifyProviderId(e.target.value)}
+                                        placeholder="e.g. 29"
+                                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all outline-none"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">Provider ID for fulfillment</p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Product Colors */}
@@ -1304,6 +1375,27 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                                 onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
                                                 placeholder="HEX"
                                                 className="w-full bg-transparent outline-none text-sm uppercase font-mono"
+                                            />
+                                        </div>
+                                        {/* Variant IDs Input */}
+                                        <div className="flex-1 min-w-[120px]">
+                                            <input
+                                                type="text"
+                                                value={color.printifyVariantIds?.join(', ') || ''}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    // Allow user to type, only convert to array for storage
+                                                    // Simplified: Just store comma separate in state logic? 
+                                                    // No, our interface says number[].
+                                                    // Improved: Parse on change but handle trailing comma or partials? 
+                                                    // Actually, storing as string temporarily might be better or parse robustly.
+                                                    // Let's parse robustly:
+                                                    const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                    updateProductColor(idx, 'printifyVariantIds', ids);
+                                                }}
+                                                placeholder="Variant IDs (e.g. 123, 456)"
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                title="Comma-separated Printify Variant IDs"
                                             />
                                         </div>
                                         <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
