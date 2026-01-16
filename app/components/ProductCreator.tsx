@@ -96,6 +96,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [realExpectationImage, setRealExpectationImage] = useState(initialData?.realExpectationImage || '');
     const [printifyBlueprintId, setPrintifyBlueprintId] = useState(initialData?.printifyBlueprintId || '');
     const [printifyProviderId, setPrintifyProviderId] = useState(initialData?.printifyProviderId || '');
+    const [printifyCameras, setPrintifyCameras] = useState<any[]>(initialData?.printifyCameras || []);
 
     // Fetch Categories
     useEffect(() => {
@@ -393,10 +394,11 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 cssTransform: v.cssTransform
             })),
             printifyBlueprintId: Number(printifyBlueprintId),
-            printifyProviderId: Number(printifyProviderId)
+            printifyProviderId: Number(printifyProviderId),
+            printifyCameras
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId, printifyCameras]);
 
 
     const handleSave = async () => {
@@ -1613,6 +1615,49 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                                 }} />
                                             </label>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="font-bold text-gray-900">Custom Cameras (JSON)</h4>
+                                        {printifyCameras.length > 0 && <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">{printifyCameras.length} Loaded</span>}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-gray-400">Upload `camera.json` to override default mockup views.</p>
+                                        <label className="block w-full border-2 border-dashed border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer text-center">
+                                            <span className="text-sm text-indigo-600 font-bold">Upload JSON</span>
+                                            <input type="file" className="hidden" accept=".json" onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (event) => {
+                                                        try {
+                                                            const json = JSON.parse(event.target?.result as string);
+                                                            if (Array.isArray(json)) {
+                                                                setPrintifyCameras(json);
+                                                                showToast(`${json.length} cameras loaded`, "success");
+                                                            } else {
+                                                                showToast("Invalid JSON: Must be an array", "error");
+                                                            }
+                                                        } catch (err) {
+                                                            showToast("Failed to parse JSON", "error");
+                                                        }
+                                                    };
+                                                    reader.readAsText(file);
+                                                }
+                                            }} />
+                                        </label>
+                                        {printifyCameras.length > 0 && (
+                                            <div className="max-h-32 overflow-y-auto text-xs bg-gray-50 p-2 rounded border border-gray-100 space-y-1">
+                                                {printifyCameras.map((c: any) => (
+                                                    <div key={c.id} className="flex justify-between">
+                                                        <span>{c.label} ({c.position})</span>
+                                                        <span className="font-mono text-gray-400">{c.id}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 

@@ -297,7 +297,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     designs: designsMap,
                     product: {
                         blueprintId,
-                        providerId
+                        providerId,
+                        printifyCameras: product.printifyCameras
                     },
                     options: {
                         variantId

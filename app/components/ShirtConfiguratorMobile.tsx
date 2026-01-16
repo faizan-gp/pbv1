@@ -224,7 +224,8 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                     designs: designsMap,
                     product: {
                         blueprintId,
-                        providerId
+                        providerId,
+                        printifyCameras: product.printifyCameras
                     },
                     options: {
                         variantId

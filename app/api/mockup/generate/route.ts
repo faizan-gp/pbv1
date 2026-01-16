@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
         }
 
         const result = await printifyProxy.generateMockupPreview(designsMap, {
-            blueprintId: product?.blueprintId || 706,
-            providerId: product?.providerId || 25,
+            blueprintId: product?.printifyBlueprintId || product?.blueprintId || 706,
+            providerId: product?.printifyProviderId || product?.providerId || 25,
+            cameras: product?.printifyCameras,
             ...options
         });
 

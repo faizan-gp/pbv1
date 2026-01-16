@@ -74,6 +74,13 @@ export interface Product {
     updatedAt?: string; // ISO Date string for SEO lastMod
     printifyBlueprintId?: number;
     printifyProviderId?: number;
+    printifyCameras?: {
+        id: number;
+        label: string;
+        position: string;
+        is_default: number;
+        camera_id: number;
+    }[];
 }
 
 export const PRODUCTS_COLLECTION = "products";

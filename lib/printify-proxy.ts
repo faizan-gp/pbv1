@@ -226,28 +226,55 @@ class PrintifyProxyService {
             }
         }
 
-        // Hardcoded cameras for 706/99
-        let targetCameras = [
-            { id: 98445, label: 'Front', position: 'front' },
-            { id: 98446, label: 'Back', position: 'back' },
-            { id: 112433, label: 'Person 1 Front', position: 'other' },
-            { id: 112434, label: 'Person 1 Back', position: 'other' },
-            { id: 98448, label: 'Person 2', position: 'other' },
-            { id: 100630, label: 'Person 3 Front', position: 'other' },
-            { id: 110640, label: 'Person 3 Back', position: 'other' }
-        ];
+        // Blueprint -> Cameras Map
+        const BLUEPRINT_CAMERAS: Record<number, any[]> = {
+            706: [ // Unisex Basic Softstyle T-Shirt
+                { id: 98445, label: 'Front', position: 'front' },
+                { id: 98446, label: 'Back', position: 'back' },
+                { id: 112433, label: 'Person 1 Front', position: 'other' },
+                { id: 112434, label: 'Person 1 Back', position: 'other' },
+                { id: 98448, label: 'Person 2', position: 'other' },
+                { id: 100630, label: 'Person 3 Front', position: 'other' },
+                { id: 110640, label: 'Person 3 Back', position: 'other' }
+            ],
+            1405: [ // Unisex Heavy Blend™ Hooded Sweatshirt
+                { id: 101381, label: 'Front Flat', position: 'front' },
+                { id: 102927, label: 'Back Flat', position: 'back' },
+                { id: 101452, label: 'Person 1 Front', position: 'other' },
+                { id: 101454, label: 'Person 1 Back', position: 'other' }
+            ],
+            // Add defaults or fallbacks
+            9999: [
+                { id: 98445, label: 'Front', position: 'front' },
+                { id: 98446, label: 'Back', position: 'back' }
+            ]
+        };
 
+        const PROVIDER_DECORATORS: Record<number, number> = {
+            99: 99,
+            47: 61, // Print Geek
+            25: 25, // Monster Digital
+            29: 29  // Hanes
+        };
 
-        // Generate for ALL cameras regardless of print position
-        // This satisfies the user request to "show all mockups" (e.g. show back view even if printing on front)
-        // Since printPosition correctly places the design on the placeholder, the other views will just be blank/appropriate.
+        // Determine cameras for this blueprint
+        // Prefer custom cameras from options if available
+        let targetCameras = options.cameras;
 
-        console.log(`📸 Generating mockups for ${targetCameras.length} views...`);
+        if (!targetCameras || !Array.isArray(targetCameras) || targetCameras.length === 0) {
+            targetCameras = BLUEPRINT_CAMERAS[blueprintId] || BLUEPRINT_CAMERAS[706];
+        }
 
-        const mockupPromises = targetCameras.map(async (camera) => {
+        // Determine decorator if not explicit
+        const decoratorId = options.decoratorId || PROVIDER_DECORATORS[options.providerId || 99] || 99;
+
+        console.log(`📸 Generating mockups for Blueprint ${blueprintId} (Decorator ${decoratorId}) with ${targetCameras.length} views...`);
+
+        const mockupPromises = targetCameras.map(async (camera: any) => {
             const payload = this.buildDesignPayload(designs, {
                 ...options,
-                cameraId: camera.id
+                decoratorId,
+                cameraId: camera.id || camera.camera_id
             });
 
             try {
@@ -258,12 +285,7 @@ class PrintifyProxyService {
                 });
 
                 if (response.status !== 200) {
-                    console.error(`❌ Mockup failed for camera ${camera.id} with status ${response.status}`);
-                    try {
-                        console.error('Response:', Buffer.from(response.data).toString());
-                    } catch (err) {
-                        console.error('Could not read response body');
-                    }
+                    console.warn(`⚠️ Mockup failed for camera ${camera.id} (${camera.label}): Status ${response.status}`);
                     return null;
                 }
 
@@ -278,7 +300,7 @@ class PrintifyProxyService {
                     position: camera.label
                 };
             } catch (e: any) {
-                console.error(`❌ Mockup failed for camera ${camera.id}:`, e.message, e.response?.data?.toString());
+                console.error(`❌ Mockup failed for camera ${camera.id}:`, e.message);
                 return null;
             }
         });
