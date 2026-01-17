@@ -1121,6 +1121,29 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     return; // EXIT after handling options.json
                 }
 
+                // MODE 1.5: Phone Model Import (size/surface)
+                if (json.size && Array.isArray(json.size)) {
+                    const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#06b6d4', '#84cc16'];
+
+                    const newColors: ProductColor[] = json.size.map((item: any, i: number) => ({
+                        name: item.label,
+                        // Use dummy hex if null, cycling through palette so they look distinct in UI
+                        hex: item.hex_code || PALETTE[i % PALETTE.length],
+                        images: {},
+                        // Map specific variant_id for this model
+                        printifyVariantIds: item.variant_id ? [item.variant_id] : []
+                    }));
+
+                    setProductColors(newColors);
+                    showToast(`Imported ${newColors.length} models from JSON`, 'success');
+
+                    // Optional: warnings for surface?
+                    if (json.surface && Array.isArray(json.surface)) {
+                        console.log("Found surfaces in JSON, but currently only mapping 'size' (models).");
+                    }
+                    return;
+                }
+
                 // MODE 2: Legacy/Simple Import (Replace all colors)
                 if (!Array.isArray(json)) {
                     showToast('Invalid JSON format: Expected an array or options object', 'error');
@@ -1161,6 +1184,74 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             }
         };
         reader.readAsText(file);
+    };
+
+    // --- METADATA FOLDER IMPORT ---
+    const handleMetadataFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        let optionsData: any = null;
+        let variantsData: any[] = [];
+        let camerasData: any[] = [];
+
+        // Read all files
+        const filePromises = Array.from(files).map(file => {
+            return new Promise<void>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const json = JSON.parse(ev.target?.result as string);
+                        if (file.name.toLowerCase() === 'options.json') optionsData = json;
+                        if (file.name.toLowerCase() === 'variants.json') variantsData = json;
+                        if (file.name.toLowerCase() === 'cameras.json') camerasData = json;
+                    } catch (err) {
+                        console.warn(`Failed to parse ${file.name}`);
+                    }
+                    resolve();
+                };
+                reader.readAsText(file);
+            });
+        });
+
+        await Promise.all(filePromises);
+
+        // Process Cameras
+        if (camerasData.length > 0) {
+            setPrintifyCameras(camerasData);
+            showToast(`Imported ${camerasData.length} cameras`, 'success');
+        }
+
+        // Process Options & Variants
+        if (optionsData && optionsData.size) {
+            const PALETTE = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#06b6d4', '#84cc16'];
+
+            const newColors: ProductColor[] = optionsData.size.map((model: any, i: number) => {
+                // Find all variants for this model ID
+                // Logic: In variants.json, options array contains [modelId, surfaceId] (order varies?)
+                // We verify if the model.id exists in the variant.options array
+                let modelVariantIds: number[] = [];
+
+                if (variantsData.length > 0) {
+                    modelVariantIds = variantsData
+                        .filter((v: any) => v.options && v.options.includes(model.id))
+                        .map((v: any) => v.variant_id);
+                } else if (model.variant_id) {
+                    // Fallback to single variant_id in options.json if variants.json missing
+                    modelVariantIds = [model.variant_id];
+                }
+
+                return {
+                    name: model.label,
+                    hex: model.hex_code || PALETTE[i % PALETTE.length],
+                    images: {},
+                    printifyVariantIds: modelVariantIds
+                };
+            });
+
+            setProductColors(newColors);
+            showToast(`Imported ${newColors.length} models with verified variants`, 'success');
+        }
     };
 
     const activeView = views.find(v => v.id === activeViewId);
@@ -1340,24 +1431,37 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             </div>
                         </div>
 
-                        {/* Product Colors */}
+                        {/* Product Colors / Models */}
                         <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-gray-900">Product Colors</h4>
-                                <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
-                                    <Plus size={14} /> Add Color
-                                </button>
-                                <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                    <FolderUp size={14} /> Import JSON
-                                    <input
-                                        type="file"
-                                        accept=".json,application/json"
-                                        className="hidden"
-                                        onChange={handleBulkColorJsonUpload}
-                                    />
-                                </label>
+                                <h4 className="font-bold text-gray-900">{subcategory === 'Phone Cases' ? 'Product Models' : 'Product Colors'}</h4>
+                                <div className="flex gap-2">
+                                    <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                        <Plus size={14} /> {subcategory === 'Phone Cases' ? 'Add Model' : 'Add Color'}
+                                    </button>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <FolderUp size={14} /> Import JSON
+                                        <input
+                                            type="file"
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={handleBulkColorJsonUpload}
+                                        />
+                                    </label>
+                                    <label className="text-sm text-green-600 font-medium hover:text-green-700 flex items-center gap-1 cursor-pointer ml-2">
+                                        <FolderUp size={14} /> Import Metadata
+                                        <input
+                                            type="file"
+                                            multiple
+                                            // @ts-ignore
+                                            webkitdirectory=""
+                                            className="hidden"
+                                            onChange={handleMetadataFolderUpload}
+                                        />
+                                    </label>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
+                            <p className="text-sm text-gray-500">{subcategory === 'Phone Cases' ? 'Define the available phone models.' : 'Define the available colors and their hex codes.'}</p>
                             <div className="space-y-3">
                                 {productColors.map((color, idx) => (
                                     <div key={idx} className="flex items-center gap-3">
