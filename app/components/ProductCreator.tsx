@@ -1420,16 +1420,32 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         <h4 className="font-bold text-gray-900">Listing Images</h4>
                                         <p className="text-sm text-gray-500">Upload shots for specific colors. Drag to reorder.</p>
                                     </div>
-                                    <label className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-xs font-bold text-indigo-700 cursor-pointer transition-colors border border-indigo-200">
-                                        <FolderUp size={14} />
-                                        <span>Bulk Upload</span>
-                                        <input
-                                            type="file"
-                                            {...{ webkitdirectory: "", directory: "" } as any}
-                                            className="hidden"
-                                            onChange={handleBulkFolderUpload}
-                                        />
-                                    </label>
+                                    <div className="flex gap-2">
+                                        {listingImages.length > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm("Are you sure you want to remove ALL images? This action cannot be undone.")) {
+                                                        setListingImages([]);
+                                                        showToast("All images removed", "success");
+                                                    }
+                                                }}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-bold text-red-600 cursor-pointer transition-colors border border-red-200"
+                                            >
+                                                <Trash2 size={14} />
+                                                <span>Remove All</span>
+                                            </button>
+                                        )}
+                                        <label className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-xs font-bold text-indigo-700 cursor-pointer transition-colors border border-indigo-200">
+                                            <FolderUp size={14} />
+                                            <span>Bulk Upload</span>
+                                            <input
+                                                type="file"
+                                                {...{ webkitdirectory: "", directory: "" } as any}
+                                                className="hidden"
+                                                onChange={handleBulkFolderUpload}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
 
                                 {/* General / All Colors Section */}
