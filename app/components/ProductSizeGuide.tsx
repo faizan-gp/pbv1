@@ -12,6 +12,24 @@ export default function ProductSizeGuide({ sizeGuide }: ProductSizeGuideProps) {
 
     if (!sizeGuide) return null;
 
+    // Default to Width/Length if no columns specified (backward compatibility)
+    let columns = (sizeGuide as any).columns || ['Width', 'Length'];
+
+    // Force sort: Width, Length, others
+    columns = [...columns].sort((a: string, b: string) => {
+        const priority = (name: string) => {
+            const lowered = name.toLowerCase();
+            if (lowered === 'width') return -2;
+            if (lowered === 'length') return -1;
+            return 0;
+        };
+        return priority(a) - priority(b);
+    });
+
+    const activeRows = measurementUnit === 'imperial' ? sizeGuide.imperial : sizeGuide.metric;
+
+    if (!activeRows || activeRows.length === 0) return null;
+
     return (
         <div className="space-y-4 pt-8 border-t border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -36,16 +54,23 @@ export default function ProductSizeGuide({ sizeGuide }: ProductSizeGuideProps) {
                     <thead className="bg-slate-50 text-xs text-slate-500 uppercase font-bold tracking-wider">
                         <tr>
                             <th className="px-6 py-4">Size</th>
-                            <th className="px-6 py-4">Width ({measurementUnit === 'imperial' ? 'in' : 'cm'})</th>
-                            <th className="px-6 py-4">Length ({measurementUnit === 'imperial' ? 'in' : 'cm'})</th>
+                            {columns.map((col: string, i: number) => (
+                                <th key={i} className="px-6 py-4">
+                                    {col} ({measurementUnit === 'imperial' ? 'in' : 'cm'})
+                                </th>
+                            ))}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                        {(sizeGuide[measurementUnit] || []).map((row: any, i: number) => (
+                        {activeRows.map((row: any, i: number) => (
                             <tr key={i} className="hover:bg-slate-50">
                                 <td className="px-6 py-4 font-bold text-slate-900">{row.size}</td>
-                                <td className="px-6 py-4 text-slate-600">{row.width}"</td>
-                                <td className="px-6 py-4 text-slate-600">{row.length}"</td>
+                                {columns.map((col: string, j: number) => (
+                                    <td key={j} className="px-6 py-4 text-slate-600">
+                                        {row[col] !== undefined ? row[col] : '-'}
+                                        {measurementUnit === 'imperial' && row[col] && '"'}
+                                    </td>
+                                ))}
                             </tr>
                         ))}
                     </tbody>
