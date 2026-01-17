@@ -1810,7 +1810,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </button>
                                         ))}
                                     </div>
-                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView)}
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView, productModels, activeModelIndex)}
                                 </div>
                             </div>
 
@@ -2158,10 +2158,17 @@ function activeViewsConfig(
     handleImageUpload: Function,
     productColors: ProductColor[],
     handleColorImageUpload: Function,
-    handleBulkColorVariantUploadForView: Function
+    handleBulkColorVariantUploadForView: Function,
+    productModels: ProductModel[] = [],
+    activeModelIndex: number = 0
 ) {
     const activeView = views.find(v => v.id === activeViewId);
     if (!activeView) return null;
+
+    // Determine effective images for display
+    const currentModel = productModels?.[activeModelIndex];
+    const modelImage = currentModel?.image;
+    const displayEditorImage = modelImage || activeView.editorImage;
 
     return (
         <div className="space-y-6">
@@ -2173,7 +2180,7 @@ function activeViewsConfig(
             <div className="space-y-2">
                 <label className="text-[10px] font-bold text-blue-500 uppercase">Editor Image (Cutout)</label>
                 <label className="block w-full h-20 border-2 border-dashed border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer overflow-hidden relative group">
-                    {activeView.editorImage ? <img src={activeView.editorImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400">Upload Cutout</div>}
+                    {displayEditorImage ? <img src={displayEditorImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400">Upload Cutout</div>}
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'editor')} />
                 </label>
             </div>
@@ -2182,10 +2189,65 @@ function activeViewsConfig(
                 <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-blue-500 uppercase">Editor Zone</label>
                     <button
-                        onClick={() => setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? { ...v, editorZone: { left: 0, top: 0, width: 1024, height: 1024 } } : v))}
+                        onClick={() => {
+                            // Priority: Model Image (if exists) > Editor Image > Preview Image
+                            const currentModel = productModels?.[activeModelIndex];
+                            const modelImage = currentModel?.image;
+                            const targetImage = modelImage || activeView.editorImage || activeView.image;
+
+                            console.log("Fit to Image Debug:", {
+                                activeModelIndex,
+                                modelName: currentModel?.name,
+                                modelImage: modelImage,
+                                editorImage: activeView.editorImage,
+                                previewImage: activeView.image,
+                                targetImage,
+                                productModelsLength: productModels?.length
+                            });
+
+                            if (!targetImage) {
+                                alert("No image found to fit to. Check the console for debug info.");
+                                return;
+                            }
+
+                            const img = new Image();
+                            img.crossOrigin = "anonymous";
+                            img.src = targetImage;
+                            img.onload = () => {
+                                // Calculate fit within 1024x1024
+                                const containerSize = 1024;
+                                const ratio = img.width / img.height;
+
+                                let w, h, l, t;
+
+                                if (ratio > 1) {
+                                    // Landscape: Width touches container edges
+                                    w = containerSize;
+                                    h = containerSize / ratio;
+                                    l = 0;
+                                    t = (containerSize - h) / 2;
+                                } else {
+                                    // Portrait or Square: Height touches container edges
+                                    h = containerSize;
+                                    w = containerSize * ratio;
+                                    t = 0;
+                                    l = (containerSize - w) / 2;
+                                }
+
+                                setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? {
+                                    ...v,
+                                    editorZone: {
+                                        left: Math.round(l),
+                                        top: Math.round(t),
+                                        width: Math.round(w),
+                                        height: Math.round(h)
+                                    }
+                                } : v));
+                            };
+                        }}
                         className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-medium transition-colors"
                     >
-                        Maximize to Full
+                        Fit to Image
                     </button>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
