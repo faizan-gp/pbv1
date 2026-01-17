@@ -24,6 +24,7 @@ interface ShirtConfiguratorProps {
     cartUserId?: string | null;
     viewOnly?: boolean;
     initialColor?: string | null;
+    initialModel?: string | null;
 }
 
 const STEPS = [
@@ -38,7 +39,7 @@ import { db } from '@/lib/firebase';
 import { CartData } from '@/lib/firestore/carts';
 import { Lock, Unlock } from 'lucide-react';
 
-export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly, initialColor }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly, initialColor, initialModel }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const { showToast } = useToast();
@@ -109,6 +110,11 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     });
 
     const [selectedSize, setSelectedSize] = useState<string>(localCartItem?.options.size || '');
+    const [selectedModel, setSelectedModel] = useState<string>(() => {
+        if (localCartItem?.options.model) return localCartItem.options.model;
+        if (initialModel) return initialModel;
+        return product.models?.[0]?.id || '';
+    });
     const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add
     const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
@@ -216,13 +222,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
         const providerId = product?.printifyProviderId || 47; // Default 25 (Monster Digital) or 47
 
-        // Determine Variant ID based on color
-        // 1. Try DB (Specific IDs entered in ProductCreator)
-        // 2. Try Map Helper (Legacy/hardcoded map)
+        // Determine Variant ID based on Model or Color
+        // 1. Try Selected Model (Phone Cases etc.)
+        // 2. Try Selected Color (T-Shirts etc.)
         // 3. Fallback to default
         let variantId = 79389; // Default fallback
 
-        if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
+        const activeModel = product.models?.find((m: any) => m.id === selectedModel);
+
+        if (activeModel && activeModel.printifyVariantIds && activeModel.printifyVariantIds.length > 0) {
+            variantId = activeModel.printifyVariantIds[0];
+        } else if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
             variantId = selectedColor.printifyVariantIds[0];
         } else {
             const mappedId = getVariantId(blueprintId, selectedColor.name);
@@ -288,7 +298,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                 return;
             }
 
-            console.log("Generating Mockups", { blueprintId, providerId, variantId, designCount: Object.keys(designsMap).length });
+            console.log("Generating Mockups", {
+                blueprintId,
+                providerId,
+                variantId,
+                selectedModel,
+                activeModelId: activeModel?.id,
+                designCount: Object.keys(designsMap).length,
+                totalCameras: product.printifyCameras?.length,
+                filteredCameras: product.printifyCameras?.filter((c: any) => c.variant_id === variantId)?.length,
+                sampleCamera: product.printifyCameras?.[0]
+            });
 
             const response = await fetch('/api/mockup/generate', {
                 method: 'POST',
@@ -298,7 +318,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     product: {
                         blueprintId,
                         providerId,
-                        printifyCameras: product.printifyCameras
+                        printifyCameras: product.printifyCameras?.filter((c: any) => c.variant_id === variantId)
                     },
                     options: {
                         variantId
@@ -813,6 +833,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     onSelectionChange={handleSelectionChange}
                                     selectedColor={selectedColor}
                                     readOnly={isReadOnly}
+                                    selectedModel={selectedModel}
                                 />
                             </div>
 

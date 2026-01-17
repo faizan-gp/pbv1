@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { useToast } from './Toast';
-import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
+import { Product as IProduct, IProductFeature, ProductModel } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
@@ -144,6 +144,16 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         return [{ name: 'Default', hex: '#ffffff', images: {} }];
     });
 
+    const [productModels, setProductModels] = useState<ProductModel[]>(() => {
+        if (initialData?.models && initialData.models.length > 0) {
+            return initialData.models;
+        }
+        return [];
+    });
+    const [activeModelIndex, setActiveModelIndex] = useState(0);
+
+    const isPhoneCase = subcategory.toLowerCase() === 'phone case' || subcategory.toLowerCase() === 'phone cases';
+
     // VIEW STATE
     const defaultView = {
         id: 'front',
@@ -261,7 +271,13 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             return { rect, text };
         };
 
-        const editor = createZoneRect(activeView.editorZone, '#3b82f6', 'rgba(59, 130, 246, 0.1)', 'editor-zone', 'EDITOR ZONE', viewMode === 'editor');
+        // Determine Editor Zone: Model-specific if phone case, else global view zone
+        let editorZone = activeView.editorZone;
+        if (isPhoneCase && productModels[activeModelIndex]?.designZone) {
+            editorZone = productModels[activeModelIndex].designZone!;
+        }
+
+        const editor = createZoneRect(editorZone, '#3b82f6', 'rgba(59, 130, 246, 0.1)', 'editor-zone', 'EDITOR ZONE', viewMode === 'editor');
         fabricCanvas.add(editor.rect, editor.text);
 
         const preview = createZoneRect(activeView.previewZone, '#22c55e', 'rgba(34, 197, 94, 0.1)', 'preview-zone', 'PREVIEW ZONE', viewMode === 'preview');
@@ -282,29 +298,30 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 previewLabel.set({ left: previewObj.left, top: (previewObj.top || 0) - 24 });
             }
 
-            setViews(prev => prev.map(v => {
-                if (v.id === activeViewId) {
-                    const updatedView = { ...v };
-                    if (editorObj && viewMode === 'editor') {
-                        updatedView.editorZone = {
-                            // @ts-ignore
-                            left: Math.round(editorObj.left || 0), top: Math.round(editorObj.top || 0),
-                            // @ts-ignore
-                            width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)), height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
-                        };
-                    }
-                    if (previewObj && viewMode === 'preview') {
-                        updatedView.previewZone = {
-                            // @ts-ignore
-                            left: Math.round(previewObj.left || 0), top: Math.round(previewObj.top || 0),
-                            // @ts-ignore
-                            width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)), height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
-                        };
-                    }
-                    return updatedView;
+            if (editorObj && viewMode === 'editor') {
+                const newZone = {
+                    // @ts-ignore
+                    left: Math.round(editorObj.left || 0), top: Math.round(editorObj.top || 0),
+                    // @ts-ignore
+                    width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)), height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
+                };
+
+                if (isPhoneCase) {
+                    setProductModels(prev => prev.map((m, i) => i === activeModelIndex ? { ...m, designZone: newZone } : m));
+                } else {
+                    setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, editorZone: newZone } : v));
                 }
-                return v;
-            }));
+            }
+
+            if (previewObj && viewMode === 'preview') {
+                const newZone = {
+                    // @ts-ignore
+                    left: Math.round(previewObj.left || 0), top: Math.round(previewObj.top || 0),
+                    // @ts-ignore
+                    width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)), height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
+                };
+                setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, previewZone: newZone } : v));
+            }
         };
 
         fabricCanvas.on('object:modified', updateState);
@@ -317,7 +334,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             fabricCanvas.off('object:moving', updateState);
             fabricCanvas.off('object:scaling', updateState);
         };
-    }, [fabricCanvas, activeViewId, viewMode, currentStep]);
+    }, [fabricCanvas, activeViewId, viewMode, currentStep, activeModelIndex, productModels.length]); // Added dependencies
 
 
     // HELPERS
@@ -382,6 +399,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 },
                 printifyVariantIds: c.printifyVariantIds || []
             })),
+            models: productModels,
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
                 id: v.id,
@@ -398,7 +416,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             printifyCameras
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId, printifyCameras]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, productModels, printifyBlueprintId, printifyProviderId, printifyCameras]);
 
 
     const handleSave = async () => {
@@ -1003,6 +1021,35 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    const addProductModel = () => {
+        setProductModels(prev => [...prev, { id: `model-${prev.length + 1}`, name: 'New Model', image: '' }]);
+    };
+
+    const removeProductModel = (index: number) => {
+        setProductModels(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateProductModel = (index: number, field: keyof ProductModel, value: any) => {
+        setProductModels(prev => prev.map((m, i) => i === index ? { ...m, [field]: value } : m));
+    };
+
+    const handleModelImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'models', productName);
+            updateProductModel(index, 'image', url);
+            showToast('Model image uploaded', 'success');
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload model image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const addView = () => {
         const newId = `view - ${views.length + 1} `;
         setViews(prev => [...prev, { ...defaultView, id: newId, name: `View ${views.length + 1} ` }]);
@@ -1171,7 +1218,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
             {/* WIZARD HEADER */}
             <div className="bg-white border-b border-gray-200 px-8 py-4 z-40">
-                <div className="max-w-4xl mx-auto">
+                <div className="w-full mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Product' : 'Create New Product'}</h2>
@@ -1217,7 +1264,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                 {/* STEP 1: BASIC INFO */}
                 {currentStep === 1 && (
-                    <div className="max-w-2xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-full px-8 py-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="text-center mb-8">
                             <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <Plus size={32} />
@@ -1341,72 +1388,255 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         </div>
 
                         {/* Product Colors */}
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-gray-900">Product Colors</h4>
-                                <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
-                                    <Plus size={14} /> Add Color
-                                </button>
-                                <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                    <FolderUp size={14} /> Import JSON
-                                    <input
-                                        type="file"
-                                        accept=".json,application/json"
-                                        className="hidden"
-                                        onChange={handleBulkColorJsonUpload}
-                                    />
-                                </label>
-                            </div>
-                            <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
-                            <div className="space-y-3">
-                                {productColors.map((color, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }}></div>
+                        {/* Product Colors OR Models */}
+                        {isPhoneCase ? (
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-gray-900">Product Models</h4>
+                                    <button onClick={addProductModel} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                        <Plus size={14} /> Add Model
+                                    </button>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <FolderUp size={14} /> Import JSONs
                                         <input
-                                            type="text"
-                                            value={color.name}
-                                            onChange={(e) => updateProductColor(idx, 'name', e.target.value)}
-                                            placeholder="Color Name"
-                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                            type="file"
+                                            multiple
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                if (files.length === 0) return;
+
+                                                const readFile = (f: File): Promise<string> => new Promise((resolve, reject) => {
+                                                    const r = new FileReader();
+                                                    r.onload = (ev) => resolve(ev.target?.result as string);
+                                                    r.onerror = reject;
+                                                    r.readAsText(f);
+                                                });
+
+                                                const optionsFile = files.find(f => f.name.includes('options'));
+                                                const variantsFile = files.find(f => f.name.includes('variants'));
+                                                const camerasFile = files.find(f => f.name.includes('cameras'));
+
+                                                let successMsg = "";
+                                                const validVariantIds = new Set<number>();
+                                                productModels.forEach(m => m.printifyVariantIds?.forEach(id => validVariantIds.add(id)));
+
+                                                // 1. Process Models (needs options & variants)
+                                                if (optionsFile && variantsFile) {
+                                                    try {
+                                                        const [optStr, varStr] = await Promise.all([readFile(optionsFile), readFile(variantsFile)]);
+                                                        const optionsData = JSON.parse(optStr);
+                                                        const variantsData = JSON.parse(varStr);
+
+                                                        const sizeOptions = optionsData.size || [];
+                                                        const newModels: ProductModel[] = sizeOptions.map((opt: any) => {
+                                                            const modelName = opt.label;
+                                                            const modelId = modelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                                                            const optionId = opt.id;
+                                                            const matchingVariants = variantsData.filter((v: any) => v.options.includes(optionId));
+                                                            const variantIds = matchingVariants.map((v: any) => v.variant_id);
+
+                                                            return { id: modelId, name: modelName, image: '', printifyVariantIds: variantIds };
+                                                        });
+
+                                                        newModels.forEach(m => m.printifyVariantIds?.forEach(id => validVariantIds.add(id)));
+
+                                                        if (newModels.length > 0) {
+                                                            setProductModels(prev => {
+                                                                const modelMap = new Map(prev.map(p => [p.id, p]));
+                                                                newModels.forEach(m => {
+                                                                    // Update existing or add new. Preserve image if not provided in new.
+                                                                    const existing = modelMap.get(m.id);
+                                                                    if (existing) {
+                                                                        modelMap.set(m.id, { ...existing, ...m, image: existing.image || m.image });
+                                                                    } else {
+                                                                        modelMap.set(m.id, m);
+                                                                    }
+                                                                });
+                                                                return Array.from(modelMap.values());
+                                                            });
+                                                            successMsg += `${newModels.length} models processed/updated. `;
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Model parse error", err);
+                                                        showToast("Failed to process model JSONs", "error");
+                                                    }
+                                                }
+
+                                                // 2. Process Cameras
+                                                if (camerasFile) {
+                                                    try {
+                                                        const camStr = await readFile(camerasFile);
+                                                        const camData = JSON.parse(camStr);
+                                                        if (Array.isArray(camData)) {
+                                                            let filteredCameras = camData.filter((c: any) => validVariantIds.has(c.variant_id));
+
+                                                            // Fallback: If filtering removed EVERYTHING (mismatched IDs), keep all to be safe?
+                                                            // Or maybe the user is importing cameras for models they haven't imported yet.
+                                                            if (filteredCameras.length === 0 && camData.length > 0) {
+                                                                console.warn("No cameras matched active Variant IDs. Importing ALL cameras as fallback.");
+                                                                filteredCameras = camData;
+                                                                successMsg += `Warning: ID mismatch. Imported all ${camData.length} cameras. `;
+                                                            } else {
+                                                                successMsg += `${filteredCameras.length} cameras loaded. `;
+                                                            }
+
+                                                            setPrintifyCameras(filteredCameras);
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Camera parse error", err);
+                                                        showToast("Failed to process cameras.json", "error");
+                                                    }
+                                                }
+
+                                                if (successMsg) showToast(successMsg, "success");
+                                                else if (!optionsFile && !variantsFile && !camerasFile) showToast("No recognized JSON files (options, variants, cameras) found.", "error");
+                                            }}
                                         />
-                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-32">
-                                            <span className="text-gray-400 text-sm">#</span>
-                                            <input
-                                                type="text"
-                                                value={color.hex.replace('#', '')}
-                                                onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
-                                                placeholder="HEX"
-                                                className="w-full bg-transparent outline-none text-sm uppercase font-mono"
-                                            />
+                                    </label>
+                                </div>
+                                <p className="text-sm text-gray-500">Define the supported phone models. Import <b>options.json</b>, <b>variants.json</b>, and optionally <b>cameras.json</b>.</p>
+                                <div className="space-y-3">
+                                    {productModels.map((model, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            {/* Model Image Upload */}
+                                            <div className="relative w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0 group">
+                                                {model.image ? (
+                                                    <img src={model.image} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-full text-gray-400">
+                                                        <Upload size={16} />
+                                                    </div>
+                                                )}
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                                    onChange={(e) => handleModelImageUpload(e, idx)}
+                                                />
+                                            </div>
+
+                                            {/* Model Name */}
+                                            <div className="flex-1">
+                                                <input
+                                                    type="text"
+                                                    value={model.name}
+                                                    onChange={(e) => updateProductModel(idx, 'name', e.target.value)}
+                                                    placeholder="Model Name (e.g. iPhone 13)"
+                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                />
+                                            </div>
+
+                                            {/* Variant IDs Input */}
+                                            <div className="flex-1 min-w-[120px]">
+                                                <input
+                                                    type="text"
+                                                    value={model.printifyVariantIds?.join(', ') || ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                        updateProductModel(idx, 'printifyVariantIds', ids);
+                                                    }}
+                                                    placeholder="Variant IDs (e.g. 123, 456)"
+                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    title="Comma-separated Printify Variant IDs"
+                                                />
+                                            </div>
+
+                                            <button onClick={() => removeProductModel(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                                <Trash2 size={16} />
+                                            </button>
                                         </div>
-                                        {/* Variant IDs Input */}
-                                        <div className="flex-1 min-w-[120px]">
-                                            <input
-                                                type="text"
-                                                value={color.printifyVariantIds?.join(', ') || ''}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    // Allow user to type, only convert to array for storage
-                                                    // Simplified: Just store comma separate in state logic? 
-                                                    // No, our interface says number[].
-                                                    // Improved: Parse on change but handle trailing comma or partials? 
-                                                    // Actually, storing as string temporarily might be better or parse robustly.
-                                                    // Let's parse robustly:
-                                                    const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
-                                                    updateProductColor(idx, 'printifyVariantIds', ids);
-                                                }}
-                                                placeholder="Variant IDs (e.g. 123, 456)"
-                                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
-                                                title="Comma-separated Printify Variant IDs"
-                                            />
+                                    ))}
+                                    {productModels.length === 0 && (
+                                        <div className="text-center py-4 text-gray-400 text-sm">No models added yet.</div>
+                                    )}
+                                </div>
+
+                                {/* Imported Cameras Display */}
+                                {printifyCameras.length > 0 && (
+                                    <div className="pt-4 border-t border-gray-100 mt-4">
+                                        <h5 className="text-sm font-bold text-gray-700 mb-2">Imported Cameras ({printifyCameras.length})</h5>
+                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                            {printifyCameras.map((cam, i) => (
+                                                <div key={i} className="text-xs flex justify-between text-gray-600 bg-white p-2 rounded border border-gray-100">
+                                                    <span>{cam.label} ({cam.position})</span>
+                                                    <span className="font-mono text-gray-400">ID: {cam.id}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                            <Trash2 size={16} />
-                                        </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-gray-900">Product Colors</h4>
+                                    <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                        <Plus size={14} /> Add Color
+                                    </button>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <FolderUp size={14} /> Import JSON
+                                        <input
+                                            type="file"
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={handleBulkColorJsonUpload}
+                                        />
+                                    </label>
+                                </div>
+                                <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
+                                <div className="space-y-3">
+                                    {productColors.map((color, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }}></div>
+                                            <input
+                                                type="text"
+                                                value={color.name}
+                                                onChange={(e) => updateProductColor(idx, 'name', e.target.value)}
+                                                placeholder="Color Name"
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                            />
+                                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-32">
+                                                <span className="text-gray-400 text-sm">#</span>
+                                                <input
+                                                    type="text"
+                                                    value={color.hex.replace('#', '')}
+                                                    onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
+                                                    placeholder="HEX"
+                                                    className="w-full bg-transparent outline-none text-sm uppercase font-mono"
+                                                />
+                                            </div>
+                                            {/* Variant IDs Input */}
+                                            <div className="flex-1 min-w-[120px]">
+                                                <input
+                                                    type="text"
+                                                    value={color.printifyVariantIds?.join(', ') || ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        // Allow user to type, only convert to array for storage
+                                                        // Simplified: Just store comma separate in state logic? 
+                                                        // No, our interface says number[].
+                                                        // Improved: Parse on change but handle trailing comma or partials? 
+                                                        // Actually, storing as string temporarily might be better or parse robustly.
+                                                        // Let's parse robustly:
+                                                        const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                        updateProductColor(idx, 'printifyVariantIds', ids);
+                                                    }}
+                                                    placeholder="Variant IDs (e.g. 123, 456)"
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    title="Comma-separated Printify Variant IDs"
+                                                />
+                                            </div>
+                                            <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Listing Images Grouped by Color */}
                         <DndContext
@@ -1521,6 +1751,22 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                     <button onClick={addView} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100 text-indigo-600">+ Add View</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                                    {/* Model Selector for Phone Cases */}
+                                    {isPhoneCase && productModels.length > 0 && (
+                                        <div className="mb-6 px-1">
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Model</h4>
+                                            <select
+                                                value={activeModelIndex}
+                                                onChange={(e) => setActiveModelIndex(Number(e.target.value))}
+                                                className="w-full text-xs bg-white border border-gray-200 rounded-lg p-2 outline-none focus:border-indigo-500"
+                                            >
+                                                {productModels.map((m, i) => (
+                                                    <option key={i} value={i}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-2">
                                         {views.map(view => (
                                             <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("text-left px-3 py-2 rounded-lg text-xs font-medium border transition-all", activeViewId === view.id ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300")}>
@@ -1548,7 +1794,11 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <div className="relative shadow-2xl rounded-lg overflow-hidden border border-zinc-800 bg-[#111]" style={{ width: 600, height: 600 }}>
                                     {activeView && (
                                         <img
-                                            src={viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image}
+                                            src={
+                                                isPhoneCase && productModels[activeModelIndex]?.image
+                                                    ? productModels[activeModelIndex].image
+                                                    : (viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image)
+                                            }
                                             className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-100"
                                             alt="background"
                                         />

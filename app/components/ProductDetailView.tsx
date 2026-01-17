@@ -17,7 +17,14 @@ interface ProductDetailViewProps {
 
 export default function ProductDetailView({ product, descriptionSlot }: ProductDetailViewProps) {
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [selectedModel, setSelectedModel] = useState<string | null>(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+    useEffect(() => {
+        if (product.models && product.models.length > 0 && !selectedModel) {
+            setSelectedModel(product.models[0].id);
+        }
+    }, [product.models]);
 
     const galleryImages = useMemo(() => {
         let images = product.listingImages || [];
@@ -143,6 +150,33 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                         </div>
                     </div>
 
+                    {/* Model Selector (For Phone Cases etc.) */}
+                    {product.models && product.models.length > 0 && (
+                        <div className="space-y-3 pt-4 border-t border-slate-100">
+                            <div className="flex justify-between text-sm">
+                                <span className="font-bold text-slate-900">Select Model</span>
+                                <span className="text-slate-500">{product.models.find(m => m.id === selectedModel)?.name}</span>
+                            </div>
+                            <div className="relative">
+                                <select
+                                    value={selectedModel || ''}
+                                    onChange={(e) => setSelectedModel(e.target.value)}
+                                    className="w-full appearance-none bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                                >
+                                    <option value="" disabled>Select your device</option>
+                                    {product.models.map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Color Selector */}
                     {product.colors && product.colors.length > 0 && (
                         <div className="space-y-3 pt-4 border-t border-slate-100">
@@ -176,11 +210,18 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                     {/* Actions */}
                     <div className="flex flex-col gap-4">
                         <Link
-                            href={`/customize/${product.id}${selectedColor ? `?color=${encodeURIComponent(selectedColor)}` : ''}`}
-                            className="group relative w-full bg-slate-900 hover:bg-black text-white py-4 md:py-5 rounded-xl font-bold text-lg shadow-xl shadow-slate-200 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden"
+                            href={`/customize/${product.id}?${[
+                                selectedColor ? `color=${encodeURIComponent(selectedColor)}` : '',
+                                selectedModel ? `model=${encodeURIComponent(selectedModel)}` : ''
+                            ].filter(Boolean).join('&')}`}
+                            className={cn(
+                                "group relative w-full bg-slate-900 hover:bg-black text-white py-4 md:py-5 rounded-xl font-bold text-lg shadow-xl shadow-slate-200 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden",
+                                (!selectedModel && product.models && product.models.length > 0) && "opacity-75 cursor-not-allowed pointer-events-none" // Disable if model required but not selected
+                            )}
                         >
                             <span className="relative z-10 flex items-center gap-2">
-                                Customize Design <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                {(!selectedModel && product.models && product.models.length > 0) ? 'Select Model to Customize' : 'Customize Design'}
+                                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </span>
                             <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-0" />
                         </Link>
