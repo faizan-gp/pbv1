@@ -88,7 +88,10 @@ export const PRODUCTS_COLLECTION = "products";
 export async function getAllProducts(): Promise<Product[]> {
     const productsRef = collection(db, PRODUCTS_COLLECTION);
     const snapshot = await getDocs(productsRef);
-    return snapshot.docs.map(doc => doc.data() as Product);
+    return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    } as Product));
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
