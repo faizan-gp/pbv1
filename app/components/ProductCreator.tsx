@@ -506,9 +506,14 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 // Color folder is at index [1] (0-indexed).
                 const colorFolder = pathParts[1].toLowerCase();
 
-                // Check if this folder matches a product color (or "All")
+                // Check if this folder matches a product color, MODEL, (or "All")
                 const matchingColor = productColors.find(c => c.name.toLowerCase() === colorFolder);
-                const targetColor = matchingColor ? matchingColor.name : (colorFolder === 'all' ? 'All' : null);
+                const matchingModel = productModels.find(m => m.name.toLowerCase() === colorFolder);
+
+                let targetColor: string | null = null;
+                if (matchingColor) targetColor = matchingColor.name;
+                else if (matchingModel) targetColor = matchingModel.name;
+                else if (colorFolder === 'all') targetColor = 'All';
 
                 if (targetColor) {
                     if (!filesByColor[targetColor]) filesByColor[targetColor] = [];
@@ -1734,6 +1739,37 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         </SortableContext>
                                     </div>
                                 ))}
+
+                                {/* Per-Model Sections (For Phone Cases etc) */}
+                                {productModels.map((model, idx) => (
+                                    <div key={model.id} className="space-y-3 pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center text-[8px] font-bold text-gray-500">M</div>
+                                                <h5 className="text-sm font-bold text-gray-700">{model.name}</h5>
+                                            </div>
+                                            <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                                                <Plus size={14} /> Add {model.name} Images
+                                                <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, model.name)} />
+                                            </label>
+                                        </div>
+                                        <SortableContext
+                                            items={listingImages.filter(img => img.color === model.name).map(img => img.url)}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                {listingImages.filter(img => img.color === model.name).map((img, i) => (
+                                                    <SortableListingImage key={img.url} img={img} index={i} colorGroup={model.name} />
+                                                ))}
+                                                {listingImages.filter(img => img.color === model.name).length === 0 && (
+                                                    <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                                        No images for {model.name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SortableContext>
+                                    </div>
+                                ))}
                             </div>
                         </DndContext>
                     </div >
@@ -2140,6 +2176,23 @@ function activeViewsConfig(
                     {activeView.editorImage ? <img src={activeView.editorImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400">Upload Cutout</div>}
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'editor')} />
                 </label>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-blue-500 uppercase">Editor Zone</label>
+                    <button
+                        onClick={() => setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? { ...v, editorZone: { left: 0, top: 0, width: 1024, height: 1024 } } : v))}
+                        className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-medium transition-colors"
+                    >
+                        Maximize to Full
+                    </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] text-gray-400 col-span-2 leading-tight">
+                        Defines the printable area relative to the 1024x1024 canvas.
+                    </p>
+                </div>
             </div>
 
             <div className="space-y-2">
