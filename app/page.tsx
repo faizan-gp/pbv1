@@ -65,8 +65,7 @@ async function getTrendingProducts() {
   }
 }
 
-// ISR: Revalidate homepage every 15 minutes (900 seconds) for trending products
-export const revalidate = 900;
+export const dynamic = 'force-dynamic'; // Ensure fresh data on each request
 
 export default async function Home() {
   const featuredProducts = await getTrendingProducts();

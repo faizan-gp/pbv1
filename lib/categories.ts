@@ -220,16 +220,15 @@ Whether you're an interior designer looking to sell your patterns or a homeowner
 export const ALL_CATEGORIES = Object.values(CATEGORIES);
 
 let cache: { data: Record<string, CategoryData>, timestamp: number } | null = null;
-// Cache categories for 15 minutes (900000 ms) - matches API cache duration
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes in milliseconds
+const CACHE_DURATION = 0; // Disable cache to ensure fresh DB data
 
 export const getCategories = async (): Promise<Record<string, CategoryData>> => {
     const now = Date.now();
 
-    // Check cache - return cached data if still valid
-    if (cache && (now - cache.timestamp < CACHE_DURATION)) {
-        return cache.data;
-    }
+    // Check cache (Disabled for now to fix staleness)
+    // if (cache && (now - cache.timestamp < CACHE_DURATION)) {
+    //    return cache.data;
+    // }
 
     try {
         const dbCategories = await getAllCategoriesFromDB();

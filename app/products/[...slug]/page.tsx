@@ -10,8 +10,7 @@ import RelatedProducts from '@/app/components/RelatedProducts';
 import { getCategoryBySlug, getSubcategoryBySlug } from '@/lib/categories';
 import CategoryPage from '@/app/components/CategoryPage';
 
-// ISR: Revalidate product pages every hour (3600 seconds)
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
 
 // Pre-render all product pages at build time
 export async function generateStaticParams() {

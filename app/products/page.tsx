@@ -2,8 +2,7 @@ import { getAllProducts } from '@/lib/firestore/products';
 import { Metadata } from "next";
 import ProductsBrowser from '../components/ProductBrowser';
 
-// ISR: Revalidate products listing page every 30 minutes (1800 seconds)
-export const revalidate = 1800;
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
     return {
