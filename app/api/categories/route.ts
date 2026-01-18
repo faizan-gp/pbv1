@@ -3,6 +3,7 @@ import { collection, getDocs, doc, writeBatch, deleteDoc, getDoc, setDoc } from 
 import { NextResponse } from 'next/server';
 import { CATEGORIES, CategoryData } from '@/lib/categories';
 import { createCategory, getAllCategoriesFromDB } from '@/lib/firestore/categories';
+import { createHash } from 'crypto';
 
 // Helper function to update category if description or subcategories are missing/empty
 async function healCategory(docRef: any, currentData: any, seedData: CategoryData) {
@@ -130,12 +131,19 @@ export async function GET(req: Request) {
             await batch.commit();
         }
 
+        // Generate ETag from categories data hash
+        const dataString = JSON.stringify(categories);
+        const etag = createHash('md5').update(dataString).digest('hex');
+        const now = new Date();
+
         return NextResponse.json(
             { success: true, data: categories },
             {
                 headers: {
                     'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800',
                     'CDN-Cache-Control': 'public, s-maxage=900',
+                    'ETag': `"${etag}"`,
+                    'Last-Modified': now.toUTCString(),
                 },
             }
         );

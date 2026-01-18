@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getProductById, updateProduct, deleteProduct, createProduct } from '@/lib/firestore/products';
+import { createHash } from 'crypto';
 
 type Props = {
     params: Promise<{
@@ -22,12 +23,19 @@ export async function GET(
             );
         }
 
+        // Generate ETag from product data hash
+        const dataString = JSON.stringify(product);
+        const etag = createHash('md5').update(dataString).digest('hex');
+        const now = new Date();
+
         return NextResponse.json(
             { success: true, data: product },
             {
                 headers: {
                     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
                     'CDN-Cache-Control': 'public, s-maxage=300',
+                    'ETag': `"${etag}"`,
+                    'Last-Modified': now.toUTCString(),
                 },
             }
         );
