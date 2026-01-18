@@ -1,8 +1,9 @@
-import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export default withAuth(
-    function middleware(req: NextRequestWithAuth) {
+    function middleware(req: NextRequest) {
         const response = NextResponse.next();
         const pathname = req.nextUrl.pathname;
 
@@ -17,7 +18,7 @@ export default withAuth(
 
         // Cache header logic for different route types
         // User-specific routes should not be cached
-        const isUserSpecificRoute =
+        const isUserSpecificRoute = 
             pathname.startsWith("/profile") ||
             pathname.startsWith("/cart") ||
             pathname.startsWith("/checkout") ||
@@ -39,7 +40,7 @@ export default withAuth(
         }
 
         // Static pages (About, FAQ, Contact, etc.) - can be cached longer
-        const isStaticPage =
+        const isStaticPage = 
             pathname === "/about" ||
             pathname === "/faq" ||
             pathname === "/contact" ||
