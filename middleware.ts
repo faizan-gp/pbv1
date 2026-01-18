@@ -49,22 +49,22 @@ export default withAuth(
             pathname === "/dmca";
 
         if (isStaticPage) {
-            // Cache static pages for 1 hour
-            response.headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=7200");
-            response.headers.set("CDN-Cache-Control", "public, s-maxage=3600");
+            // Cache static pages: 1 hour browser, 1 day CDN
+            response.headers.set("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800");
             return response;
         }
 
         // Product and category pages - ISR handles caching, but add edge cache headers
         if (pathname.startsWith("/products/") || pathname.startsWith("/categories/")) {
-            // Let ISR handle the caching, but add Cloudflare-specific headers
-            response.headers.set("CDN-Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+            // Cache: 5 min browser, 15 min CDN, stale for 1 hour
+            response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
             return response;
         }
 
         // Homepage - ISR handles caching
         if (pathname === "/") {
-            response.headers.set("CDN-Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+            // Cache: 5 min browser, 15 min CDN, stale for 1 hour
+            response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
             return response;
         }
 
