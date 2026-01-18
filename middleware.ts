@@ -39,6 +39,7 @@ export default withAuth(
         }
 
         // Static pages (About, FAQ, Contact, etc.) - can be cached longer
+        // Static pages (About, FAQ, Contact, etc.) - can be cached longer
         const isStaticPage =
             pathname === "/about" ||
             pathname === "/faq" ||
@@ -51,6 +52,10 @@ export default withAuth(
         if (isStaticPage) {
             // Cache static pages: 1 hour browser, 1 day CDN
             response.headers.set("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800");
+            // Add Last-Modified for validation
+            response.headers.set("Last-Modified", new Date().toUTCString());
+            // Optimize Vary header
+            response.headers.set("Vary", "Accept-Encoding");
             return response;
         }
 
@@ -58,6 +63,10 @@ export default withAuth(
         if (pathname.startsWith("/products/") || pathname.startsWith("/categories/")) {
             // Cache: 5 min browser, 15 min CDN, stale for 1 hour
             response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
+            // Add Last-Modified for validation
+            response.headers.set("Last-Modified", new Date().toUTCString());
+            // Optimize Vary header
+            response.headers.set("Vary", "Accept-Encoding");
             return response;
         }
 
@@ -65,6 +74,10 @@ export default withAuth(
         if (pathname === "/") {
             // Cache: 5 min browser, 15 min CDN, stale for 1 hour
             response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
+            // Add Last-Modified for validation
+            response.headers.set("Last-Modified", new Date().toUTCString());
+            // Optimize Vary header
+            response.headers.set("Vary", "Accept-Encoding");
             return response;
         }
 
