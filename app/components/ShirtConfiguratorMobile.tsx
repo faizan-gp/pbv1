@@ -226,7 +226,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                     product: {
                         blueprintId,
                         providerId,
-                        printifyCameras: product.printifyCameras
+                        printifyCameras: product.printifyCameras?.filter((c: any) => !c.variant_id || c.variant_id === variantId)
                     },
                     options: {
                         variantId

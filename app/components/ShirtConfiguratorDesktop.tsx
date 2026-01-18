@@ -328,7 +328,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     product: {
                         blueprintId,
                         providerId,
-                        printifyCameras: product.printifyCameras?.filter((c: any) => c.variant_id === variantId)
+                        printifyCameras: product.printifyCameras?.filter((c: any) => !c.variant_id || c.variant_id === variantId)
                     },
                     options: {
                         variantId
