@@ -1099,6 +1099,33 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         setProductModels(prev => [...prev, { id: `model-${prev.length + 1}`, name: 'New Model', image: '' }]);
     };
 
+    const handleModelViewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, modelIndex: number, viewId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'models', productName);
+            setProductModels(prev => prev.map((m, i) => {
+                if (i === modelIndex) {
+                    return {
+                        ...m,
+                        images: {
+                            ...(m.images || {}),
+                            [viewId]: url
+                        }
+                    };
+                }
+                return m;
+            }));
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload model view image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const removeProductModel = (index: number) => {
         setProductModels(prev => prev.filter((_, i) => i !== index));
     };
@@ -1583,54 +1610,87 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <p className="text-sm text-gray-500">Define the supported phone models. Import <b>options.json</b>, <b>variants.json</b>, and optionally <b>cameras.json</b>.</p>
                                 <div className="space-y-3">
                                     {productModels.map((model, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                            {/* Model Image Upload */}
-                                            <div className="relative w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0 group">
-                                                {model.image ? (
-                                                    <img src={model.image} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="flex items-center justify-center h-full text-gray-400">
-                                                        <Upload size={16} />
+                                        <div key={idx} className="flex flex-col gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <div className="flex items-center gap-3 w-full">
+                                                {/* Model Image Upload */}
+                                                <div className="relative w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0 group">
+                                                    {model.image ? (
+                                                        <img src={model.image} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex items-center justify-center h-full text-gray-400">
+                                                            <Upload size={16} />
+                                                        </div>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleModelImageUpload(e, idx)}
+                                                    />
+                                                </div>
+
+                                                {/* Model Name */}
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="text"
+                                                        value={model.name}
+                                                        onChange={(e) => updateProductModel(idx, 'name', e.target.value)}
+                                                        placeholder="Model Name (e.g. iPhone 13)"
+                                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    />
+                                                </div>
+
+                                                {/* Variant IDs Input */}
+                                                <div className="flex-1 min-w-[120px]">
+                                                    <input
+                                                        type="text"
+                                                        value={model.printifyVariantIds?.join(', ') || ''}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                            updateProductModel(idx, 'printifyVariantIds', ids);
+                                                        }}
+                                                        placeholder="Variant IDs (e.g. 123, 456)"
+                                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                        title="Comma-separated Printify Variant IDs"
+                                                    />
+                                                </div>
+
+                                                <button onClick={() => removeProductModel(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+
+                                            {/* View Specific Images */}
+                                            {views && views.length > 0 && (
+                                                <div className="w-full mt-1 pt-3 border-t border-gray-200/50">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">View Specific Preview</p>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {views.map(view => (
+                                                            <div key={view.id} className="relative group/view w-16">
+                                                                <div className={cn("w-16 h-16 rounded border overflow-hidden relative", model.images?.[view.id] ? "border-indigo-200" : "border-gray-200 bg-white")}>
+                                                                    {model.images?.[view.id] ? (
+                                                                        <img src={model.images[view.id]} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-gray-300"><Upload size={14} /></div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/view:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <Upload size={14} className="text-white drop-shadow" />
+                                                                    </div>
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                                    title={`Upload ${view.name} image for ${model.name}`}
+                                                                    onChange={(e) => handleModelViewImageUpload(e, idx, view.id)}
+                                                                />
+                                                                <div className="mt-1 w-full text-[9px] text-center text-gray-500 truncate leading-tight">{view.name}</div>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                )}
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                                    onChange={(e) => handleModelImageUpload(e, idx)}
-                                                />
-                                            </div>
-
-                                            {/* Model Name */}
-                                            <div className="flex-1">
-                                                <input
-                                                    type="text"
-                                                    value={model.name}
-                                                    onChange={(e) => updateProductModel(idx, 'name', e.target.value)}
-                                                    placeholder="Model Name (e.g. iPhone 13)"
-                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
-                                                />
-                                            </div>
-
-                                            {/* Variant IDs Input */}
-                                            <div className="flex-1 min-w-[120px]">
-                                                <input
-                                                    type="text"
-                                                    value={model.printifyVariantIds?.join(', ') || ''}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
-                                                        updateProductModel(idx, 'printifyVariantIds', ids);
-                                                    }}
-                                                    placeholder="Variant IDs (e.g. 123, 456)"
-                                                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
-                                                    title="Comma-separated Printify Variant IDs"
-                                                />
-                                            </div>
-
-                                            <button onClick={() => removeProductModel(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                                <Trash2 size={16} />
-                                            </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                     {productModels.length === 0 && (

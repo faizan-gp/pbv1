@@ -671,13 +671,20 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                                             key={m.id}
                                                             onClick={() => setSelectedModel(m.id)}
                                                             className={cn(
-                                                                "p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group",
+                                                                "p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group flex flex-col items-center gap-3",
                                                                 selectedModel === m.id
                                                                     ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
                                                                     : "border-slate-100 hover:border-indigo-200 hover:bg-slate-50"
                                                             )}
                                                         >
-                                                            <div className="font-bold text-slate-900 text-sm mb-1">{m.name}</div>
+                                                            <div className="w-full aspect-[3/4] rounded-lg bg-white border border-slate-100 p-2 relative overflow-hidden">
+                                                                <img
+                                                                    src={m.images?.[activeViewId] || m.image || product.image}
+                                                                    alt={m.name}
+                                                                    className="w-full h-full object-contain mix-blend-multiply"
+                                                                />
+                                                            </div>
+                                                            <div className="font-bold text-slate-900 text-sm text-center">{m.name}</div>
                                                             {selectedModel === m.id && (
                                                                 <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white">
                                                                     <Check size={12} strokeWidth={3} />
@@ -877,13 +884,14 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     selectedColor={selectedColor}
                                     readOnly={isReadOnly}
                                     selectedModel={selectedModel}
+                                    useRealPreview={currentStep === 0}
                                 />
                             </div>
 
                             {/* Standard Preview (Not AI) */}
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                                 <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 relative">
-                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
+                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} selectedModel={selectedModel} />
                                 </div>
                             </div>
                         </div>
@@ -911,7 +919,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                             fallbackViewImage: view.image,
                                             finalSrc: selectedColor.images?.[view.id] || view.image || product.image
                                         }) as any}
-                                        <img src={selectedColor.images?.[view.id] || view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
+                                        <img
+                                            src={
+                                                (product.models?.find((m: any) => m.id === selectedModel)?.images?.[view.id]) ||
+                                                (product.models?.find((m: any) => m.id === selectedModel)?.image) ||
+                                                selectedColor.images?.[view.id] ||
+                                                view.image ||
+                                                product.image
+                                            }
+                                            alt={view.name}
+                                            className="w-full h-full object-contain p-1"
+                                        />
                                     </div>
                                     <span className={cn("text-[10px] font-bold uppercase tracking-wider", activeViewId === view.id ? "text-indigo-600" : "text-slate-400")}>{view.name}</span>
                                 </button>

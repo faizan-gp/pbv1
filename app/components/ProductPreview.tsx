@@ -14,18 +14,31 @@ interface ProductPreviewProps {
     minimal?: boolean;
     isOverlay?: boolean; // If true, rendering full canvas overlay instead of design zone content
     className?: string;
+    selectedModel?: string;
 }
 
 export default function ProductPreview({
-    designTextureUrl, product, selectedColor, activeViewId, onViewChange, minimal = false, isOverlay = false, className = ''
+    designTextureUrl, product, selectedColor, activeViewId, onViewChange, minimal = false, isOverlay = false, className = '', selectedModel
 }: ProductPreviewProps) {
 
     const activePreview = product.previews.find(p => p.id === activeViewId) || product.previews[0];
     const [showGrid, setShowGrid] = useState(false);
     const [imgLoading, setImgLoading] = useState(true);
 
+    const activeModel = product.models?.find((m: any) => m.id === selectedModel);
+
+    // Determine Background Image
+    let imageUrl = selectedColor.images[activeViewId] || selectedColor.images['front'] || product.image;
+    if (activeModel) {
+        if (activeModel.images?.[activeViewId]) {
+            imageUrl = activeModel.images[activeViewId];
+        } else if (activeModel.image) {
+            imageUrl = activeModel.image;
+        }
+    }
+
     // Calculate percentage positioning
-    const currentZone = activePreview.previewZone || product.designZone;
+    const currentZone = (activeModel?.designZone) || activePreview.previewZone || product.designZone;
     const zoneStyle = {
         left: `${(currentZone.left / product.canvasSize) * 100}%`,
         top: `${(currentZone.top / product.canvasSize) * 100}%`,
@@ -62,11 +75,10 @@ export default function ProductPreview({
 
                     {/* 1. Base Image (Shirt) */}
                     <img
-                        src={selectedColor.images[activeViewId] || selectedColor.images['front']}
+                        src={imageUrl}
                         alt="Product Base"
                         onLoad={() => setImgLoading(false)}
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-10 select-none transition-opacity duration-300"
-                        style={{ opacity: imgLoading ? 0 : 1 }}
                     />
 
                     {/* 2. Grid Overlay (Helper) */}

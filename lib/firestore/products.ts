@@ -89,6 +89,7 @@ export interface ProductModel {
     id: string; // e.g. "iphone-13" or just a slugified name
     name: string; // e.g. "iPhone 13"
     image?: string; // Cutout/Template image
+    images?: Record<string, string>; // Map of viewId -> imageUrl
     printifyVariantIds?: number[]; // Variant IDs specific to this model
     designZone?: {
         left: number;
