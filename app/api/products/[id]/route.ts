@@ -22,7 +22,15 @@ export async function GET(
             );
         }
 
-        return NextResponse.json({ success: true, data: product });
+        return NextResponse.json(
+            { success: true, data: product },
+            {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+                    'CDN-Cache-Control': 'public, s-maxage=300',
+                },
+            }
+        );
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }

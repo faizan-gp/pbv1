@@ -6,7 +6,15 @@ export async function GET() {
     try {
         const products = await getAllProducts();
 
-        return NextResponse.json({ success: true, data: products });
+        return NextResponse.json(
+            { success: true, data: products },
+            {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+                    'CDN-Cache-Control': 'public, s-maxage=300',
+                },
+            }
+        );
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
