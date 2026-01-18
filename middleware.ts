@@ -1,6 +1,5 @@
 import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { createHash } from "crypto";
 
 export default withAuth(
     function middleware(req: NextRequestWithAuth) {
@@ -52,13 +51,6 @@ export default withAuth(
         if (isStaticPage) {
             // Cache static pages: 1 hour browser, 1 day CDN
             response.headers.set("Cache-Control", "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800");
-            
-            // Add ETag and Last-Modified for cache validation
-            const now = new Date();
-            const etag = createHash("md5").update(`${pathname}-${Math.floor(now.getTime() / 3600000)}`).digest("hex");
-            response.headers.set("ETag", `"${etag}"`);
-            response.headers.set("Last-Modified", now.toUTCString());
-            
             return response;
         }
 
@@ -66,16 +58,6 @@ export default withAuth(
         if (pathname.startsWith("/products/") || pathname.startsWith("/categories/")) {
             // Cache: 5 min browser, 15 min CDN, stale for 1 hour
             response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
-            
-            // Add ETag and Last-Modified for cache validation
-            // For ISR pages, use revalidation interval (900s = 15min) to generate stable ETags
-            const now = new Date();
-            const revalidateInterval = 900; // 15 minutes
-            const timeBucket = Math.floor(now.getTime() / 1000 / revalidateInterval);
-            const etag = createHash("md5").update(`${pathname}-${timeBucket}`).digest("hex");
-            response.headers.set("ETag", `"${etag}"`);
-            response.headers.set("Last-Modified", now.toUTCString());
-            
             return response;
         }
 
@@ -83,16 +65,6 @@ export default withAuth(
         if (pathname === "/") {
             // Cache: 5 min browser, 15 min CDN, stale for 1 hour
             response.headers.set("Cache-Control", "public, max-age=300, s-maxage=900, stale-while-revalidate=3600");
-            
-            // Add ETag and Last-Modified for cache validation
-            // Homepage revalidates every 900s (15 min), so generate ETag based on that interval
-            const now = new Date();
-            const revalidateInterval = 900; // 15 minutes (matches revalidate = 900)
-            const timeBucket = Math.floor(now.getTime() / 1000 / revalidateInterval);
-            const etag = createHash("md5").update(`${pathname}-${timeBucket}`).digest("hex");
-            response.headers.set("ETag", `"${etag}"`);
-            response.headers.set("Last-Modified", now.toUTCString());
-            
             return response;
         }
 

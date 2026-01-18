@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getAllProducts, createProduct, getProductById } from '@/lib/firestore/products';
-import { createHash } from 'crypto';
 
 
 export async function GET() {
     try {
         const products = await getAllProducts();
-
-        // Generate ETag from products data hash
-        const dataString = JSON.stringify(products);
-        const etag = createHash('md5').update(dataString).digest('hex');
-        const now = new Date();
 
         return NextResponse.json(
             { success: true, data: products },
@@ -18,8 +12,6 @@ export async function GET() {
                 headers: {
                     'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
                     'CDN-Cache-Control': 'public, s-maxage=300',
-                    'ETag': `"${etag}"`,
-                    'Last-Modified': now.toUTCString(),
                 },
             }
         );
