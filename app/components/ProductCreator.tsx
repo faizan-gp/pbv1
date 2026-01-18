@@ -609,6 +609,75 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    const handleBulkModelSVGUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            // Sort models by name length descending to ensure specific models match first
+            // e.g. "iPhone 16 Pro" matches before "iPhone 16"
+            const sortedModels = [...productModels].sort((a, b) => b.name.length - a.name.length);
+
+            const updates: { index: number, image: string }[] = [];
+            const uploadPromises: Promise<void>[] = [];
+
+            // Helper to clean filename for matching
+            // "Phone cover back_iPhone 8 Plus Glossy.svg" -> "iPhone 8 Plus"
+            const cleanName = (name: string) => {
+                return name
+                    .replace(/\.(svg|png|jpg|jpeg)$/i, '') // remove extension
+                    .replace(/_/g, ' ') // underscores to spaces
+                    .replace(/-/g, ' ') // hyphens to spaces
+                    .toLowerCase();
+            };
+
+            Array.from(files).forEach(file => {
+                const normalizedFilename = cleanName(file.name);
+
+                // Find matching model
+                const matchedModel = sortedModels.find(m =>
+                    normalizedFilename.includes(m.name.toLowerCase())
+                );
+
+                if (matchedModel) {
+                    const originalIndex = productModels.findIndex(pm => pm.id === matchedModel.id || pm.name === matchedModel.name);
+
+                    if (originalIndex !== -1) {
+                        const p = uploadProductImage(file, 'models', productName).then(url => {
+                            updates.push({ index: originalIndex, image: url });
+                        });
+                        uploadPromises.push(p);
+                    }
+                }
+            });
+
+            if (uploadPromises.length === 0) {
+                showToast('No matching models found in filenames', 'error');
+                return;
+            }
+
+            await Promise.all(uploadPromises);
+
+            setProductModels(prev => {
+                const copy = [...prev];
+                updates.forEach(u => {
+                    copy[u.index] = { ...copy[u.index], image: u.image };
+                });
+                return copy;
+            });
+
+            showToast(`Matched and uploaded ${updates.length} model images`, 'success');
+        } catch (error) {
+            console.error("Bulk SVG upload failed", error);
+            showToast('Failed to bulk upload SVGs', 'error');
+        } finally {
+            setIsUploading(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
+
     // DRAG AND DROP SETUP
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -1402,6 +1471,16 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         <Plus size={14} /> Add Model
                                     </button>
                                     <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <Upload size={14} /> Bulk SVGs
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept=".svg,.png,.jpg,.jpeg"
+                                            className="hidden"
+                                            onChange={handleBulkModelSVGUpload}
+                                        />
+                                    </label>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
                                         <FolderUp size={14} /> Import JSONs
                                         <input
                                             type="file"
@@ -1810,7 +1889,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </button>
                                         ))}
                                     </div>
-                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView, productModels, activeModelIndex)}
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView, productModels, activeModelIndex, isPhoneCase, setProductModels)}
                                 </div>
                             </div>
 
@@ -2160,7 +2239,9 @@ function activeViewsConfig(
     handleColorImageUpload: Function,
     handleBulkColorVariantUploadForView: Function,
     productModels: ProductModel[] = [],
-    activeModelIndex: number = 0
+    activeModelIndex: number = 0,
+    isPhoneCase: boolean = false,
+    setProductModels: Function = () => { }
 ) {
     const activeView = views.find(v => v.id === activeViewId);
     if (!activeView) return null;
@@ -2195,28 +2276,19 @@ function activeViewsConfig(
                             const modelImage = currentModel?.image;
                             const targetImage = modelImage || activeView.editorImage || activeView.image;
 
-                            console.log("Fit to Image Debug:", {
-                                activeModelIndex,
-                                modelName: currentModel?.name,
-                                modelImage: modelImage,
-                                editorImage: activeView.editorImage,
-                                previewImage: activeView.image,
-                                targetImage,
-                                productModelsLength: productModels?.length
-                            });
-
                             if (!targetImage) {
-                                alert("No image found to fit to. Check the console for debug info.");
+                                alert("No image found to fit to.");
                                 return;
                             }
 
                             const img = new Image();
-                            img.crossOrigin = "anonymous";
-                            img.src = targetImage;
+
                             img.onload = () => {
                                 // Calculate fit within 1024x1024
                                 const containerSize = 1024;
-                                const ratio = img.width / img.height;
+                                const w_val = img.naturalWidth || img.width;
+                                const h_val = img.naturalHeight || img.height;
+                                const ratio = w_val / h_val;
 
                                 let w, h, l, t;
 
@@ -2234,17 +2306,31 @@ function activeViewsConfig(
                                     l = (containerSize - w) / 2;
                                 }
 
-                                setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? {
-                                    ...v,
-                                    editorZone: {
-                                        left: Math.round(l),
-                                        top: Math.round(t),
-                                        width: Math.round(w),
-                                        height: Math.round(h)
-                                    }
-                                } : v));
+                                const newZone = {
+                                    left: Math.round(l),
+                                    top: Math.round(t),
+                                    width: Math.round(w),
+                                    height: Math.round(h)
+                                };
+
+                                alert(`Updated Editor Zone:\nImage: ${w_val}x${h_val}\nNew Zone: ${newZone.width}x${newZone.height}`);
+
+                                if (isPhoneCase) {
+                                    setProductModels((prev: any) => prev.map((m: any, i: number) => i === activeModelIndex ? { ...m, designZone: newZone } : m));
+                                } else {
+                                    setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? { ...v, editorZone: newZone } : v));
+                                }
                             };
+
+                            img.onerror = (err) => {
+                                console.error("Failed to load image for dimension calculation", err);
+                                alert("Failed to load the target image. Please ensure the URL is accessible.");
+                            };
+
+                            // Set src LAST to avoid race conditions
+                            img.src = targetImage;
                         }}
+
                         className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-medium transition-colors"
                     >
                         Fit to Image
@@ -2266,64 +2352,66 @@ function activeViewsConfig(
             </div>
 
             {/* Color Variants Overrides */}
-            {productColors && productColors.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                            Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
-                        </label>
-                        <label className="text-[10px] flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
-                            <FolderUp size={12} />
-                            Bulk Upload
-                            <input
-                                type="file"
-                                className="hidden"
-                                multiple
-                                // @ts-ignore
-                                webkitdirectory=""
-                                onChange={(e) => handleBulkColorVariantUploadForView(e, activeViewId, activeView.name)}
-                            />
-                        </label>
-                    </div>
-                    <div className="space-y-2">
-                        {productColors.map((color, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: color.hex }} title={color.name}></div>
-                                <label className="flex-1 h-8 border border-gray-200 rounded hover:border-indigo-300 cursor-pointer overflow-hidden relative bg-gray-50 flex items-center px-2">
-                                    {color.images?.[activeViewId] ? (
-                                        <div className="flex items-center gap-2 w-full">
-                                            <div className="w-4 h-4 rounded-sm bg-gray-200 shrink-0 overflow-hidden">
-                                                <img src={color.images[activeViewId]} className="w-full h-full object-cover" />
+            {
+                productColors && productColors.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                                Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
+                            </label>
+                            <label className="text-[10px] flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
+                                <FolderUp size={12} />
+                                Bulk Upload
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    multiple
+                                    // @ts-ignore
+                                    webkitdirectory=""
+                                    onChange={(e) => handleBulkColorVariantUploadForView(e, activeViewId, activeView.name)}
+                                />
+                            </label>
+                        </div>
+                        <div className="space-y-2">
+                            {productColors.map((color, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: color.hex }} title={color.name}></div>
+                                    <label className="flex-1 h-8 border border-gray-200 rounded hover:border-indigo-300 cursor-pointer overflow-hidden relative bg-gray-50 flex items-center px-2">
+                                        {color.images?.[activeViewId] ? (
+                                            <div className="flex items-center gap-2 w-full">
+                                                <div className="w-4 h-4 rounded-sm bg-gray-200 shrink-0 overflow-hidden">
+                                                    <img src={color.images[activeViewId]} className="w-full h-full object-cover" />
+                                                </div>
+                                                <span className="text-[10px] text-gray-600 truncate flex-1">Image Set</span>
                                             </div>
-                                            <span className="text-[10px] text-gray-600 truncate flex-1">Image Set</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] text-gray-400">Upload {color.name} variant...</span>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400">Upload {color.name} variant...</span>
+                                        )}
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleColorImageUpload(e, idx, activeViewId)} />
+                                    </label>
+                                    {color.images?.[activeViewId] && (
+                                        <button
+                                            onClick={() => {
+                                                // Quick hack to delete: Reuse handle but create a cleaner deleter if needed. 
+                                                // Passing setProductColors might be needed for deletion if we want it here.
+                                                // For now, let's keep it simple: Just upload overrides.
+                                            }}
+                                            className="hidden text-gray-400 hover:text-red-500"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
                                     )}
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleColorImageUpload(e, idx, activeViewId)} />
-                                </label>
-                                {color.images?.[activeViewId] && (
-                                    <button
-                                        onClick={() => {
-                                            // Quick hack to delete: Reuse handle but create a cleaner deleter if needed. 
-                                            // Passing setProductColors might be needed for deletion if we want it here.
-                                            // For now, let's keep it simple: Just upload overrides.
-                                        }}
-                                        className="hidden text-gray-400 hover:text-red-500"
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase">CSS Transform</label>
                 <input type="text" placeholder="rotate(-2deg)" value={activeView.cssTransform || ''} onChange={(e) => setViews((p: any) => p.map((v: any) => v.id === activeViewId ? { ...v, cssTransform: e.target.value } : v))} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono" />
             </div>
-        </div>
+        </div >
     );
 }

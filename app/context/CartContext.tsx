@@ -17,6 +17,7 @@ export interface CartItem {
         color?: string;
         size?: string;
         customText?: string;
+        model?: string;
         // Add other customization options here
     };
     shippingCost?: number;
