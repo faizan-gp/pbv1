@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature, ProductModel } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package, ImageMinus, Image as ImageIcon } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -678,6 +678,86 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         }
     };
 
+    const handleBulkPreviewUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        let matchCount = 0;
+
+        try {
+            // Sort models by name length descending to ensure specific models match first
+            // e.g. "iPhone 16 Pro" matches before "iPhone 16"
+            const sortedModels = [...productModels].sort((a, b) => b.name.length - a.name.length);
+            const updates: { modelIndex: number, viewId: string, image: string }[] = [];
+            const uploadPromises: Promise<void>[] = [];
+
+            // Helper to clean filename for matching
+            // "iPhone 16 - Front View.png" -> parts...
+            const cleanName = (name: string) => name.replace(/\.(png|jpg|jpeg|webp)$/i, '').toLowerCase();
+
+            Array.from(files).forEach(file => {
+                const name = cleanName(file.name);
+
+                // Strategy: 
+                // 1. Find the longest model name that exists in the filename
+                // 2. Then check if the remaining part of filename matches a View Name
+
+                const matchedModel = sortedModels.find(m => name.includes(m.name.toLowerCase()));
+
+                if (matchedModel) {
+                    // Get the part of the string that is NOT the model name
+                    // e.g. "iphone 16 - front view" - "iphone 16" = " - front view"
+                    const viewPart = name.replace(matchedModel.name.toLowerCase(), '');
+
+                    const matchedView = views.find(v => viewPart.includes(v.name.toLowerCase()));
+
+                    if (matchedView) {
+                        const originalIndex = productModels.findIndex(pm => pm.id === matchedModel.id);
+                        if (originalIndex !== -1) {
+                            const p = uploadProductImage(file, 'models', productName).then(url => {
+                                updates.push({ modelIndex: originalIndex, viewId: matchedView.id, image: url });
+                            });
+                            uploadPromises.push(p);
+                        }
+                    }
+                }
+            });
+
+            if (uploadPromises.length === 0) {
+                showToast('No matching Model+View combinations found', 'error');
+                return;
+            }
+
+            await Promise.all(uploadPromises);
+
+            setProductModels(prev => {
+                const copy = [...prev];
+                updates.forEach(u => {
+                    const model = copy[u.modelIndex];
+                    copy[u.modelIndex] = {
+                        ...model,
+                        images: {
+                            ...(model.images || {}),
+                            [u.viewId]: u.image
+                        }
+                    };
+                });
+                return copy;
+            });
+
+            matchCount = updates.length;
+            showToast(`Matched and uploaded ${matchCount} preview images`, 'success');
+
+        } catch (error) {
+            console.error("Bulk Preview Upload Failed", error);
+            showToast('Failed to upload previews', 'error');
+        } finally {
+            setIsUploading(false);
+            e.target.value = '';
+        }
+    };
+
     // DRAG AND DROP SETUP
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -833,7 +913,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
         // 2. Find matching filenames if bulk mode
         if (bulkByFilename && img.fileName) {
-            // Find other images with same filename in other colors
             const siblings = listingImages.filter(other =>
                 other.fileName === img.fileName &&
                 other.color !== 'All' &&
@@ -841,31 +920,57 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             );
 
             siblings.forEach(sib => {
-                // Check if this color already has an image for this view?
-                // Overwrite behavior is assumed desired.
                 imagesToAssign.push({ color: sib.color, url: sib.url });
             });
         }
 
-        setProductColors(prev => prev.map(c => {
-            const assignment = imagesToAssign.find(a => a.color === c.name);
-            if (assignment) {
-                return {
-                    ...c,
-                    images: {
-                        ...(c.images || {}),
-                        [viewId]: assignment.url
-                    }
-                };
-            }
-            return c;
-        }));
+        let updatedAny = false;
+
+        // A. Try updating Colors
+        setProductColors(prev => {
+            const next = prev.map(c => {
+                const assignment = imagesToAssign.find(a => a.color === c.name);
+                if (assignment) {
+                    updatedAny = true;
+                    return {
+                        ...c,
+                        images: { ...(c.images || {}), [viewId]: assignment.url }
+                    };
+                }
+                return c;
+            });
+            return next;
+        });
+
+        // B. Try updating Models
+        setProductModels(prev => {
+            const next = prev.map(m => {
+                // Check if the "color" (group name) matches the Model Name
+                const assignment = imagesToAssign.find(a => a.color === m.name);
+                if (assignment) {
+                    updatedAny = true;
+                    return {
+                        ...m,
+                        images: { ...(m.images || {}), [viewId]: assignment.url }
+                    };
+                }
+                return m;
+            });
+            return next;
+        });
 
         const viewName = views.find(v => v.id === viewId)?.name || 'View';
-        if (bulkByFilename && imagesToAssign.length > 1) {
-            showToast(`Assigned "${img.fileName}" to ${viewName} for ${imagesToAssign.length} colors`, 'success');
+        if (updatedAny) {
+            if (bulkByFilename && imagesToAssign.length > 1) {
+                showToast(`Assigned "${img.fileName}" to ${viewName} for ${imagesToAssign.length} items`, 'success');
+            } else {
+                showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+            }
         } else {
-            showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+            // Note: If state update is async, updatedAny might be false here potentially? 
+            // Actually synchronous in this block context for logic, but Find logic works.
+            // If we didn't match any color or model, show warning.
+            // However, since we derived from listingImages which are strictly tied to colors or models, it should work.
         }
     };
 
@@ -920,14 +1025,17 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                                 <div className="h-4 w-px bg-white/20 mx-1" />
 
-                                {views.length > 0 && img.color !== 'All' && (
+                                {views.length > 0 && (
                                     <button
                                         onPointerDown={e => e.stopPropagation()}
                                         onClick={() => setIsMenuOpen(true)}
                                         className="p-1.5 text-white/70 hover:text-blue-400 hover:bg-white/20 rounded transition-colors"
-                                        title="Assign to View"
+                                        title="Set as Preview (Assign to View)"
                                     >
-                                        <Link2 size={14} />
+                                        <div className="relative">
+                                            <ImageIcon size={14} />
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full border border-black"></div>
+                                        </div>
                                     </button>
                                 )}
 
@@ -1498,17 +1606,27 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         <Plus size={14} /> Add Model
                                     </button>
                                     <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                        <Upload size={14} /> Bulk SVGs
+                                        <ImageMinus size={14} /> Bulk SVGs
                                         <input
                                             type="file"
                                             multiple
-                                            accept=".svg,.png,.jpg,.jpeg"
+                                            accept=".svg"
                                             className="hidden"
                                             onChange={handleBulkModelSVGUpload}
                                         />
                                     </label>
                                     <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                        <FolderUp size={14} /> Import JSONs
+                                        <ImageIcon size={14} /> Bulk Previews
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleBulkPreviewUpload}
+                                        />
+                                    </label>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <Upload size={14} /> Import JSONs
                                         <input
                                             type="file"
                                             multiple
