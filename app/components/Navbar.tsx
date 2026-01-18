@@ -135,7 +135,6 @@ export default function Navbar() {
 
 
                     <div className="flex flex-col gap-4 text-sm text-slate-500">
-                        <Link href="/track-order" onClick={() => setMobileMenuOpen(false)}>Track Order</Link>
                         <Link href="/how-it-works" onClick={() => setMobileMenuOpen(false)}>How it Works</Link>
                         <Link href="/guides" onClick={() => setMobileMenuOpen(false)}>Guides</Link>
                         <Link href="/about" onClick={() => setMobileMenuOpen(false)}>About Us</Link>
