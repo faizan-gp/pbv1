@@ -7,7 +7,8 @@ import CategoryClient from './CategoryClient';
 import CategorySchema from '@/app/components/seo/CategorySchema';
 import CategoryGrid from '@/app/components/CategoryGrid';
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate category pages every 30 minutes (1800 seconds)
+export const revalidate = 1800;
 
 interface PageProps {
     params: Promise<{

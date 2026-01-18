@@ -130,7 +130,15 @@ export async function GET(req: Request) {
             await batch.commit();
         }
 
-        return NextResponse.json({ success: true, data: categories });
+        return NextResponse.json(
+            { success: true, data: categories },
+            {
+                headers: {
+                    'Cache-Control': 'public, s-maxage=900, stale-while-revalidate=1800',
+                    'CDN-Cache-Control': 'public, s-maxage=900',
+                },
+            }
+        );
     } catch (error) {
         console.error('Error fetching categories:', error);
         return NextResponse.json({ success: false, error: 'Failed to fetch categories' }, { status: 500 });
