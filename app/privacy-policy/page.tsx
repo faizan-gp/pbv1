@@ -8,66 +8,113 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
     return (
-        <div className="min-h-screen bg-slate-50 py-24">
-            <div className="container-width max-w-4xl px-6">
-                <div className="bg-white p-8 md:p-12 rounded-2xl border border-slate-200 shadow-sm">
-                    <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-8">Privacy Policy</h1>
-                    <div className="prose prose-slate max-w-none text-slate-600">
-                        <p className="lead text-lg">
-                            Last Updated: {new Date().toLocaleDateString()}
-                        </p>
-                        <p>
-                            At Print Brawl, we respect your privacy and are committed to protecting the personal information you share with us. This policy explains what data we collect and how we use it.
-                        </p>
+        <div className="min-h-screen bg-white font-sans selection:bg-indigo-500 selection:text-white">
+            {/* Header / Hero */}
+            <div className="relative bg-slate-50 border-b border-slate-100 overflow-hidden">
+                <div className="absolute inset-0 opacity-[0.4] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-multiply pointer-events-none"></div>
+                {/* Gradient Blob */}
+                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-100/50 rounded-full blur-3xl opacity-50 translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
 
-                        <h3>1. Information We Collect</h3>
-                        <ul>
-                            <li><strong>Order Information:</strong> When you make a purchase, we collect your name, shipping address, and email address to fulfill your order.</li>
-                            <li><strong>Design Assets:</strong> We store the images and design files you upload solely for the purpose of printing your custom products.</li>
-                            <li><strong>Payment Information:</strong> We do <strong>not</strong> store your credit card details. All payment transactions are processed securely by our third-party payment providers (e.g., Stripe, PayPal).</li>
-                        </ul>
+                <div className="container-width relative z-10 px-6 py-20 md:py-32 text-center">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-slate-900 text-xs font-bold uppercase tracking-wider mb-8">
+                        Legal Documentation
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-[0.9]">
+                        Privacy Policy
+                    </h1>
+                    <p className="text-xl md:text-2xl text-slate-500 max-w-2xl mx-auto font-medium leading-relaxed">
+                        Transparency is key. Here's how we handle your data with care and security.
+                    </p>
+                </div>
+            </div>
 
-                        <h3>2. How We Use Your Data</h3>
-                        <p>
-                            We use your information to:
-                        </p>
-                        <ul>
-                            <li>Process and ship your orders.</li>
-                            <li>Communicate with you regarding order status or customer service inquiries.</li>
-                            <li>Improve our website and product offerings.</li>
-                        </ul>
-                        <p>
-                            We do <strong>not</strong> sell your personal data to advertisers or third parties.
-                        </p>
+            {/* Content */}
+            <div className="container-width max-w-4xl px-6 py-20">
+                <div className="flex flex-col md:flex-row gap-12">
+                    {/* Sticky Sidebar (Table of Contents style or Quick Info) */}
+                    <div className="hidden md:block w-64 shrink-0">
+                        <div className="sticky top-32 space-y-8">
+                            <div>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Last Updated</h3>
+                                <div className="inline-block px-3 py-1 bg-slate-100 rounded-lg text-sm font-bold text-slate-900">
+                                    {new Date().toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Contact</h3>
+                                <a href="mailto:hello@printbrawl.com" className="text-sm font-bold text-indigo-600 hover:text-indigo-700 underline decoration-2 underline-offset-2">
+                                    hello@printbrawl.com
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
-                        <h3>3. Third-Party Sharing</h3>
-                        <p>
-                            We may share necessary data with trusted third-party partners strictly for fulfillment purposes, such as:
-                        </p>
-                        <ul>
-                            <li><strong>Print Providers:</strong> To manufacture your custom items.</li>
-                            <li><strong>Shipping Carriers:</strong> To deliver your package (e.g., USPS, FedEx).</li>
-                        </ul>
+                    {/* Main Text */}
+                    <div className="flex-1">
+                        <div className="prose prose-slate prose-lg max-w-none prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-li:text-slate-600 prose-a:text-indigo-600 prose-a:no-underline hover:prose-a:text-indigo-500">
+                            <p className="lead text-xl md:text-2xl text-slate-900 font-bold mb-12">
+                                At Print Brawl, we respect your privacy and are committed to protecting the personal information you share with us.
+                            </p>
 
-                        <h3>4. Cookies</h3>
-                        <p>
-                            We use essential cookies to keep track of your shopping cart contents and ensure the website functions correctly. We may also use analytics cookies to understand how visitors interact with our site, which helps us improve the user experience.
-                        </p>
+                            <h3>1. Information We Collect</h3>
+                            <p>We believe in collecting only what's necessary to provide you with an exceptional custom printing experience.</p>
+                            <ul className="list-disc pl-5 space-y-2 marker:text-indigo-500">
+                                <li><strong>Order Information:</strong> When you purchase, we collect your name, shipping address, and email to ensure your gear reaches you.</li>
+                                <li><strong>Design Assets:</strong> Your creativity is safe with us. We store your uploaded designs purely for fulfillment.</li>
+                                <li><strong>Payment Security:</strong> We do <strong>not</strong> touch your credit card data. All payments are encrypted and handled by Stripe/PayPal.</li>
+                            </ul>
 
-                        <h3>5. Data Security</h3>
-                        <p>
-                            We implement industry-standard security measures to protect your data during transmission and storage. However, no method of transmission over the internet is 100% secure.
-                        </p>
+                            <h3>2. How We Use Your Data</h3>
+                            <p>Everything we collect serves a direct purpose:</p>
+                            <ul className="list-disc pl-5 space-y-2 marker:text-indigo-500">
+                                <li><strong>Fulfillment:</strong> To print, pack, and ship your custom items.</li>
+                                <li><strong>Communication:</strong> To send order updates and support responses.</li>
+                                <li><strong>Improvement:</strong> To understand what products you love most.</li>
+                            </ul>
 
-                        <h3>6. Your Rights</h3>
-                        <p>
-                            You have the right to request access to the personal information we hold about you or to request its deletion, subject to our need to retain records for order processing and legal compliance.
-                        </p>
+                            <div className="my-8 p-6 bg-slate-900 rounded-2xl text-white not-prose">
+                                <h4 className="flex items-center gap-2 text-lg font-bold mb-2">
+                                    <span className="text-indigo-400">★</span> Our Promise
+                                </h4>
+                                <p className="text-slate-300">
+                                    We will never sell your personal data to advertisers or third parties. Your information belongs to you.
+                                </p>
+                            </div>
 
-                        <hr className="my-8 border-slate-200" />
-                        <p className="text-sm">
-                            For privacy concerns, please contact our Data Privacy Officer at <a href="mailto:privacy@printbrawl.com" className="text-indigo-600 hover:underline">hello@printbrawl.com</a>.
-                        </p>
+                            <h3>3. Third-Party Sharing</h3>
+                            <p>
+                                We partner only with trusted services essential to our operation:
+                            </p>
+                            <ul className="list-disc pl-5 space-y-2 marker:text-indigo-500">
+                                <li><strong>Print Providers:</strong> Our network of high-quality print shops.</li>
+                                <li><strong>Couriers:</strong> USPS, FedEx, and UPS for delivery.</li>
+                            </ul>
+
+                            <h3>4. Cookies & Experience</h3>
+                            <p>
+                                We use cookies for two things: keeping your cart saved and understanding general site traffic. You can control cookies through your browser settings, though it may affect cart functionality.
+                            </p>
+
+                            <h3>5. Security Measures</h3>
+                            <p>
+                                Your data is encrypted in transit and at rest. We use industry-standard SSL technology to keep your connection secure. While no online service is impenetrable, we treat security as a top priority.
+                            </p>
+
+                            <h3>6. Your Rights</h3>
+                            <p>
+                                You have the right to access, download, or delete your personal data. Simply reach out to our team, and we'll handle your request in compliance with GDPR and CCPA regulations.
+                            </p>
+                        </div>
+
+                        <div className="mt-16 pt-10 border-t border-slate-100">
+                            <h4 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">Have questions?</h4>
+                            <p className="text-lg text-slate-600 mb-6">
+                                If anything in this policy is unclear, our Data Privacy Officer is here to help.
+                            </p>
+                            <a href="mailto:hello@printbrawl.com" className="inline-flex items-center justify-center h-12 px-8 rounded-full bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors">
+                                Contact Privacy Team
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
