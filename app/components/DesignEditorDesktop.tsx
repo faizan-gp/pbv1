@@ -33,9 +33,11 @@ interface DesignEditorProps {
     onSelectionChange?: (selection: any | null) => void;
     selectedColor?: ProductColor;
     readOnly?: boolean;
+    selectedModel?: string | null;
+    useRealPreview?: boolean;
 }
 
-const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange, selectedColor, readOnly }, ref) => {
+const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, hideToolbar = false, onSelectionChange, selectedColor, readOnly, selectedModel, useRealPreview = false }, ref) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null); // The Right-side container
@@ -49,7 +51,10 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
     const [fontFamily, setFontFamily] = useState<string>('Arial');
 
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
-    const currentDesignZone = activePreview.editorZone || product.designZone;
+
+    // Resolve Design Zone: Check Model Specific -> Default Preview -> Global
+    const activeModel = product.models?.find((m: any) => m.id === selectedModel);
+    const currentDesignZone = activeModel?.designZone || activePreview.editorZone || product.designZone;
 
     // --- Read Only Effect ---
     useEffect(() => {
@@ -162,13 +167,20 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             // --- LOAD BACKGROUND IMAGE ---
             let imageUrl = product.image; // default fallback
-            if (selectedColor && selectedColor.images && selectedColor.images[activeViewId]) {
+
+            if (activeModel) {
+                if (activeModel.images?.[activeViewId]) {
+                    imageUrl = activeModel.images[activeViewId];
+                } else if (activeModel.image) {
+                    imageUrl = activeModel.image;
+                }
+            } else if (selectedColor && selectedColor.images && selectedColor.images[activeViewId]) {
                 imageUrl = selectedColor.images[activeViewId];
             } else if (activePreview && (activePreview as any).image) {
                 imageUrl = (activePreview as any).image;
             }
 
-            console.log("DEBUG: Loading Background Image Desktop", { activeViewId, color: selectedColor?.name, url: imageUrl });
+
 
             const cleanUrl = imageUrl.split('?')[0].toLowerCase();
             const isSvg = cleanUrl.endsWith('.svg');
@@ -305,7 +317,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             } catch (e) { }
             setFabricCanvas(null);
         };
-    }, [product.id, activeViewId]);
+    }, [product.id, activeViewId, selectedModel]);
 
     // --- Expose API ---
     useImperativeHandle(ref, () => ({
@@ -553,7 +565,11 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                     style={{ width: product.canvasSize, height: product.canvasSize, transform: `scale(${scale})` }}>
                     {/* Background Image managed via img tag for reliability */}
                     <img
-                        src={activePreview.editorCutout || product.image}
+                        src={
+                            useRealPreview
+                                ? (activeModel?.images?.[activeViewId] || activeModel?.image || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
+                                : (activeModel?.image || activeModel?.images?.[activeViewId] || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
+                        }
                         alt="Editor Background"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 select-none"
                     />

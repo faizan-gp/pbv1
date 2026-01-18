@@ -10,7 +10,7 @@ import {
     ShoppingBag, ArrowLeft, Check, Sparkles, Share2,
     Palette, Type, Image as ImageIcon, Ruler, ChevronRight, Eye, Edit3, Trash2,
     ArrowUp, ArrowDown, ArrowRight, Minus, Plus, Maximize2, ChevronDown, RefreshCcw, RefreshCw, X,
-    Bold, Italic, Underline, Sliders
+    Bold, Italic, Underline, Sliders, Smartphone
 } from 'lucide-react';
 import { useToast } from './Toast';
 import Link from 'next/link';
@@ -24,6 +24,7 @@ interface ShirtConfiguratorProps {
     cartUserId?: string | null;
     viewOnly?: boolean;
     initialColor?: string | null;
+    initialModel?: string | null;
 }
 
 const STEPS = [
@@ -38,11 +39,21 @@ import { db } from '@/lib/firebase';
 import { CartData } from '@/lib/firestore/carts';
 import { Lock, Unlock } from 'lucide-react';
 
-export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly, initialColor }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorDesktop({ product, editCartId, cartUserId, viewOnly, initialColor, initialModel }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const { showToast } = useToast();
     const editorRef = useRef<DesignEditorRef>(null);
+
+    const isPhoneCase = product.models && product.models.length > 0;
+
+    // Dynamic Steps to swap Color for Model
+    const steps = React.useMemo(() => STEPS.map(s => {
+        if (s.id === 'color' && isPhoneCase) {
+            return { ...s, label: 'Model', icon: Smartphone, description: 'Choose your model' };
+        }
+        return s;
+    }), [isPhoneCase]);
 
     // Read Only State
     const [isReadOnly, setIsReadOnly] = useState(!!viewOnly);
@@ -109,6 +120,11 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     });
 
     const [selectedSize, setSelectedSize] = useState<string>(localCartItem?.options.size || '');
+    const [selectedModel, setSelectedModel] = useState<string>(() => {
+        if (localCartItem?.options.model) return localCartItem.options.model;
+        if (initialModel) return initialModel;
+        return product.models?.[0]?.id || '';
+    });
     const [extraColors, setExtraColors] = useState<string[]>([]); // Multi-color add
     const [measurementUnit, setMeasurementUnit] = useState<'imperial' | 'metric'>('imperial');
     const [activeViewId, setActiveViewId] = useState(product.previews[0].id);
@@ -216,13 +232,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
         const providerId = product?.printifyProviderId || 47; // Default 25 (Monster Digital) or 47
 
-        // Determine Variant ID based on color
-        // 1. Try DB (Specific IDs entered in ProductCreator)
-        // 2. Try Map Helper (Legacy/hardcoded map)
+        // Determine Variant ID based on Model or Color
+        // 1. Try Selected Model (Phone Cases etc.)
+        // 2. Try Selected Color (T-Shirts etc.)
         // 3. Fallback to default
         let variantId = 79389; // Default fallback
 
-        if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
+        const activeModel = product.models?.find((m: any) => m.id === selectedModel);
+
+        if (activeModel && activeModel.printifyVariantIds && activeModel.printifyVariantIds.length > 0) {
+            variantId = activeModel.printifyVariantIds[0];
+        } else if (selectedColor.printifyVariantIds && selectedColor.printifyVariantIds.length > 0) {
             variantId = selectedColor.printifyVariantIds[0];
         } else {
             const mappedId = getVariantId(blueprintId, selectedColor.name);
@@ -288,7 +308,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                 return;
             }
 
-            console.log("Generating Mockups", { blueprintId, providerId, variantId, designCount: Object.keys(designsMap).length });
+            console.log("Generating Mockups", {
+                blueprintId,
+                providerId,
+                variantId,
+                selectedModel,
+                activeModelId: activeModel?.id,
+                designCount: Object.keys(designsMap).length,
+                totalCameras: product.printifyCameras?.length,
+                filteredCameras: product.printifyCameras?.filter((c: any) => c.variant_id === variantId)?.length,
+                sampleCamera: product.printifyCameras?.[0]
+            });
 
             const response = await fetch('/api/mockup/generate', {
                 method: 'POST',
@@ -298,7 +328,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     product: {
                         blueprintId,
                         providerId,
-                        printifyCameras: product.printifyCameras
+                        printifyCameras: product.printifyCameras?.filter((c: any) => c.variant_id === variantId)
                     },
                     options: {
                         variantId
@@ -606,7 +636,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         <div className="px-8 py-6">
                             <div className="flex justify-between items-center relative">
                                 <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-100 -z-10" />
-                                {STEPS.map((step, idx) => {
+                                {steps.map((step, idx) => {
                                     const Icon = step.icon;
                                     const isActive = idx === currentStep;
                                     const isPast = idx < currentStep;
@@ -623,23 +653,63 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         <div className="flex-1 overflow-y-auto px-8 py-4 custom-scrollbar">
                             <div className="space-y-6">
                                 <div className="text-left">
-                                    <h2 className="text-2xl font-bold text-slate-900 mb-1">{STEPS[currentStep].label}</h2>
-                                    <p className="text-sm text-slate-500">{STEPS[currentStep].description}</p>
+                                    <h2 className="text-2xl font-bold text-slate-900 mb-1">{steps[currentStep].label}</h2>
+                                    <p className="text-sm text-slate-500">{steps[currentStep].description}</p>
                                 </div>
 
                                 {currentStep === 0 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                        <div className="text-sm font-medium text-slate-700 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex items-center gap-2">
-                                            Selected: <span className="font-bold text-slate-900">{selectedColor.name}</span>
-                                        </div>
-                                        <div className="grid grid-cols-4 gap-4">
-                                            {product.colors?.map((c: any) => (
-                                                <button key={c.name} onClick={() => setSelectedColor(c)} className={cn("aspect-square rounded-xl border flex items-center justify-center relative transition-all group", selectedColor.name === c.name ? "border-indigo-600 ring-1 ring-indigo-600 ring-offset-2" : "border-slate-200 hover:border-slate-300")}>
-                                                    <div className="w-full h-full m-1 rounded-lg shadow-inner" style={{ backgroundColor: c.hex }} />
-                                                    {selectedColor.name === c.name && <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-xl"><Check className="text-white drop-shadow-md" strokeWidth={3} size={20} /></div>}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        {isPhoneCase ? (
+                                            // PHONE CASE - MODEL SELECTION
+                                            <>
+                                                <div className="text-sm font-medium text-slate-700 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex items-center gap-2">
+                                                    Selected: <span className="font-bold text-slate-900">{product.models?.find((m: any) => m.id === selectedModel)?.name || 'None'}</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {product.models?.map((m: any) => (
+                                                        <button
+                                                            key={m.id}
+                                                            onClick={() => setSelectedModel(m.id)}
+                                                            className={cn(
+                                                                "p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden group flex flex-col items-center gap-3",
+                                                                selectedModel === m.id
+                                                                    ? "border-indigo-600 bg-indigo-50/50 shadow-sm"
+                                                                    : "border-slate-100 hover:border-indigo-200 hover:bg-slate-50"
+                                                            )}
+                                                        >
+                                                            <div className="w-full aspect-[3/4] rounded-lg bg-white border border-slate-100 p-2 relative overflow-hidden">
+                                                                <img
+                                                                    src={m.images?.[activeViewId] || m.image || product.image}
+                                                                    alt={m.name}
+                                                                    className="w-full h-full object-contain mix-blend-multiply"
+                                                                />
+                                                            </div>
+                                                            <div className="font-bold text-slate-900 text-sm text-center">{m.name}</div>
+                                                            {selectedModel === m.id && (
+                                                                <div className="absolute top-2 right-2 flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white">
+                                                                    <Check size={12} strokeWidth={3} />
+                                                                </div>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            // T-SHIRT - COLOR SELECTION
+                                            <>
+                                                <div className="text-sm font-medium text-slate-700 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 flex items-center gap-2">
+                                                    Selected: <span className="font-bold text-slate-900">{selectedColor.name}</span>
+                                                </div>
+                                                <div className="grid grid-cols-4 gap-4">
+                                                    {product.colors?.map((c: any) => (
+                                                        <button key={c.name} onClick={() => setSelectedColor(c)} className={cn("aspect-square rounded-xl border flex items-center justify-center relative transition-all group", selectedColor.name === c.name ? "border-indigo-600 ring-1 ring-indigo-600 ring-offset-2" : "border-slate-200 hover:border-slate-300")}>
+                                                            <div className="w-full h-full m-1 rounded-lg shadow-inner" style={{ backgroundColor: c.hex }} />
+                                                            {selectedColor.name === c.name && <div className="absolute inset-0 flex items-center justify-center bg-black/10 rounded-xl"><Check className="text-white drop-shadow-md" strokeWidth={3} size={20} /></div>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
 
@@ -813,13 +883,15 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     onSelectionChange={handleSelectionChange}
                                     selectedColor={selectedColor}
                                     readOnly={isReadOnly}
+                                    selectedModel={selectedModel}
+                                    useRealPreview={currentStep === 0}
                                 />
                             </div>
 
                             {/* Standard Preview (Not AI) */}
                             <div className={cn("absolute inset-0 transition-opacity duration-300", activeViewMode === 'preview' ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none")}>
                                 <div className="w-full h-full bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 relative">
-                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} />
+                                    <ProductPreview designTextureUrl={designPreviews[activeViewId]} product={product} selectedColor={selectedColor} activeViewId={activeViewId} onViewChange={setActiveViewId} minimal={true} selectedModel={selectedModel} />
                                 </div>
                             </div>
                         </div>
@@ -847,7 +919,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                             fallbackViewImage: view.image,
                                             finalSrc: selectedColor.images?.[view.id] || view.image || product.image
                                         }) as any}
-                                        <img src={selectedColor.images?.[view.id] || view.image || product.image} alt={view.name} className="w-full h-full object-contain p-1" />
+                                        <img
+                                            src={
+                                                (product.models?.find((m: any) => m.id === selectedModel)?.images?.[view.id]) ||
+                                                (product.models?.find((m: any) => m.id === selectedModel)?.image) ||
+                                                selectedColor.images?.[view.id] ||
+                                                view.image ||
+                                                product.image
+                                            }
+                                            alt={view.name}
+                                            className="w-full h-full object-contain p-1"
+                                        />
                                     </div>
                                     <span className={cn("text-[10px] font-bold uppercase tracking-wider", activeViewId === view.id ? "text-indigo-600" : "text-slate-400")}>{view.name}</span>
                                 </button>

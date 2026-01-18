@@ -3,9 +3,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as fabric from 'fabric';
 import { useToast } from './Toast';
-import { Product as IProduct, IProductFeature } from '@/lib/firestore/products';
+import { Product as IProduct, IProductFeature, ProductModel } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package, ImageMinus, Image as ImageIcon } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -144,6 +144,16 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         return [{ name: 'Default', hex: '#ffffff', images: {} }];
     });
 
+    const [productModels, setProductModels] = useState<ProductModel[]>(() => {
+        if (initialData?.models && initialData.models.length > 0) {
+            return initialData.models;
+        }
+        return [];
+    });
+    const [activeModelIndex, setActiveModelIndex] = useState(0);
+
+    const isPhoneCase = subcategory.toLowerCase() === 'phone case' || subcategory.toLowerCase() === 'phone cases';
+
     // VIEW STATE
     const defaultView = {
         id: 'front',
@@ -261,7 +271,13 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             return { rect, text };
         };
 
-        const editor = createZoneRect(activeView.editorZone, '#3b82f6', 'rgba(59, 130, 246, 0.1)', 'editor-zone', 'EDITOR ZONE', viewMode === 'editor');
+        // Determine Editor Zone: Model-specific if phone case, else global view zone
+        let editorZone = activeView.editorZone;
+        if (isPhoneCase && productModels[activeModelIndex]?.designZone) {
+            editorZone = productModels[activeModelIndex].designZone!;
+        }
+
+        const editor = createZoneRect(editorZone, '#3b82f6', 'rgba(59, 130, 246, 0.1)', 'editor-zone', 'EDITOR ZONE', viewMode === 'editor');
         fabricCanvas.add(editor.rect, editor.text);
 
         const preview = createZoneRect(activeView.previewZone, '#22c55e', 'rgba(34, 197, 94, 0.1)', 'preview-zone', 'PREVIEW ZONE', viewMode === 'preview');
@@ -282,29 +298,30 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 previewLabel.set({ left: previewObj.left, top: (previewObj.top || 0) - 24 });
             }
 
-            setViews(prev => prev.map(v => {
-                if (v.id === activeViewId) {
-                    const updatedView = { ...v };
-                    if (editorObj && viewMode === 'editor') {
-                        updatedView.editorZone = {
-                            // @ts-ignore
-                            left: Math.round(editorObj.left || 0), top: Math.round(editorObj.top || 0),
-                            // @ts-ignore
-                            width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)), height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
-                        };
-                    }
-                    if (previewObj && viewMode === 'preview') {
-                        updatedView.previewZone = {
-                            // @ts-ignore
-                            left: Math.round(previewObj.left || 0), top: Math.round(previewObj.top || 0),
-                            // @ts-ignore
-                            width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)), height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
-                        };
-                    }
-                    return updatedView;
+            if (editorObj && viewMode === 'editor') {
+                const newZone = {
+                    // @ts-ignore
+                    left: Math.round(editorObj.left || 0), top: Math.round(editorObj.top || 0),
+                    // @ts-ignore
+                    width: Math.round((editorObj.width || 0) * (editorObj.scaleX || 1)), height: Math.round((editorObj.height || 0) * (editorObj.scaleY || 1)),
+                };
+
+                if (isPhoneCase) {
+                    setProductModels(prev => prev.map((m, i) => i === activeModelIndex ? { ...m, designZone: newZone } : m));
+                } else {
+                    setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, editorZone: newZone } : v));
                 }
-                return v;
-            }));
+            }
+
+            if (previewObj && viewMode === 'preview') {
+                const newZone = {
+                    // @ts-ignore
+                    left: Math.round(previewObj.left || 0), top: Math.round(previewObj.top || 0),
+                    // @ts-ignore
+                    width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)), height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
+                };
+                setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, previewZone: newZone } : v));
+            }
         };
 
         fabricCanvas.on('object:modified', updateState);
@@ -317,7 +334,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             fabricCanvas.off('object:moving', updateState);
             fabricCanvas.off('object:scaling', updateState);
         };
-    }, [fabricCanvas, activeViewId, viewMode, currentStep]);
+    }, [fabricCanvas, activeViewId, viewMode, currentStep, activeModelIndex, productModels.length]); // Added dependencies
 
 
     // HELPERS
@@ -382,6 +399,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 },
                 printifyVariantIds: c.printifyVariantIds || []
             })),
+            models: productModels,
             designZone: views[0]?.editorZone,
             previews: views.map(v => ({
                 id: v.id,
@@ -398,7 +416,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             printifyCameras
         };
         setJsonOutput(JSON.stringify(config, null, 4));
-    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, printifyBlueprintId, printifyProviderId, printifyCameras]);
+    }, [views, productName, category, subcategory, trending, price, shippingCost, shippingTime, productionTime, previewExpectationImage, realExpectationImage, listingImages, shortDescription, fullDescription, features, bulletPoints, careInstructions, faq, sizeGuide, isEditing, initialData, productColors, productModels, printifyBlueprintId, printifyProviderId, printifyCameras]);
 
 
     const handleSave = async () => {
@@ -488,9 +506,14 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 // Color folder is at index [1] (0-indexed).
                 const colorFolder = pathParts[1].toLowerCase();
 
-                // Check if this folder matches a product color (or "All")
+                // Check if this folder matches a product color, MODEL, (or "All")
                 const matchingColor = productColors.find(c => c.name.toLowerCase() === colorFolder);
-                const targetColor = matchingColor ? matchingColor.name : (colorFolder === 'all' ? 'All' : null);
+                const matchingModel = productModels.find(m => m.name.toLowerCase() === colorFolder);
+
+                let targetColor: string | null = null;
+                if (matchingColor) targetColor = matchingColor.name;
+                else if (matchingModel) targetColor = matchingModel.name;
+                else if (colorFolder === 'all') targetColor = 'All';
 
                 if (targetColor) {
                     if (!filesByColor[targetColor]) filesByColor[targetColor] = [];
@@ -583,6 +606,155 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             showToast('Failed to upload images', 'error');
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleBulkModelSVGUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        try {
+            // Sort models by name length descending to ensure specific models match first
+            // e.g. "iPhone 16 Pro" matches before "iPhone 16"
+            const sortedModels = [...productModels].sort((a, b) => b.name.length - a.name.length);
+
+            const updates: { index: number, image: string }[] = [];
+            const uploadPromises: Promise<void>[] = [];
+
+            // Helper to clean filename for matching
+            // "Phone cover back_iPhone 8 Plus Glossy.svg" -> "iPhone 8 Plus"
+            const cleanName = (name: string) => {
+                return name
+                    .replace(/\.(svg|png|jpg|jpeg)$/i, '') // remove extension
+                    .replace(/_/g, ' ') // underscores to spaces
+                    .replace(/-/g, ' ') // hyphens to spaces
+                    .toLowerCase();
+            };
+
+            Array.from(files).forEach(file => {
+                const normalizedFilename = cleanName(file.name);
+
+                // Find matching model
+                const matchedModel = sortedModels.find(m =>
+                    normalizedFilename.includes(m.name.toLowerCase())
+                );
+
+                if (matchedModel) {
+                    const originalIndex = productModels.findIndex(pm => pm.id === matchedModel.id || pm.name === matchedModel.name);
+
+                    if (originalIndex !== -1) {
+                        const p = uploadProductImage(file, 'models', productName).then(url => {
+                            updates.push({ index: originalIndex, image: url });
+                        });
+                        uploadPromises.push(p);
+                    }
+                }
+            });
+
+            if (uploadPromises.length === 0) {
+                showToast('No matching models found in filenames', 'error');
+                return;
+            }
+
+            await Promise.all(uploadPromises);
+
+            setProductModels(prev => {
+                const copy = [...prev];
+                updates.forEach(u => {
+                    copy[u.index] = { ...copy[u.index], image: u.image };
+                });
+                return copy;
+            });
+
+            showToast(`Matched and uploaded ${updates.length} model images`, 'success');
+        } catch (error) {
+            console.error("Bulk SVG upload failed", error);
+            showToast('Failed to bulk upload SVGs', 'error');
+        } finally {
+            setIsUploading(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
+
+    const handleBulkPreviewUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        let matchCount = 0;
+
+        try {
+            // Sort models by name length descending to ensure specific models match first
+            // e.g. "iPhone 16 Pro" matches before "iPhone 16"
+            const sortedModels = [...productModels].sort((a, b) => b.name.length - a.name.length);
+            const updates: { modelIndex: number, viewId: string, image: string }[] = [];
+            const uploadPromises: Promise<void>[] = [];
+
+            // Helper to clean filename for matching
+            // "iPhone 16 - Front View.png" -> parts...
+            const cleanName = (name: string) => name.replace(/\.(png|jpg|jpeg|webp)$/i, '').toLowerCase();
+
+            Array.from(files).forEach(file => {
+                const name = cleanName(file.name);
+
+                // Strategy: 
+                // 1. Find the longest model name that exists in the filename
+                // 2. Then check if the remaining part of filename matches a View Name
+
+                const matchedModel = sortedModels.find(m => name.includes(m.name.toLowerCase()));
+
+                if (matchedModel) {
+                    // Get the part of the string that is NOT the model name
+                    // e.g. "iphone 16 - front view" - "iphone 16" = " - front view"
+                    const viewPart = name.replace(matchedModel.name.toLowerCase(), '');
+
+                    const matchedView = views.find(v => viewPart.includes(v.name.toLowerCase()));
+
+                    if (matchedView) {
+                        const originalIndex = productModels.findIndex(pm => pm.id === matchedModel.id);
+                        if (originalIndex !== -1) {
+                            const p = uploadProductImage(file, 'models', productName).then(url => {
+                                updates.push({ modelIndex: originalIndex, viewId: matchedView.id, image: url });
+                            });
+                            uploadPromises.push(p);
+                        }
+                    }
+                }
+            });
+
+            if (uploadPromises.length === 0) {
+                showToast('No matching Model+View combinations found', 'error');
+                return;
+            }
+
+            await Promise.all(uploadPromises);
+
+            setProductModels(prev => {
+                const copy = [...prev];
+                updates.forEach(u => {
+                    const model = copy[u.modelIndex];
+                    copy[u.modelIndex] = {
+                        ...model,
+                        images: {
+                            ...(model.images || {}),
+                            [u.viewId]: u.image
+                        }
+                    };
+                });
+                return copy;
+            });
+
+            matchCount = updates.length;
+            showToast(`Matched and uploaded ${matchCount} preview images`, 'success');
+
+        } catch (error) {
+            console.error("Bulk Preview Upload Failed", error);
+            showToast('Failed to upload previews', 'error');
+        } finally {
+            setIsUploading(false);
+            e.target.value = '';
         }
     };
 
@@ -741,7 +913,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
         // 2. Find matching filenames if bulk mode
         if (bulkByFilename && img.fileName) {
-            // Find other images with same filename in other colors
             const siblings = listingImages.filter(other =>
                 other.fileName === img.fileName &&
                 other.color !== 'All' &&
@@ -749,31 +920,57 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
             );
 
             siblings.forEach(sib => {
-                // Check if this color already has an image for this view?
-                // Overwrite behavior is assumed desired.
                 imagesToAssign.push({ color: sib.color, url: sib.url });
             });
         }
 
-        setProductColors(prev => prev.map(c => {
-            const assignment = imagesToAssign.find(a => a.color === c.name);
-            if (assignment) {
-                return {
-                    ...c,
-                    images: {
-                        ...(c.images || {}),
-                        [viewId]: assignment.url
-                    }
-                };
-            }
-            return c;
-        }));
+        let updatedAny = false;
+
+        // A. Try updating Colors
+        setProductColors(prev => {
+            const next = prev.map(c => {
+                const assignment = imagesToAssign.find(a => a.color === c.name);
+                if (assignment) {
+                    updatedAny = true;
+                    return {
+                        ...c,
+                        images: { ...(c.images || {}), [viewId]: assignment.url }
+                    };
+                }
+                return c;
+            });
+            return next;
+        });
+
+        // B. Try updating Models
+        setProductModels(prev => {
+            const next = prev.map(m => {
+                // Check if the "color" (group name) matches the Model Name
+                const assignment = imagesToAssign.find(a => a.color === m.name);
+                if (assignment) {
+                    updatedAny = true;
+                    return {
+                        ...m,
+                        images: { ...(m.images || {}), [viewId]: assignment.url }
+                    };
+                }
+                return m;
+            });
+            return next;
+        });
 
         const viewName = views.find(v => v.id === viewId)?.name || 'View';
-        if (bulkByFilename && imagesToAssign.length > 1) {
-            showToast(`Assigned "${img.fileName}" to ${viewName} for ${imagesToAssign.length} colors`, 'success');
+        if (updatedAny) {
+            if (bulkByFilename && imagesToAssign.length > 1) {
+                showToast(`Assigned "${img.fileName}" to ${viewName} for ${imagesToAssign.length} items`, 'success');
+            } else {
+                showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+            }
         } else {
-            showToast(`Assigned to ${viewName} (${targetColorName})`, 'success');
+            // Note: If state update is async, updatedAny might be false here potentially? 
+            // Actually synchronous in this block context for logic, but Find logic works.
+            // If we didn't match any color or model, show warning.
+            // However, since we derived from listingImages which are strictly tied to colors or models, it should work.
         }
     };
 
@@ -828,14 +1025,17 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                                 <div className="h-4 w-px bg-white/20 mx-1" />
 
-                                {views.length > 0 && img.color !== 'All' && (
+                                {views.length > 0 && (
                                     <button
                                         onPointerDown={e => e.stopPropagation()}
                                         onClick={() => setIsMenuOpen(true)}
                                         className="p-1.5 text-white/70 hover:text-blue-400 hover:bg-white/20 rounded transition-colors"
-                                        title="Assign to View"
+                                        title="Set as Preview (Assign to View)"
                                     >
-                                        <Link2 size={14} />
+                                        <div className="relative">
+                                            <ImageIcon size={14} />
+                                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-indigo-500 rounded-full border border-black"></div>
+                                        </div>
                                     </button>
                                 )}
 
@@ -998,6 +1198,62 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         } catch (error) {
             console.error("Upload failed", error);
             showToast('Failed to upload color variant image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const addProductModel = () => {
+        setProductModels(prev => [...prev, { id: `model-${prev.length + 1}`, name: 'New Model', image: '' }]);
+    };
+
+    const handleModelViewImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, modelIndex: number, viewId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'models', productName);
+            setProductModels(prev => prev.map((m, i) => {
+                if (i === modelIndex) {
+                    return {
+                        ...m,
+                        images: {
+                            ...(m.images || {}),
+                            [viewId]: url
+                        }
+                    };
+                }
+                return m;
+            }));
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload model view image', 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeProductModel = (index: number) => {
+        setProductModels(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const updateProductModel = (index: number, field: keyof ProductModel, value: any) => {
+        setProductModels(prev => prev.map((m, i) => i === index ? { ...m, [field]: value } : m));
+    };
+
+    const handleModelImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        try {
+            const url = await uploadProductImage(file, 'models', productName);
+            updateProductModel(index, 'image', url);
+            showToast('Model image uploaded', 'success');
+        } catch (error) {
+            console.error("Upload failed", error);
+            showToast('Failed to upload model image', 'error');
         } finally {
             setIsUploading(false);
         }
@@ -1171,7 +1427,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
             {/* WIZARD HEADER */}
             <div className="bg-white border-b border-gray-200 px-8 py-4 z-40">
-                <div className="max-w-4xl mx-auto">
+                <div className="w-full mx-auto">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">{isEditing ? 'Edit Product' : 'Create New Product'}</h2>
@@ -1217,7 +1473,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
 
                 {/* STEP 1: BASIC INFO */}
                 {currentStep === 1 && (
-                    <div className="max-w-2xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="w-full px-8 py-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <div className="text-center mb-8">
                             <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                                 <Plus size={32} />
@@ -1341,72 +1597,308 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         </div>
 
                         {/* Product Colors */}
-                        <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h4 className="font-bold text-gray-900">Product Colors</h4>
-                                <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
-                                    <Plus size={14} /> Add Color
-                                </button>
-                                <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                    <FolderUp size={14} /> Import JSON
-                                    <input
-                                        type="file"
-                                        accept=".json,application/json"
-                                        className="hidden"
-                                        onChange={handleBulkColorJsonUpload}
-                                    />
-                                </label>
-                            </div>
-                            <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
-                            <div className="space-y-3">
-                                {productColors.map((color, idx) => (
-                                    <div key={idx} className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }}></div>
+                        {/* Product Colors OR Models */}
+                        {isPhoneCase ? (
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-gray-900">Product Models</h4>
+                                    <button onClick={addProductModel} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                        <Plus size={14} /> Add Model
+                                    </button>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <ImageMinus size={14} /> Bulk SVGs
                                         <input
-                                            type="text"
-                                            value={color.name}
-                                            onChange={(e) => updateProductColor(idx, 'name', e.target.value)}
-                                            placeholder="Color Name"
-                                            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                            type="file"
+                                            multiple
+                                            accept=".svg"
+                                            className="hidden"
+                                            onChange={handleBulkModelSVGUpload}
                                         />
-                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-32">
-                                            <span className="text-gray-400 text-sm">#</span>
-                                            <input
-                                                type="text"
-                                                value={color.hex.replace('#', '')}
-                                                onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
-                                                placeholder="HEX"
-                                                className="w-full bg-transparent outline-none text-sm uppercase font-mono"
-                                            />
+                                    </label>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <ImageIcon size={14} /> Bulk Previews
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleBulkPreviewUpload}
+                                        />
+                                    </label>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <Upload size={14} /> Import JSONs
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                if (files.length === 0) return;
+
+                                                const readFile = (f: File): Promise<string> => new Promise((resolve, reject) => {
+                                                    const r = new FileReader();
+                                                    r.onload = (ev) => resolve(ev.target?.result as string);
+                                                    r.onerror = reject;
+                                                    r.readAsText(f);
+                                                });
+
+                                                const optionsFile = files.find(f => f.name.includes('options'));
+                                                const variantsFile = files.find(f => f.name.includes('variants'));
+                                                const camerasFile = files.find(f => f.name.includes('cameras'));
+
+                                                let successMsg = "";
+                                                const validVariantIds = new Set<number>();
+                                                productModels.forEach(m => m.printifyVariantIds?.forEach(id => validVariantIds.add(id)));
+
+                                                // 1. Process Models (needs options & variants)
+                                                if (optionsFile && variantsFile) {
+                                                    try {
+                                                        const [optStr, varStr] = await Promise.all([readFile(optionsFile), readFile(variantsFile)]);
+                                                        const optionsData = JSON.parse(optStr);
+                                                        const variantsData = JSON.parse(varStr);
+
+                                                        const sizeOptions = optionsData.size || [];
+                                                        const newModels: ProductModel[] = sizeOptions.map((opt: any) => {
+                                                            const modelName = opt.label;
+                                                            const modelId = modelName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                                                            const optionId = opt.id;
+                                                            const matchingVariants = variantsData.filter((v: any) => v.options.includes(optionId));
+                                                            const variantIds = matchingVariants.map((v: any) => v.variant_id);
+
+                                                            return { id: modelId, name: modelName, image: '', printifyVariantIds: variantIds };
+                                                        });
+
+                                                        newModels.forEach(m => m.printifyVariantIds?.forEach(id => validVariantIds.add(id)));
+
+                                                        if (newModels.length > 0) {
+                                                            setProductModels(prev => {
+                                                                const modelMap = new Map(prev.map(p => [p.id, p]));
+                                                                newModels.forEach(m => {
+                                                                    // Update existing or add new. Preserve image if not provided in new.
+                                                                    const existing = modelMap.get(m.id);
+                                                                    if (existing) {
+                                                                        modelMap.set(m.id, { ...existing, ...m, image: existing.image || m.image });
+                                                                    } else {
+                                                                        modelMap.set(m.id, m);
+                                                                    }
+                                                                });
+                                                                return Array.from(modelMap.values());
+                                                            });
+                                                            successMsg += `${newModels.length} models processed/updated. `;
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Model parse error", err);
+                                                        showToast("Failed to process model JSONs", "error");
+                                                    }
+                                                }
+
+                                                // 2. Process Cameras
+                                                if (camerasFile) {
+                                                    try {
+                                                        const camStr = await readFile(camerasFile);
+                                                        const camData = JSON.parse(camStr);
+                                                        if (Array.isArray(camData)) {
+                                                            let filteredCameras = camData.filter((c: any) => validVariantIds.has(c.variant_id));
+
+                                                            // Fallback: If filtering removed EVERYTHING (mismatched IDs), keep all to be safe?
+                                                            // Or maybe the user is importing cameras for models they haven't imported yet.
+                                                            if (filteredCameras.length === 0 && camData.length > 0) {
+                                                                console.warn("No cameras matched active Variant IDs. Importing ALL cameras as fallback.");
+                                                                filteredCameras = camData;
+                                                                successMsg += `Warning: ID mismatch. Imported all ${camData.length} cameras. `;
+                                                            } else {
+                                                                successMsg += `${filteredCameras.length} cameras loaded. `;
+                                                            }
+
+                                                            setPrintifyCameras(filteredCameras);
+                                                        }
+                                                    } catch (err) {
+                                                        console.error("Camera parse error", err);
+                                                        showToast("Failed to process cameras.json", "error");
+                                                    }
+                                                }
+
+                                                if (successMsg) showToast(successMsg, "success");
+                                                else if (!optionsFile && !variantsFile && !camerasFile) showToast("No recognized JSON files (options, variants, cameras) found.", "error");
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                                <p className="text-sm text-gray-500">Define the supported phone models. Import <b>options.json</b>, <b>variants.json</b>, and optionally <b>cameras.json</b>.</p>
+                                <div className="space-y-3">
+                                    {productModels.map((model, idx) => (
+                                        <div key={idx} className="flex flex-col gap-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <div className="flex items-center gap-3 w-full">
+                                                {/* Model Image Upload */}
+                                                <div className="relative w-12 h-12 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 flex-shrink-0 group">
+                                                    {model.image ? (
+                                                        <img src={model.image} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="flex items-center justify-center h-full text-gray-400">
+                                                            <Upload size={16} />
+                                                        </div>
+                                                    )}
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        onChange={(e) => handleModelImageUpload(e, idx)}
+                                                    />
+                                                </div>
+
+                                                {/* Model Name */}
+                                                <div className="flex-1">
+                                                    <input
+                                                        type="text"
+                                                        value={model.name}
+                                                        onChange={(e) => updateProductModel(idx, 'name', e.target.value)}
+                                                        placeholder="Model Name (e.g. iPhone 13)"
+                                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    />
+                                                </div>
+
+                                                {/* Variant IDs Input */}
+                                                <div className="flex-1 min-w-[120px]">
+                                                    <input
+                                                        type="text"
+                                                        value={model.printifyVariantIds?.join(', ') || ''}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                            updateProductModel(idx, 'printifyVariantIds', ids);
+                                                        }}
+                                                        placeholder="Variant IDs (e.g. 123, 456)"
+                                                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                        title="Comma-separated Printify Variant IDs"
+                                                    />
+                                                </div>
+
+                                                <button onClick={() => removeProductModel(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+
+                                            {/* View Specific Images */}
+                                            {views && views.length > 0 && (
+                                                <div className="w-full mt-1 pt-3 border-t border-gray-200/50">
+                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">View Specific Preview</p>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {views.map(view => (
+                                                            <div key={view.id} className="relative group/view w-16">
+                                                                <div className={cn("w-16 h-16 rounded border overflow-hidden relative", model.images?.[view.id] ? "border-indigo-200" : "border-gray-200 bg-white")}>
+                                                                    {model.images?.[view.id] ? (
+                                                                        <img src={model.images[view.id]} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-gray-300"><Upload size={14} /></div>
+                                                                    )}
+                                                                    <div className="absolute inset-0 bg-black/10 opacity-0 group-hover/view:opacity-100 transition-opacity flex items-center justify-center">
+                                                                        <Upload size={14} className="text-white drop-shadow" />
+                                                                    </div>
+                                                                </div>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                                                    title={`Upload ${view.name} image for ${model.name}`}
+                                                                    onChange={(e) => handleModelViewImageUpload(e, idx, view.id)}
+                                                                />
+                                                                <div className="mt-1 w-full text-[9px] text-center text-gray-500 truncate leading-tight">{view.name}</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                        {/* Variant IDs Input */}
-                                        <div className="flex-1 min-w-[120px]">
-                                            <input
-                                                type="text"
-                                                value={color.printifyVariantIds?.join(', ') || ''}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    // Allow user to type, only convert to array for storage
-                                                    // Simplified: Just store comma separate in state logic? 
-                                                    // No, our interface says number[].
-                                                    // Improved: Parse on change but handle trailing comma or partials? 
-                                                    // Actually, storing as string temporarily might be better or parse robustly.
-                                                    // Let's parse robustly:
-                                                    const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
-                                                    updateProductColor(idx, 'printifyVariantIds', ids);
-                                                }}
-                                                placeholder="Variant IDs (e.g. 123, 456)"
-                                                className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
-                                                title="Comma-separated Printify Variant IDs"
-                                            />
+                                    ))}
+                                    {productModels.length === 0 && (
+                                        <div className="text-center py-4 text-gray-400 text-sm">No models added yet.</div>
+                                    )}
+                                </div>
+
+                                {/* Imported Cameras Display */}
+                                {printifyCameras.length > 0 && (
+                                    <div className="pt-4 border-t border-gray-100 mt-4">
+                                        <h5 className="text-sm font-bold text-gray-700 mb-2">Imported Cameras ({printifyCameras.length})</h5>
+                                        <div className="max-h-40 overflow-y-auto space-y-2 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                                            {printifyCameras.map((cam, i) => (
+                                                <div key={i} className="text-xs flex justify-between text-gray-600 bg-white p-2 rounded border border-gray-100">
+                                                    <span>{cam.label} ({cam.position})</span>
+                                                    <span className="font-mono text-gray-400">ID: {cam.id}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                                            <Trash2 size={16} />
-                                        </button>
                                     </div>
-                                ))}
+                                )}
                             </div>
-                        </div>
+                        ) : (
+                            <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-bold text-gray-900">Product Colors</h4>
+                                    <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                        <Plus size={14} /> Add Color
+                                    </button>
+                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                        <FolderUp size={14} /> Import JSON
+                                        <input
+                                            type="file"
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={handleBulkColorJsonUpload}
+                                        />
+                                    </label>
+                                </div>
+                                <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
+                                <div className="space-y-3">
+                                    {productColors.map((color, idx) => (
+                                        <div key={idx} className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full border border-gray-200 shadow-sm" style={{ backgroundColor: color.hex }}></div>
+                                            <input
+                                                type="text"
+                                                value={color.name}
+                                                onChange={(e) => updateProductColor(idx, 'name', e.target.value)}
+                                                placeholder="Color Name"
+                                                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                            />
+                                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 w-32">
+                                                <span className="text-gray-400 text-sm">#</span>
+                                                <input
+                                                    type="text"
+                                                    value={color.hex.replace('#', '')}
+                                                    onChange={(e) => updateProductColor(idx, 'hex', `#${e.target.value} `)}
+                                                    placeholder="HEX"
+                                                    className="w-full bg-transparent outline-none text-sm uppercase font-mono"
+                                                />
+                                            </div>
+                                            {/* Variant IDs Input */}
+                                            <div className="flex-1 min-w-[120px]">
+                                                <input
+                                                    type="text"
+                                                    value={color.printifyVariantIds?.join(', ') || ''}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        // Allow user to type, only convert to array for storage
+                                                        // Simplified: Just store comma separate in state logic? 
+                                                        // No, our interface says number[].
+                                                        // Improved: Parse on change but handle trailing comma or partials? 
+                                                        // Actually, storing as string temporarily might be better or parse robustly.
+                                                        // Let's parse robustly:
+                                                        const ids = val.split(',').map(s => s.trim()).filter(s => !isNaN(Number(s)) && s !== '').map(Number);
+                                                        updateProductColor(idx, 'printifyVariantIds', ids);
+                                                    }}
+                                                    placeholder="Variant IDs (e.g. 123, 456)"
+                                                    className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                                    title="Comma-separated Printify Variant IDs"
+                                                />
+                                            </div>
+                                            <button onClick={() => removeProductColor(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Listing Images Grouped by Color */}
                         <DndContext
@@ -1504,6 +1996,37 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         </SortableContext>
                                     </div>
                                 ))}
+
+                                {/* Per-Model Sections (For Phone Cases etc) */}
+                                {productModels.map((model, idx) => (
+                                    <div key={model.id} className="space-y-3 pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-4 h-4 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center text-[8px] font-bold text-gray-500">M</div>
+                                                <h5 className="text-sm font-bold text-gray-700">{model.name}</h5>
+                                            </div>
+                                            <label className="text-xs text-indigo-600 font-medium cursor-pointer hover:underline flex items-center gap-1">
+                                                <Plus size={14} /> Add {model.name} Images
+                                                <input type="file" multiple accept="image/*" className="hidden" onChange={(e) => handleListingImageUpload(e, model.name)} />
+                                            </label>
+                                        </div>
+                                        <SortableContext
+                                            items={listingImages.filter(img => img.color === model.name).map(img => img.url)}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                                {listingImages.filter(img => img.color === model.name).map((img, i) => (
+                                                    <SortableListingImage key={img.url} img={img} index={i} colorGroup={model.name} />
+                                                ))}
+                                                {listingImages.filter(img => img.color === model.name).length === 0 && (
+                                                    <div className="col-span-full py-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-100 rounded-lg">
+                                                        No images for {model.name}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </SortableContext>
+                                    </div>
+                                ))}
                             </div>
                         </DndContext>
                     </div >
@@ -1521,6 +2044,22 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                     <button onClick={addView} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded hover:bg-gray-100 text-indigo-600">+ Add View</button>
                                 </div>
                                 <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                                    {/* Model Selector for Phone Cases */}
+                                    {isPhoneCase && productModels.length > 0 && (
+                                        <div className="mb-6 px-1">
+                                            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Select Model</h4>
+                                            <select
+                                                value={activeModelIndex}
+                                                onChange={(e) => setActiveModelIndex(Number(e.target.value))}
+                                                className="w-full text-xs bg-white border border-gray-200 rounded-lg p-2 outline-none focus:border-indigo-500"
+                                            >
+                                                {productModels.map((m, i) => (
+                                                    <option key={i} value={i}>{m.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    )}
+
                                     <div className="grid grid-cols-2 gap-2">
                                         {views.map(view => (
                                             <button key={view.id} onClick={() => setActiveViewId(view.id)} className={cn("text-left px-3 py-2 rounded-lg text-xs font-medium border transition-all", activeViewId === view.id ? "bg-indigo-50 border-indigo-200 text-indigo-700" : "bg-white border-gray-200 text-gray-600 hover:border-gray-300")}>
@@ -1528,7 +2067,7 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                             </button>
                                         ))}
                                     </div>
-                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView)}
+                                    {activeViewsConfig(views, activeViewId, setViews, handleImageUpload, productColors, handleColorImageUpload, handleBulkColorVariantUploadForView, productModels, activeModelIndex, isPhoneCase, setProductModels)}
                                 </div>
                             </div>
 
@@ -1548,7 +2087,11 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                 <div className="relative shadow-2xl rounded-lg overflow-hidden border border-zinc-800 bg-[#111]" style={{ width: 600, height: 600 }}>
                                     {activeView && (
                                         <img
-                                            src={viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image}
+                                            src={
+                                                isPhoneCase && productModels[activeModelIndex]?.image
+                                                    ? productModels[activeModelIndex].image
+                                                    : (viewMode === 'editor' && activeView.editorImage ? activeView.editorImage : activeView.image)
+                                            }
                                             className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none opacity-100"
                                             alt="background"
                                         />
@@ -1872,10 +2415,19 @@ function activeViewsConfig(
     handleImageUpload: Function,
     productColors: ProductColor[],
     handleColorImageUpload: Function,
-    handleBulkColorVariantUploadForView: Function
+    handleBulkColorVariantUploadForView: Function,
+    productModels: ProductModel[] = [],
+    activeModelIndex: number = 0,
+    isPhoneCase: boolean = false,
+    setProductModels: Function = () => { }
 ) {
     const activeView = views.find(v => v.id === activeViewId);
     if (!activeView) return null;
+
+    // Determine effective images for display
+    const currentModel = productModels?.[activeModelIndex];
+    const modelImage = currentModel?.image;
+    const displayEditorImage = modelImage || activeView.editorImage;
 
     return (
         <div className="space-y-6">
@@ -1887,9 +2439,86 @@ function activeViewsConfig(
             <div className="space-y-2">
                 <label className="text-[10px] font-bold text-blue-500 uppercase">Editor Image (Cutout)</label>
                 <label className="block w-full h-20 border-2 border-dashed border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer overflow-hidden relative group">
-                    {activeView.editorImage ? <img src={activeView.editorImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400">Upload Cutout</div>}
+                    {displayEditorImage ? <img src={displayEditorImage} className="w-full h-full object-contain" /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-gray-400">Upload Cutout</div>}
                     <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'editor')} />
                 </label>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-blue-500 uppercase">Editor Zone</label>
+                    <button
+                        onClick={() => {
+                            // Priority: Model Image (if exists) > Editor Image > Preview Image
+                            const currentModel = productModels?.[activeModelIndex];
+                            const modelImage = currentModel?.image;
+                            const targetImage = modelImage || activeView.editorImage || activeView.image;
+
+                            if (!targetImage) {
+                                alert("No image found to fit to.");
+                                return;
+                            }
+
+                            const img = new Image();
+
+                            img.onload = () => {
+                                // Calculate fit within 1024x1024
+                                const containerSize = 1024;
+                                const w_val = img.naturalWidth || img.width;
+                                const h_val = img.naturalHeight || img.height;
+                                const ratio = w_val / h_val;
+
+                                let w, h, l, t;
+
+                                if (ratio > 1) {
+                                    // Landscape: Width touches container edges
+                                    w = containerSize;
+                                    h = containerSize / ratio;
+                                    l = 0;
+                                    t = (containerSize - h) / 2;
+                                } else {
+                                    // Portrait or Square: Height touches container edges
+                                    h = containerSize;
+                                    w = containerSize * ratio;
+                                    t = 0;
+                                    l = (containerSize - w) / 2;
+                                }
+
+                                const newZone = {
+                                    left: Math.round(l),
+                                    top: Math.round(t),
+                                    width: Math.round(w),
+                                    height: Math.round(h)
+                                };
+
+                                alert(`Updated Editor Zone:\nImage: ${w_val}x${h_val}\nNew Zone: ${newZone.width}x${newZone.height}`);
+
+                                if (isPhoneCase) {
+                                    setProductModels((prev: any) => prev.map((m: any, i: number) => i === activeModelIndex ? { ...m, designZone: newZone } : m));
+                                } else {
+                                    setViews((prev: any) => prev.map((v: any) => v.id === activeViewId ? { ...v, editorZone: newZone } : v));
+                                }
+                            };
+
+                            img.onerror = (err) => {
+                                console.error("Failed to load image for dimension calculation", err);
+                                alert("Failed to load the target image. Please ensure the URL is accessible.");
+                            };
+
+                            // Set src LAST to avoid race conditions
+                            img.src = targetImage;
+                        }}
+
+                        className="text-[10px] bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-medium transition-colors"
+                    >
+                        Fit to Image
+                    </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <p className="text-[10px] text-gray-400 col-span-2 leading-tight">
+                        Defines the printable area relative to the 1024x1024 canvas.
+                    </p>
+                </div>
             </div>
 
             <div className="space-y-2">
@@ -1901,64 +2530,66 @@ function activeViewsConfig(
             </div>
 
             {/* Color Variants Overrides */}
-            {productColors && productColors.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
-                            Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
-                        </label>
-                        <label className="text-[10px] flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
-                            <FolderUp size={12} />
-                            Bulk Upload
-                            <input
-                                type="file"
-                                className="hidden"
-                                multiple
-                                // @ts-ignore
-                                webkitdirectory=""
-                                onChange={(e) => handleBulkColorVariantUploadForView(e, activeViewId, activeView.name)}
-                            />
-                        </label>
-                    </div>
-                    <div className="space-y-2">
-                        {productColors.map((color, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: color.hex }} title={color.name}></div>
-                                <label className="flex-1 h-8 border border-gray-200 rounded hover:border-indigo-300 cursor-pointer overflow-hidden relative bg-gray-50 flex items-center px-2">
-                                    {color.images?.[activeViewId] ? (
-                                        <div className="flex items-center gap-2 w-full">
-                                            <div className="w-4 h-4 rounded-sm bg-gray-200 shrink-0 overflow-hidden">
-                                                <img src={color.images[activeViewId]} className="w-full h-full object-cover" />
+            {
+                productColors && productColors.length > 0 && (
+                    <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
+                                Color Variants <span className="text-gray-300 font-normal normal-case">(For this view)</span>
+                            </label>
+                            <label className="text-[10px] flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium cursor-pointer">
+                                <FolderUp size={12} />
+                                Bulk Upload
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    multiple
+                                    // @ts-ignore
+                                    webkitdirectory=""
+                                    onChange={(e) => handleBulkColorVariantUploadForView(e, activeViewId, activeView.name)}
+                                />
+                            </label>
+                        </div>
+                        <div className="space-y-2">
+                            {productColors.map((color, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: color.hex }} title={color.name}></div>
+                                    <label className="flex-1 h-8 border border-gray-200 rounded hover:border-indigo-300 cursor-pointer overflow-hidden relative bg-gray-50 flex items-center px-2">
+                                        {color.images?.[activeViewId] ? (
+                                            <div className="flex items-center gap-2 w-full">
+                                                <div className="w-4 h-4 rounded-sm bg-gray-200 shrink-0 overflow-hidden">
+                                                    <img src={color.images[activeViewId]} className="w-full h-full object-cover" />
+                                                </div>
+                                                <span className="text-[10px] text-gray-600 truncate flex-1">Image Set</span>
                                             </div>
-                                            <span className="text-[10px] text-gray-600 truncate flex-1">Image Set</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] text-gray-400">Upload {color.name} variant...</span>
+                                        ) : (
+                                            <span className="text-[10px] text-gray-400">Upload {color.name} variant...</span>
+                                        )}
+                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handleColorImageUpload(e, idx, activeViewId)} />
+                                    </label>
+                                    {color.images?.[activeViewId] && (
+                                        <button
+                                            onClick={() => {
+                                                // Quick hack to delete: Reuse handle but create a cleaner deleter if needed. 
+                                                // Passing setProductColors might be needed for deletion if we want it here.
+                                                // For now, let's keep it simple: Just upload overrides.
+                                            }}
+                                            className="hidden text-gray-400 hover:text-red-500"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
                                     )}
-                                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleColorImageUpload(e, idx, activeViewId)} />
-                                </label>
-                                {color.images?.[activeViewId] && (
-                                    <button
-                                        onClick={() => {
-                                            // Quick hack to delete: Reuse handle but create a cleaner deleter if needed. 
-                                            // Passing setProductColors might be needed for deletion if we want it here.
-                                            // For now, let's keep it simple: Just upload overrides.
-                                        }}
-                                        className="hidden text-gray-400 hover:text-red-500"
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <div className="space-y-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase">CSS Transform</label>
                 <input type="text" placeholder="rotate(-2deg)" value={activeView.cssTransform || ''} onChange={(e) => setViews((p: any) => p.map((v: any) => v.id === activeViewId ? { ...v, cssTransform: e.target.value } : v))} className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono" />
             </div>
-        </div>
+        </div >
     );
 }

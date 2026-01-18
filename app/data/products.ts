@@ -35,6 +35,7 @@ export interface Product {
     image: string; // Path to the base product image (SVG or PNG) for editor (fallback)
     canvasSize: number; // The size of the editor canvas (e.g., 1024)
     colors: ProductColor[];
+    models?: any[]; // For phone cases etc
     // Global design zone (legacy/fallback)
     designZone: {
         left: number;
