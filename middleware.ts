@@ -72,38 +72,7 @@ export default withAuth(
     },
     {
         callbacks: {
-            authorized: ({ token, req }) => {
-                const pathname = req.nextUrl.pathname;
-                console.log(`[Middleware] Checking path: ${pathname}`);
-
-                // Public routes - no authentication required
-                const isPublicRoute =
-                    pathname === "/" ||
-                    pathname.startsWith("/products") ||
-                    pathname.startsWith("/categories") ||
-                    pathname.startsWith("/api/products") ||
-                    pathname.startsWith("/api/categories") ||
-                    pathname === "/about" ||
-                    pathname === "/faq" ||
-                    pathname === "/contact" ||
-                    pathname === "/how-it-works" ||
-                    pathname === "/privacy-policy" ||
-                    pathname === "/terms-of-service" ||
-                    pathname === "/dmca" ||
-                    pathname === "/login" ||
-                    pathname === "/signup" ||
-                    pathname.startsWith("/_next") ||
-                    pathname.startsWith("/images");
-
-                console.log(`[Middleware] isPublicRoute: ${isPublicRoute}, hasToken: ${!!token}`);
-
-                if (isPublicRoute) {
-                    return true; // Allow access without authentication
-                }
-
-                // Protected routes require authentication
-                return !!token;
-            },
+            authorized: ({ token }) => !!token,
         },
     }
 );
