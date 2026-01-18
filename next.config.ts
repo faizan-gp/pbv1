@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable compression so Cloudflare handles it (fixes ETag stripping)
-  compress: false,
-  // Remove X-Powered-By header
-  poweredByHeader: false,
   // Enable ETag generation for responses
   generateEtags: true,
   images: {
