@@ -2,7 +2,6 @@ import { getAllUsers } from "@/lib/firestore/users";
 import { getAllOrders } from "@/lib/firestore/orders";
 import { getAllProducts } from "@/lib/firestore/products";
 import { CreditCard, ShoppingBag, Users as UsersIcon, TrendingUp } from 'lucide-react';
-import CacheInvalidateButton from "@/app/components/admin/CacheInvalidateButton";
 
 async function getStats() {
     const [users, orders, products] = await Promise.all([
@@ -63,7 +62,8 @@ export default async function AdminDashboard() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
                 <h2 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h2>
                 <div className="flex gap-4">
-                    <CacheInvalidateButton />
+                    {/* Placeholder for quick actions if needed */}
+                    <span className="text-sm text-slate-500 italic">No quick actions configured yet.</span>
                 </div>
             </div>
         </div>

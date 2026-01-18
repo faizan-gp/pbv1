@@ -1,8 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable ETag generation for responses
-  generateEtags: true,
   images: {
     remotePatterns: [
       {
@@ -37,55 +35,23 @@ const nextConfig: NextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=2592000, stale-while-revalidate=86400',
           },
-        ],
-      },
-      {
-        // Homepage and main pages - cache with validation headers
-        source: '/',
-        headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=300, s-maxage=900, stale-while-revalidate=3600',
+            key: 'CDN-Cache-Control',
+            value: 'public, max-age=2592000',
           },
         ],
       },
       {
-        // Products listing
-        source: '/products',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=300, s-maxage=900, stale-while-revalidate=3600',
-          },
-        ],
-      },
-      {
-        // Product detail pages
+        // Cache product images
         source: '/products/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=300, s-maxage=900, stale-while-revalidate=3600',
+            value: 'public, max-age=2592000, stale-while-revalidate=86400',
           },
-        ],
-      },
-      {
-        // Categories
-        source: '/categories/:path*',
-        headers: [
           {
-            key: 'Cache-Control',
-            value: 'public, max-age=300, s-maxage=900, stale-while-revalidate=3600',
-          },
-        ],
-      },
-      {
-        // Static pages - cache longer
-        source: '/(about|faq|contact|how-it-works|privacy-policy|terms-of-service|dmca)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+            key: 'CDN-Cache-Control',
+            value: 'public, max-age=2592000',
           },
         ],
       },
