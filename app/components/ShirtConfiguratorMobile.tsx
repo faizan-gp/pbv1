@@ -21,6 +21,7 @@ interface ShirtConfiguratorProps {
     cartUserId?: string | null;
     viewOnly?: boolean;
     initialColor?: string | null;
+    initialModel?: string | null;
 }
 
 import { doc, getDoc } from 'firebase/firestore';
@@ -36,7 +37,7 @@ const TABS = [
     { id: 'size', label: 'Size', icon: Ruler },
 ];
 
-export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId, viewOnly, initialColor }: ShirtConfiguratorProps) {
+export default function ShirtConfiguratorMobile({ product, editCartId, cartUserId, viewOnly, initialColor, initialModel }: ShirtConfiguratorProps) {
     const router = useRouter();
     const { addToCart, updateItem, items: cartItems } = useCart();
     const editorRef = useRef<DesignEditorRef>(null);
