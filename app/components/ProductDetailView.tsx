@@ -30,6 +30,15 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
         let images = product.listingImages || [];
         if (selectedColor) {
             images = images.filter(img => !img.color || img.color === 'All' || img.color === selectedColor);
+
+            // Sort: Selected color images first
+            images.sort((a, b) => {
+                const aIsSelected = a.color === selectedColor;
+                const bIsSelected = b.color === selectedColor;
+                if (aIsSelected && !bIsSelected) return -1;
+                if (!aIsSelected && bIsSelected) return 1;
+                return 0;
+            });
         } else {
             images = images.filter(img => !img.color || img.color === 'All');
         }
