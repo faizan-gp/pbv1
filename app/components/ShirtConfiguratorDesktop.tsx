@@ -209,7 +209,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             imgDesign.crossOrigin = 'anonymous';
             imgDesign.onload = () => {
                 const activePreview = product.previews.find((p: any) => p.id === viewId) || product.previews[0];
-                const zone = activePreview.previewZone || product.designZone;
+                const zone = activePreview.editorZone || product.designZone;
 
                 // Scale Logic: Map design zone coordinates to our new canvas size
                 const scaleFactor = size / product.canvasSize;
@@ -227,7 +227,15 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         });
     };
 
-    const generateMockups = async () => {
+    const generateMockups = async (manualTrigger: boolean = false) => {
+        if (!manualTrigger && typeof manualTrigger !== 'object') {
+            // Guard against any auto-calls (React events might pass object/event as first arg, so we need to be careful. 
+            // Actually, if called by onClick={generateMockups}, the first arg is the Event object (truthy).
+            // If called by `generateMockups()`, first arg is undefined (falsy).
+            // The user says it IS called automatically. 
+            // If I change signature to `manualTrigger: boolean`, and it's called with no args, it is undefined/false.
+            return;
+        }
         // Default to T-shirt (706) if not specified
         const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
         const providerId = product?.printifyProviderId || 47; // Default 25 (Monster Digital) or 47
@@ -791,7 +799,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                         <div className="mt-8 pt-6 border-t border-slate-100 pb-4">
                                             <button
                                                 onClick={() => {
-                                                    if (mockupImages.length === 0) generateMockups();
+                                                    if (mockupImages.length === 0) generateMockups(true);
                                                     setIsMockupModalOpen(true);
                                                 }}
                                                 className="w-full h-12 rounded-xl bg-white border border-indigo-200 text-indigo-600 font-bold text-sm hover:bg-indigo-50 transition-all flex items-center justify-center gap-2 shadow-sm"
@@ -842,7 +850,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                 <div className="absolute top-4 right-4 z-40 flex gap-2">
                     <button
                         onClick={() => {
-                            if (mockupImages.length === 0) generateMockups();
+                            if (mockupImages.length === 0) generateMockups(true);
                             setIsMockupModalOpen(true);
                         }}
                         className="h-10 px-4 bg-white/90 backdrop-blur border border-slate-200 shadow-sm rounded-lg text-slate-700 font-bold text-xs hover:bg-white hover:text-indigo-600 transition-all flex items-center gap-2"
@@ -989,7 +997,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
                                     {/* Action Footer utilized for Regen */}
                                     <div className="mt-12 flex justify-center pb-8">
-                                        <button onClick={generateMockups} className="bg-slate-900 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-indigo-500/30 hover:bg-indigo-600 transition-all font-bold flex items-center gap-3 active:scale-95">
+                                        <button onClick={() => generateMockups(true)} className="bg-slate-900 text-white px-8 py-3 rounded-full shadow-lg hover:shadow-indigo-500/30 hover:bg-indigo-600 transition-all font-bold flex items-center gap-3 active:scale-95">
                                             <Sparkles size={18} /> Regenerate All Views
                                         </button>
                                     </div>
@@ -998,7 +1006,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                 <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
                                     <Sparkles size={48} className="text-slate-300 mb-4" />
                                     <p className="text-slate-500 font-medium">No mockups generated yet.</p>
-                                    <button onClick={generateMockups} className="mt-4 text-indigo-600 font-bold hover:underline">Try Generating Now</button>
+                                    <button onClick={() => generateMockups(true)} className="mt-4 text-indigo-600 font-bold hover:underline">Try Generating Now</button>
                                 </div>
                             )}
                         </div>

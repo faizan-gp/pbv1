@@ -20,9 +20,12 @@ interface DesignEditorProps {
     initialState?: any;
     onSelectionChange?: (selection: any | null) => void;
     readOnly?: boolean;
+    useRealPreview?: boolean;
+    selectedColor?: any;
+    selectedModel?: string;
 }
 
-const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, onSelectionChange, readOnly }, ref) => {
+const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onUpdate, product, activeViewId, initialState, onSelectionChange, readOnly, useRealPreview = false, selectedColor, selectedModel }, ref) => {
 
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -362,12 +365,33 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         }
     }));
 
+    // --- DETERMINE BACKGROUND IMAGE ---
+    let imageUrl = product.image;
+    const preferCutout = !useRealPreview;
+
+    // Check for Model Logic (Phone Cases)
+    const activeModel = product.models?.find((m: any) => m.id === selectedModel);
+
+    if (preferCutout && activePreview.editorCutout) {
+        imageUrl = activePreview.editorCutout;
+    } else if (activeModel) {
+        if (activeModel.images?.[activeViewId]) {
+            imageUrl = activeModel.images[activeViewId];
+        } else if (activeModel.image) {
+            imageUrl = activeModel.image;
+        }
+    } else if (selectedColor && selectedColor.images && selectedColor.images[activeViewId]) {
+        imageUrl = selectedColor.images[activeViewId];
+    } else if (activePreview && (activePreview as any).image) {
+        imageUrl = (activePreview as any).image;
+    }
+
     return (
         <div ref={containerRef} className="w-full h-full relative overflow-hidden touch-none">
             {/* Background Image (Centered) */}
             <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                    src={activePreview.editorCutout || product.image}
+                    src={imageUrl}
                     alt="Product"
                     className="max-w-[100%] max-h-[100%] w-auto h-auto object-contain pointer-events-none select-none opacity-95"
                 />

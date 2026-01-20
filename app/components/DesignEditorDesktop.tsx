@@ -320,7 +320,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             } catch (e) { }
             setFabricCanvas(null);
         };
-    }, [product.id, activeViewId, selectedModel]);
+    }, [product.id, activeViewId, selectedModel, selectedColor, useRealPreview]);
 
     // --- Expose API ---
     useImperativeHandle(ref, () => ({

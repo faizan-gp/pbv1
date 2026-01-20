@@ -270,7 +270,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             imgDesign.crossOrigin = 'anonymous';
             imgDesign.onload = () => {
                 const activePreview = product.previews.find((p: any) => p.id === viewId) || product.previews[0];
-                const zone = activePreview.previewZone || product.designZone;
+                const zone = activePreview.editorZone || product.designZone;
 
                 // Scale Logic: Map design zone coordinates to our new canvas size
                 const scaleFactor = size / product.canvasSize;
@@ -462,6 +462,8 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                             initialState={designStates[activeViewId]}
                             onSelectionChange={handleSelectionChange}
                             readOnly={isReadOnly}
+                            selectedColor={selectedColor}
+                            useRealPreview={activeTab === 'text'}
                         />
                     </div>
 

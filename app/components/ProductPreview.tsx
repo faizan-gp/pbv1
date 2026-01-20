@@ -38,7 +38,7 @@ export default function ProductPreview({
     }
 
     // Calculate percentage positioning
-    const currentZone = (activeModel?.designZone) || activePreview.previewZone || product.designZone;
+    const currentZone = (activeModel?.designZone) || activePreview.editorZone || product.designZone;
     const zoneStyle = {
         left: `${(currentZone.left / product.canvasSize) * 100}%`,
         top: `${(currentZone.top / product.canvasSize) * 100}%`,

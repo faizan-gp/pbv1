@@ -8,13 +8,6 @@ export interface PreviewConfig {
         width: number;
         height: number;
     };
-    // The zone where the design is rendered on the preview image
-    previewZone: {
-        left: number;
-        top: number;
-        width: number;
-        height: number;
-    };
     displacementMap?: string;
     shadowMap?: string;
     editorCutout?: string; // Optional: Specific cutout for this view in the editor
@@ -90,7 +83,6 @@ export const products: Product[] = [
                 id: 'front',
                 name: 'Front View',
                 editorZone: { left: 312, top: 262, width: 400, height: 500 },
-                previewZone: { left: 312, top: 262, width: 400, height: 500 },
                 displacementMap: '/displacement/tshirt-disp.jpg',
                 shadowMap: '/shadows/tshirt-shadow.png'
             },
@@ -98,7 +90,6 @@ export const products: Product[] = [
                 id: 'back',
                 name: 'Back View',
                 editorZone: { left: 312, top: 262, width: 400, height: 500 },
-                previewZone: { left: 312, top: 262, width: 400, height: 500 },
             }
         ]
     },
@@ -118,7 +109,6 @@ export const products: Product[] = [
                 id: 'front',
                 name: 'Front View',
                 editorZone: { left: 128, top: 128, width: 768, height: 768 },
-                previewZone: { left: 128, top: 128, width: 768, height: 768 },
                 displacementMap: '/displacement/canvas-disp.jpg',
                 shadowMap: '/shadows/canvas-shadow.png'
             },

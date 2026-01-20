@@ -39,7 +39,6 @@ interface ViewConfig {
     name: string;
     image: string;
     editorZone: Zone;
-    previewZone: Zone;
     displacementMap?: string;
     shadowMap?: string;
     cssTransform?: string;
@@ -161,7 +160,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         image: '',
         editorImage: '',
         editorZone: { left: 312, top: 262, width: 400, height: 500 },
-        previewZone: { left: 312, top: 262, width: 400, height: 500 },
     };
 
     const initializeViews = (): ViewConfig[] => {
@@ -177,7 +175,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 image: previewImage,
                 editorImage: preview.editorCutout || '',
                 editorZone: preview.editorZone,
-                previewZone: preview.previewZone,
                 displacementMap: preview.displacementMap,
                 shadowMap: preview.shadowMap,
                 cssTransform: preview.cssTransform,
@@ -280,22 +277,13 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         const editor = createZoneRect(editorZone, '#3b82f6', 'rgba(59, 130, 246, 0.1)', 'editor-zone', 'EDITOR ZONE', viewMode === 'editor');
         fabricCanvas.add(editor.rect, editor.text);
 
-        const preview = createZoneRect(activeView.previewZone, '#22c55e', 'rgba(34, 197, 94, 0.1)', 'preview-zone', 'PREVIEW ZONE', viewMode === 'preview');
-        fabricCanvas.add(preview.rect, preview.text);
-
         const updateState = () => {
             const editorObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone') as fabric.Rect;
-            const previewObj = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone') as fabric.Rect;
             const editorLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'editor-zone-label') as fabric.Text;
-            const previewLabel = fabricCanvas.getObjects().find(o => (o as any).data?.id === 'preview-zone-label') as fabric.Text;
 
             if (editorObj && editorLabel && editorObj.visible) {
                 // @ts-ignore
                 editorLabel.set({ left: editorObj.left, top: (editorObj.top || 0) - 24 });
-            }
-            if (previewObj && previewLabel && previewObj.visible) {
-                // @ts-ignore
-                previewLabel.set({ left: previewObj.left, top: (previewObj.top || 0) - 24 });
             }
 
             if (editorObj && viewMode === 'editor') {
@@ -311,16 +299,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 } else {
                     setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, editorZone: newZone } : v));
                 }
-            }
-
-            if (previewObj && viewMode === 'preview') {
-                const newZone = {
-                    // @ts-ignore
-                    left: Math.round(previewObj.left || 0), top: Math.round(previewObj.top || 0),
-                    // @ts-ignore
-                    width: Math.round((previewObj.width || 0) * (previewObj.scaleX || 1)), height: Math.round((previewObj.height || 0) * (previewObj.scaleY || 1)),
-                };
-                setViews(prev => prev.map(v => v.id === activeViewId ? { ...v, previewZone: newZone } : v));
             }
         };
 
@@ -405,7 +383,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 id: v.id,
                 name: v.name,
                 editorZone: v.editorZone,
-                previewZone: v.previewZone,
                 displacementMap: v.displacementMap,
                 shadowMap: v.shadowMap,
                 editorCutout: v.editorImage,
