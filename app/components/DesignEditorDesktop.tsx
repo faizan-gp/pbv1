@@ -167,8 +167,11 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
             // --- LOAD BACKGROUND IMAGE ---
             let imageUrl = product.image; // default fallback
+            const preferCutout = !useRealPreview;
 
-            if (activeModel) {
+            if (preferCutout && activePreview.editorCutout) {
+                imageUrl = activePreview.editorCutout;
+            } else if (activeModel) {
                 if (activeModel.images?.[activeViewId]) {
                     imageUrl = activeModel.images[activeViewId];
                 } else if (activeModel.image) {
@@ -568,7 +571,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                         src={
                             useRealPreview
                                 ? (activeModel?.images?.[activeViewId] || activeModel?.image || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
-                                : (activeModel?.image || activeModel?.images?.[activeViewId] || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
+                                : (activePreview.editorCutout || activeModel?.image || activeModel?.images?.[activeViewId] || (selectedColor?.images?.[activeViewId]) || product.image)
                         }
                         alt="Editor Background"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 select-none"
