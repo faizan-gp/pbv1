@@ -58,6 +58,7 @@ interface ProductColor {
     hex: string;
     images: Record<string, string>; // Map viewId -> imageUrl
     printifyVariantIds?: number[];
+    isBackground?: boolean;
 }
 
 interface ProductCreatorProps {
@@ -137,10 +138,18 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 name: c.name,
                 hex: c.hex,
                 images: c.images || {},
-                printifyVariantIds: c.printifyVariantIds || []
+                printifyVariantIds: c.printifyVariantIds || [],
+                isBackground: c.isBackground || false
             }));
         }
         return [{ name: 'Default', hex: '#ffffff', images: {} }];
+    });
+
+    const [isAOP, setIsAOP] = useState(() => {
+        if (initialData?.colors && initialData.colors.length > 0) {
+            return initialData.colors.some((c: any) => c.isBackground);
+        }
+        return false;
     });
 
     const [productModels, setProductModels] = useState<ProductModel[]>(() => {
@@ -375,7 +384,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                     ...views.reduce((acc, v) => ({ ...acc, [v.id]: v.image }), {}),
                     ...(c.images || {})
                 },
-                printifyVariantIds: c.printifyVariantIds || []
+                printifyVariantIds: c.printifyVariantIds || [],
+                isBackground: c.isBackground || false
             })),
             models: productModels,
             designZone: views[0]?.editorZone,
@@ -1369,7 +1379,8 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                             name: item.name,
                             hex: item.hex,
                             images: {},
-                            printifyVariantIds: item.printifyVariantIds || []
+                            printifyVariantIds: item.printifyVariantIds || [],
+                            isBackground: isAOP
                         });
                     } else {
                         invalidCount++;
@@ -1811,21 +1822,47 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                         ) : (
                             <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h4 className="font-bold text-gray-900">Product Colors</h4>
-                                    <button onClick={addProductColor} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
-                                        <Plus size={14} /> Add Color
-                                    </button>
-                                    <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
-                                        <FolderUp size={14} /> Import JSON
-                                        <input
-                                            type="file"
-                                            accept=".json,application/json"
-                                            className="hidden"
-                                            onChange={handleBulkColorJsonUpload}
-                                        />
-                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <h4 className="font-bold text-gray-900">{isAOP ? 'Background Colors' : 'Product Colors'}</h4>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                id="isAOP"
+                                                checked={isAOP}
+                                                onChange={(e) => {
+                                                    const val = e.target.checked;
+                                                    setIsAOP(val);
+                                                    setProductColors(prev => prev.map(c => ({ ...c, isBackground: val })));
+                                                }}
+                                                className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <label htmlFor="isAOP" className="text-xs font-medium text-gray-600 cursor-pointer select-none">
+                                                Use as Background Colors (AOP)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <button onClick={() => {
+                                            setProductColors(prev => [...prev, { name: 'New Color', hex: '#000000', images: {}, isBackground: isAOP }]);
+                                        }} className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1">
+                                            <Plus size={14} /> Add Color
+                                        </button>
+                                        <label className="text-sm text-indigo-600 font-medium hover:text-indigo-700 flex items-center gap-1 cursor-pointer">
+                                            <FolderUp size={14} /> Import JSON
+                                            <input
+                                                type="file"
+                                                accept=".json,application/json"
+                                                className="hidden"
+                                                onChange={handleBulkColorJsonUpload}
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
-                                <p className="text-sm text-gray-500">Define the available colors and their hex codes.</p>
+                                <p className="text-sm text-gray-500">
+                                    {isAOP
+                                        ? "Define background colors for the editor. These won't show as product variants."
+                                        : "Define the available colors and their hex codes."}
+                                </p>
                                 <div className="space-y-3">
                                     {productColors.map((color, idx) => (
                                         <div key={idx} className="flex items-center gap-3">

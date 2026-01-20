@@ -27,6 +27,7 @@ export interface IProductColor {
     hex: string;
     images: Record<string, string>;
     printifyVariantIds?: number[];
+    isBackground?: boolean;
 }
 
 export interface IProductFeature {
