@@ -90,7 +90,20 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
     const activeItem = fetchedCartItem || localCartItem;
 
     // --- STATE ---
-    const [activeTab, setActiveTab] = useState(activeItem || editCartId ? 'text' : 'color'); // If editing, go to edit mode
+    const isAOP = React.useMemo(() => product.colors?.some((c: any) => c.isBackground), [product.colors]);
+
+    const [activeTab, setActiveTab] = useState(() => {
+        if (editCartId || fetchedCartItem || localCartItem) return 'text';
+        if (isAOP) return 'text';
+        return 'color';
+    });
+
+    // Dynamic Tabs
+    const tabs = React.useMemo(() => {
+        if (isAOP) return TABS.filter(t => t.id !== 'color');
+        return TABS;
+    }, [isAOP]);
+
     const [selectedColor, setSelectedColor] = useState(() => {
         if (localCartItem?.options.color) {
             return product.colors.find((c: any) => c.name === localCartItem.options.color) || product.colors[0];
@@ -891,7 +904,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
                         {/* 3. Bottom Tab Bar (Sticky) */}
                         <div className="h-16 border-t border-slate-100 flex items-center justify-around bg-white shrink-0 pb-safe">
-                            {TABS.map(tab => {
+                            {tabs.map(tab => {
                                 const Icon = tab.icon;
                                 const isActive = activeTab === tab.id;
                                 return (
