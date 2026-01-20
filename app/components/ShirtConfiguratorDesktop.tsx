@@ -282,23 +282,29 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                 setDesignPreviews(prev => ({ ...prev, [activeViewId]: currentState.dataUrl }));
             }
 
-            // 1b. Get designs for Front and Back
-            // We iterate over keys 'front' and 'back' and check if we have data
+            // 1b. Get designs for All Views dynamically
             const designsMap: Record<string, any> = {};
 
-            // Check Front
-            if (currentDesignPreviews['front']) {
-                designsMap['front'] = {
-                    imageBase64: currentDesignPreviews['front'],
-                    printPosition: 'front'
-                };
+            if (product.previews && Array.isArray(product.previews)) {
+                product.previews.forEach((preview: any) => {
+                    const viewId = preview.id;
+                    if (currentDesignPreviews[viewId]) {
+                        designsMap[viewId] = {
+                            imageBase64: currentDesignPreviews[viewId],
+                            printPosition: viewId
+                        };
+                    }
+                });
             }
-            // Check Back
-            if (currentDesignPreviews['back']) {
-                designsMap['back'] = {
-                    imageBase64: currentDesignPreviews['back'],
-                    printPosition: 'back'
-                };
+
+            // Fallback: If no designs found via previews (e.g. legacy data), try direct keys
+            if (Object.keys(designsMap).length === 0) {
+                Object.keys(currentDesignPreviews).forEach(viewId => {
+                    designsMap[viewId] = {
+                        imageBase64: currentDesignPreviews[viewId],
+                        printPosition: viewId
+                    };
+                });
             }
 
             // Debug: Check if we have what we expect

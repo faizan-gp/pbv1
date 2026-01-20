@@ -175,29 +175,29 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             }
 
             // Build Designs Map
+            // Build Designs Map dynamically
             const designsMap: Record<string, any> = {};
 
-            // Front
-            if (finalDesignPreviews['front']) {
-                designsMap['front'] = {
-                    imageBase64: finalDesignPreviews['front'],
-                    printPosition: 'front'
-                };
-            }
-            // Back
-            if (finalDesignPreviews['back']) {
-                designsMap['back'] = {
-                    imageBase64: finalDesignPreviews['back'],
-                    printPosition: 'back'
-                };
+            if (product.previews && Array.isArray(product.previews)) {
+                product.previews.forEach((preview: any) => {
+                    const viewId = preview.id;
+                    if (finalDesignPreviews[viewId]) {
+                        designsMap[viewId] = {
+                            imageBase64: finalDesignPreviews[viewId],
+                            printPosition: viewId
+                        };
+                    }
+                });
             }
 
-            // Fallback: If map empty but we have active view data
-            if (Object.keys(designsMap).length === 0 && finalDesignPreviews[activeViewId]) {
-                designsMap[activeViewId] = {
-                    imageBase64: finalDesignPreviews[activeViewId],
-                    printPosition: activeViewId === 'back' ? 'back' : 'front'
-                };
+            // Fallback: If no designs found via previews, try direct keys
+            if (Object.keys(designsMap).length === 0) {
+                Object.keys(finalDesignPreviews).forEach(viewId => {
+                    designsMap[viewId] = {
+                        imageBase64: finalDesignPreviews[viewId],
+                        printPosition: viewId
+                    };
+                });
             }
 
             if (Object.keys(designsMap).length === 0) {
