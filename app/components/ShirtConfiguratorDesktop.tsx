@@ -132,7 +132,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     const [isAdding, setIsAdding] = useState(false);
     const [viewModeOverride, setViewModeOverride] = useState<'editor' | 'preview' | null>(null);
 
-    const activeViewMode = viewModeOverride ?? (currentStep === 0 || currentStep === 3 ? 'preview' : 'editor');
+    const activeViewMode = viewModeOverride ?? (currentStep === 0 ? 'preview' : 'editor');
 
     const handleDesignUpdate = React.useCallback((data: { dataUrl: string; jsonState: any }) => {
         console.log("DEBUG: handleDesignUpdate in ShirtConfigurator", { viewId: activeViewId, dataUrlLength: data.dataUrl?.length });
@@ -354,11 +354,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     };
 
     // Trigger generation when entering preview mode
-    React.useEffect(() => {
-        if (activeViewMode === 'preview' && mockupImages.length === 0 && product.printifyBlueprintId) {
-            generateMockups();
-        }
-    }, [activeViewMode]);
+
 
     const handleAddToCart = async (isUpdate: boolean = false) => {
         if (!selectedSize) { showToast('Please select a size', 'error'); return; }
