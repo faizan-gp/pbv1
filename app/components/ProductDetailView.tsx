@@ -180,7 +180,7 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
                     )}
 
                     {/* Color Selector */}
-                    {product.colors && product.colors.length > 0 && (!product.models || product.models.length === 0) && (
+                    {product.colors && product.colors.length > 0 && (!product.models || product.models.length === 0) && !product.colors.some((c: any) => c.isBackground) && (
                         <div className="space-y-3 pt-4 border-t border-slate-100">
                             <div className="flex justify-between text-sm">
                                 <span className="font-bold text-slate-900">Select Color</span>

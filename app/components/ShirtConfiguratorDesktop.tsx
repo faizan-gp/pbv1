@@ -49,12 +49,23 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     const isPhoneCase = product.models && product.models.length > 0;
 
     // Dynamic Steps to swap Color for Model
-    const steps = React.useMemo(() => STEPS.map(s => {
-        if (s.id === 'color' && isPhoneCase) {
-            return { ...s, label: 'Model', icon: Smartphone, description: 'Choose your model' };
+    const isAOP = React.useMemo(() => product.colors?.some((c: any) => c.isBackground), [product.colors]);
+
+    // Dynamic Steps: 
+    // 1. Swap Color for Model if Phone Case
+    // 2. Remove Color if AOP
+    const steps = React.useMemo(() => {
+        let filtered = STEPS;
+        if (isAOP) {
+            filtered = filtered.filter(s => s.id !== 'color');
         }
-        return s;
-    }), [isPhoneCase]);
+        return filtered.map(s => {
+            if (s.id === 'color' && isPhoneCase) {
+                return { ...s, label: 'Model', icon: Smartphone, description: 'Choose your model' };
+            }
+            return s;
+        });
+    }, [isPhoneCase, isAOP]);
 
     // Read Only State
     const [isReadOnly, setIsReadOnly] = useState(!!viewOnly);
@@ -134,7 +145,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     const [isAdding, setIsAdding] = useState(false);
     const [viewModeOverride, setViewModeOverride] = useState<'editor' | 'preview' | null>(null);
 
-    const activeViewMode = viewModeOverride ?? (currentStep === 0 ? 'preview' : 'editor');
+    const isColorStep = steps[currentStep]?.id === 'color';
+    const activeViewMode = viewModeOverride ?? (isColorStep ? 'preview' : 'editor');
 
     const handleDesignUpdate = React.useCallback((data: { dataUrl: string; jsonState: any }) => {
         console.log("DEBUG: handleDesignUpdate in ShirtConfigurator", { viewId: activeViewId, dataUrlLength: data.dataUrl?.length });
@@ -689,7 +701,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     <p className="text-sm text-slate-500">{steps[currentStep].description}</p>
                                 </div>
 
-                                {currentStep === 0 && (
+                                {steps[currentStep].id === 'color' && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                                         {isPhoneCase ? (
                                             // PHONE CASE - MODEL SELECTION
@@ -745,7 +757,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     </div>
                                 )}
 
-                                {currentStep === 1 && (
+                                {steps[currentStep].id === 'text' && (
                                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                                         <button onClick={() => { editorRef.current?.addText(); setViewModeOverride('editor'); }} className="w-full p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group text-left">
                                             <div className="flex items-center gap-4">
@@ -756,7 +768,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     </div>
                                 )}
 
-                                {currentStep === 2 && (
+                                {steps[currentStep].id === 'image' && (
                                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                                         <label className="w-full p-6 rounded-2xl border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all group text-left block cursor-pointer">
                                             <div className="flex items-center gap-4">
@@ -775,7 +787,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                                     </div>
                                 )}
 
-                                {currentStep === 3 && (
+                                {steps[currentStep].id === 'size' && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                                         {/* Unit Toggle & Size Chart */}
                                         <div className="flex justify-between items-center mb-2">
@@ -846,7 +858,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
                         <div className="p-8 border-t border-slate-100 bg-white">
                             <div className="flex gap-4">
-                                {currentStep === STEPS.length - 1 ? (
+                                {currentStep === steps.length - 1 ? (
                                     <div className="flex-1 flex gap-3">
                                         {editCartId ? (
                                             <>
