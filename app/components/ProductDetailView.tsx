@@ -31,10 +31,14 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
         if (selectedColor) {
             images = images.filter(img => !img.color || img.color === 'All' || img.color === selectedColor);
 
-            // Sort: Selected color images first
+            // Sort: Selected color images first, 'All'/'Generic' images last
             images.sort((a, b) => {
-                const aIsSelected = a.color === selectedColor;
-                const bIsSelected = b.color === selectedColor;
+                const aColor = typeof a === 'string' ? 'All' : (a.color || 'All');
+                const bColor = typeof b === 'string' ? 'All' : (b.color || 'All');
+
+                const aIsSelected = aColor === selectedColor;
+                const bIsSelected = bColor === selectedColor;
+
                 if (aIsSelected && !bIsSelected) return -1;
                 if (!aIsSelected && bIsSelected) return 1;
                 return 0;
