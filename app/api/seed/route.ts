@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { seedProductsBatch, getAllProducts, PRODUCTS_COLLECTION } from '@/lib/firestore/products';
-import { db } from '@/lib/firebase';
-import { writeBatch, doc } from 'firebase/firestore';
-import { products } from '@/app/data/products';
+// import { seedProductsBatch, getAllProducts, PRODUCTS_COLLECTION } from '@/lib/firestore/products';
+// import { db } from '@/lib/firebase';
+// import { writeBatch, doc } from 'firebase/firestore';
+// import { products } from '@/app/data/products';
 
 export async function GET() {
+    return NextResponse.json({ message: 'Seeding is currently disabled as static product data is missing.' });
+    /*
     try {
         // We are NOT clearing existing products for now with simple firestore utils
         // unless we fetch all and delete, but writeBatch has limits.
@@ -38,4 +40,5 @@ export async function GET() {
         console.error('Seed error:', error);
         return NextResponse.json({ message: 'Error seeding database', error }, { status: 500 });
     }
+    */
 }
