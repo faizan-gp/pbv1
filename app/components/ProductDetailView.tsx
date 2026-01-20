@@ -28,31 +28,54 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
 
     const galleryImages = useMemo(() => {
         let images = product.listingImages || [];
+
+        // Filter logic (preserve existing behavior for listingImages)
         if (selectedColor) {
             images = images.filter(img => !img.color || img.color === 'All' || img.color === selectedColor);
 
-            // Sort: Selected color images first, 'All'/'Generic' images last
+            // Sort: Selected color images first
             images.sort((a, b) => {
                 const aColor = typeof a === 'string' ? 'All' : (a.color || 'All');
-                const bColor = typeof b === 'string' ? 'All' : (b.color || 'All');
-
+                // const bColor = typeof b === 'string' ? 'All' : (b.color || 'All'); 
+                // Optimization: We only care if 'a' is selected. 
+                // Actually, existing sort logic is fine, let's keep it simple or rely on the prepend below.
                 const aIsSelected = aColor === selectedColor;
-                const bIsSelected = bColor === selectedColor;
-
-                if (aIsSelected && !bIsSelected) return -1;
-                if (!aIsSelected && bIsSelected) return 1;
+                if (aIsSelected) return -1;
                 return 0;
             });
         } else {
             images = images.filter(img => !img.color || img.color === 'All');
         }
+
         let urls = images.map(img => (typeof img === 'string' ? img : img.url));
-        if (urls.length === 0 && product.image) urls = [product.image];
+
+        // Fallback: If filtered list is empty, maybe show all listing images? 
+        // Existing logic did: if (urls.length === 0 && (product.listingImages || []).length > 0) ...
         if (urls.length === 0 && (product.listingImages || []).length > 0) {
             urls = (product.listingImages || []).map(img => (typeof img === 'string' ? img : img.url));
         }
+
+        // Default fallback
+        if (urls.length === 0 && product.image) urls = [product.image];
+
+        // MASTER OVERRIDE: Prepend actual color images from `product.colors`
+        if (selectedColor) {
+            const colorObj = product.colors.find(c => c.name === selectedColor);
+            if (colorObj && colorObj.images) {
+                // Get relevant images (front, back, etc) in order
+                // We likely want 'front' first, then others
+                const frontImg = colorObj.images['front'];
+                const otherImgs = Object.values(colorObj.images).filter(url => url !== frontImg);
+
+                const colorUrls = [frontImg, ...otherImgs].filter(Boolean);
+
+                // Merge and Deduplicate
+                urls = [...colorUrls, ...urls].filter((item, pos, self) => self.indexOf(item) === pos);
+            }
+        }
+
         return urls;
-    }, [product.listingImages, product.image, selectedColor]);
+    }, [product.listingImages, product.image, selectedColor, product.colors]);
 
     const activeImage = galleryImages[activeImageIndex] || galleryImages[0] || product.image;
 
