@@ -463,7 +463,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                             onSelectionChange={handleSelectionChange}
                             readOnly={isReadOnly}
                             selectedColor={selectedColor}
-                            useRealPreview={activeTab === 'text'}
+                            useRealPreview={false}
                         />
                     </div>
 
