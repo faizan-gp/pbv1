@@ -29,20 +29,9 @@ export default function ProductDetailView({ product, descriptionSlot }: ProductD
     const galleryImages = useMemo(() => {
         let images = product.listingImages || [];
         if (selectedColor) {
-            images = images.filter(img => !img.color || img.color === 'All' || img.color === selectedColor);
-
-            // Sort: Selected color images first, 'All'/'Generic' images last
-            images.sort((a, b) => {
-                const aColor = typeof a === 'string' ? 'All' : (a.color || 'All');
-                const bColor = typeof b === 'string' ? 'All' : (b.color || 'All');
-
-                const aIsSelected = aColor === selectedColor;
-                const bIsSelected = bColor === selectedColor;
-
-                if (aIsSelected && !bIsSelected) return -1;
-                if (!aIsSelected && bIsSelected) return 1;
-                return 0;
-            });
+            const specificImages = images.filter(img => img.color === selectedColor);
+            const commonImages = images.filter(img => !img.color || img.color === 'All');
+            images = [...specificImages, ...commonImages];
         } else {
             images = images.filter(img => !img.color || img.color === 'All');
         }
