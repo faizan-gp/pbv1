@@ -870,32 +870,34 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                                             ))}
                                         </div>
 
-                                        {/* Multi-Color Variants */}
-                                        <div className="mt-8 pt-6 border-t border-slate-200">
-                                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Also add in these colors?</h3>
-                                            <div className="grid grid-cols-4 gap-3">
-                                                {product.colors.filter((c: any) => c.name !== selectedColor.name).map((c: any) => {
-                                                    const isSelected = extraColors.includes(c.name);
-                                                    return (
-                                                        <button
-                                                            key={c.name}
-                                                            onClick={() => setExtraColors(prev =>
-                                                                prev.includes(c.name)
-                                                                    ? prev.filter(x => x !== c.name)
-                                                                    : [...prev, c.name]
-                                                            )}
-                                                            className={cn("relative rounded-lg overflow-hidden border transition-all group", isSelected ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-slate-200")}
-                                                        >
-                                                            <div className="aspect-[4/5] relative bg-slate-50">
-                                                                <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
-                                                            </div>
-                                                            <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
-                                                            {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
-                                                        </button>
-                                                    );
-                                                })}
+                                        {/* Multi-Color Variants - Hidden for AOP */}
+                                        {!isAOP && (
+                                            <div className="mt-8 pt-6 border-t border-slate-200">
+                                                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Also add in these colors?</h3>
+                                                <div className="grid grid-cols-4 gap-3">
+                                                    {product.colors.filter((c: any) => c.name !== selectedColor.name).map((c: any) => {
+                                                        const isSelected = extraColors.includes(c.name);
+                                                        return (
+                                                            <button
+                                                                key={c.name}
+                                                                onClick={() => setExtraColors(prev =>
+                                                                    prev.includes(c.name)
+                                                                        ? prev.filter(x => x !== c.name)
+                                                                        : [...prev, c.name]
+                                                                )}
+                                                                className={cn("relative rounded-lg overflow-hidden border transition-all group", isSelected ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-slate-200")}
+                                                            >
+                                                                <div className="aspect-[4/5] relative bg-slate-50">
+                                                                    <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
+                                                                </div>
+                                                                <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
+                                                                {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
