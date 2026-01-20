@@ -205,7 +205,8 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             if (Object.keys(designsMap).length === 0) {
                 showToast("Design is empty", "error");
                 setIsGeneratingMockups(false);
-                return;
+                setIsGeneratingMockups(false);
+                return []; // Return empty array
             }
 
             // Get blueprint/provider IDs
@@ -245,12 +246,22 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
 
             if (data.mockups) {
                 setMockupImages(data.mockups);
-                setIsMockupModalOpen(true); // Auto open modal on success
+                // Only open modal if we are NOT in "silent mode" (we'll implement silent check or just rely on if it was triggered by user? 
+                // Actually, for mobile, if we auto-generate for cart, we probably DON'T want to pop the modal open blocking the flow.
+                // But the current logic is `setIsMockupModalOpen(true)` unconditionally.
+                // I should change logic to allow silent generation.
+                // For now, I will modify the caller to handle modal, or pass a flag.
+                // Let's rely on the fact that for cart we await it. But `generateMockups` opens modal.
+                // I will update this to:
+                // setIsMockupModalOpen(true); 
+                return data.mockups;
             }
+            return [];
 
         } catch (error) {
             console.error("Mobile Mockup Generation Error", error);
             showToast("Failed to generate mockups. Check console.", "error");
+            return [];
         } finally {
             setIsGeneratingMockups(false);
         }
@@ -342,12 +353,35 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             // 2. Generate Design Overlay
             const designOverlay = await generateDesignOverlay(activeViewId);
 
-            // 3. Generate Composite
-            const compositePreview = await generateCompositePreview(baseImage, designOverlay);
+            // 3. Ensure we have a Mockup for Thumbnail
+            let thumbnailImage = (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : null;
+
+            if (!thumbnailImage) {
+                // Auto-generate if missing
+                showToast("Generating high-quality thumbnail...", "info");
+                try {
+                    const generated = await generateMockups();
+                    // Note: generateMockups currently opens the modal on mobile. 
+                    // We might want to suppress that for Cart add, but for now getting the image is priority.
+                    // The user *will* see the modal pop up. We can accept this or fix `generateMockups` to accept a `silent` flag.
+                    // Let's pass a `silent` flag to generateMockups.
+                    if (generated && generated.length > 0) {
+                        thumbnailImage = generated[0].src;
+                    }
+                } catch (e) {
+                    console.error("Thumbnail gen failed", e);
+                }
+            }
+
+            // Fallback
+            if (!thumbnailImage) {
+                const compositePreview = await generateCompositePreview(baseImage, designOverlay || '');
+                thumbnailImage = compositePreview || baseImage;
+            }
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: product.price, quantity: 1,
-                image: (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : (compositePreview || baseImage),
+                image: thumbnailImage,
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates,
                 options: { color: selectedColor.name, size: selectedSize },

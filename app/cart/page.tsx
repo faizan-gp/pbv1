@@ -55,15 +55,6 @@ export default function CartPage() {
                                             alt={item.name}
                                             className="w-full h-full object-contain p-3 mix-blend-multiply"
                                         />
-                                        {/* Design Overlay */}
-                                        {item.previews && Object.values(item.previews).map((overlay, i) => (
-                                            <img
-                                                key={i}
-                                                src={overlay}
-                                                alt="Design Overlay"
-                                                className="absolute inset-0 w-full h-full object-contain pointer-events-none opacity-90 p-3"
-                                            />
-                                        ))}
                                     </div>
 
                                     {/* Details */}

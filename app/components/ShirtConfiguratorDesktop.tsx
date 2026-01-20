@@ -236,7 +236,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             // If called by `generateMockups()`, first arg is undefined (falsy).
             // The user says it IS called automatically. 
             // If I change signature to `manualTrigger: boolean`, and it's called with no args, it is undefined/false.
-            return;
+            return [];
         }
         // Default to T-shirt (706) if not specified
         const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
@@ -321,7 +321,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             if (Object.keys(designsMap).length === 0) {
                 showToast("Design is empty", "error");
                 setIsGeneratingMockups(false);
-                return;
+                return [];
             }
 
             console.log("Generating Mockups", {
@@ -356,7 +356,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
             if (result.success) {
                 setMockupImages(result.mockups);
-                showToast("Mockups generated!", "success");
+                if (manualTrigger) showToast("Mockups generated!", "success");
+                return result.mockups;
             } else {
                 throw new Error(result.error);
             }
@@ -364,6 +365,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
         } catch (error: any) {
             console.error("Mockup generation failed:", error);
             showToast(error.message || "Failed to generate mockups", "error");
+            return [];
         } finally {
             setIsGeneratingMockups(false);
         }
@@ -384,13 +386,31 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             const designOverlay = await generateDesignOverlay(activeViewId);
             console.log("DEBUG: Generated Design Overlay", { length: designOverlay?.length, activeViewId, previewsAvailable: Object.keys(designPreviews) });
 
-            // 3. Generate Composite Preview (for Cart Thumbnail)
-            const compositePreview = await generateCompositePreview(baseImage, designOverlay || '');
-            console.log("DEBUG: Generated Composite Preview", { length: compositePreview?.length, isBase: compositePreview === baseImage });
+            // 3. Ensure we have a Mockup for Thumbnail
+            let thumbnailImage = (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : null;
+
+            if (!thumbnailImage) {
+                // Auto-generate if missing
+                showToast("Generating high-quality thumbnail...", "info");
+                try {
+                    const generated = await generateMockups(true); // Pass true to force execution
+                    if (generated && generated.length > 0) {
+                        thumbnailImage = generated[0].src;
+                    }
+                } catch (e) {
+                    console.error("Thumbnail generation failed", e);
+                }
+            }
+
+            // Fallback to composite if still no mockup
+            if (!thumbnailImage) {
+                const compositePreview = await generateCompositePreview(baseImage, designOverlay || '');
+                thumbnailImage = compositePreview || baseImage;
+            }
 
             const cartPayload = {
                 productId: product.id, name: product.name, price: product.price, quantity: 1,
-                image: (mockupImages && mockupImages.length > 0) ? mockupImages[0].src : (compositePreview || baseImage),
+                image: thumbnailImage,
                 previews: designOverlay ? { [activeViewId]: designOverlay } : undefined,
                 designState: designStates, // Save full design state
                 options: { color: selectedColor.name, size: selectedSize },
