@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import DesignEditor, { DesignEditorRef } from './DesignEditorMobile';
 import ProductPreview from './ProductPreview';
 import FontPicker from './FontPicker';
+import SizeChartModal from './SizeChartModal';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -154,6 +155,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
     const [mockupImages, setMockupImages] = useState<any[]>([]);
     const [isGeneratingMockups, setIsGeneratingMockups] = useState(false);
     const [isMockupModalOpen, setIsMockupModalOpen] = useState(false);
+    const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
 
     const generateMockups = async () => {
         setIsGeneratingMockups(true);
@@ -799,47 +801,53 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
                                     {/* Unit Toggle */}
                                     <div className="flex justify-center">
-                                        <div className="bg-slate-100 p-1 rounded-lg inline-flex">
-                                            <button onClick={() => setMeasurementUnit('imperial')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'imperial' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Imperial</button>
-                                            <button onClick={() => setMeasurementUnit('metric')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'metric' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Metric</button>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
-                                            <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-left transition-all", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}>
-                                                <div className="text-lg font-bold">{s.size}</div>
-                                                <div className={cn("text-xs opacity-80", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
-                                                    {s.width} {measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length} {measurementUnit === 'imperial' ? '"' : 'cm'}
-                                                </div>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <button
+                                                onClick={() => setIsSizeChartOpen(true)}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                            >
+                                                <Ruler size={14} /> Size Chart
                                             </button>
-                                        ))}
-                                    </div>
 
-                                    {/* Multi-Color Variants */}
-                                    <div className="mt-8 pt-6 border-t border-slate-200">
-                                        <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Also add in these colors?</h3>
-                                        <div className="grid grid-cols-4 gap-3">
-                                            {product.colors.filter((c: any) => c.name !== selectedColor.name).map((c: any) => {
-                                                const isSelected = extraColors.includes(c.name);
-                                                return (
-                                                    <button
-                                                        key={c.name}
-                                                        onClick={() => setExtraColors(prev =>
-                                                            prev.includes(c.name)
-                                                                ? prev.filter(x => x !== c.name)
-                                                                : [...prev, c.name]
-                                                        )}
-                                                        className={cn("relative rounded-lg overflow-hidden border transition-all group", isSelected ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-slate-200")}
-                                                    >
-                                                        <div className="aspect-[4/5] relative bg-slate-50">
-                                                            <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
-                                                        </div>
-                                                        <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
-                                                        {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
-                                                    </button>
-                                                );
-                                            })}
+                                            <div className="bg-slate-100 p-1 rounded-lg inline-flex">
+                                                <button onClick={() => setMeasurementUnit('imperial')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'imperial' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>IN</button>
+                                                <button onClick={() => setMeasurementUnit('metric')} className={cn("px-3 py-1 rounded-md text-[10px] font-bold transition-all", measurementUnit === 'metric' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>CM</button>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
+                                                <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center h-20", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}>
+                                                    <div className="text-xl font-bold">{s.size}</div>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        {/* Multi-Color Variants */}
+                                        <div className="mt-8 pt-6 border-t border-slate-200">
+                                            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Also add in these colors?</h3>
+                                            <div className="grid grid-cols-4 gap-3">
+                                                {product.colors.filter((c: any) => c.name !== selectedColor.name).map((c: any) => {
+                                                    const isSelected = extraColors.includes(c.name);
+                                                    return (
+                                                        <button
+                                                            key={c.name}
+                                                            onClick={() => setExtraColors(prev =>
+                                                                prev.includes(c.name)
+                                                                    ? prev.filter(x => x !== c.name)
+                                                                    : [...prev, c.name]
+                                                            )}
+                                                            className={cn("relative rounded-lg overflow-hidden border transition-all group", isSelected ? "border-indigo-600 ring-2 ring-indigo-600 ring-offset-2" : "border-slate-200")}
+                                                        >
+                                                            <div className="aspect-[4/5] relative bg-slate-50">
+                                                                <img src={c.images[activeViewId] || c.images['front']} className="w-full h-full object-contain mix-blend-multiply" />
+                                                            </div>
+                                                            <div className="p-1 bg-white text-[10px] font-bold text-center truncate">{c.name}</div>
+                                                            {isSelected && <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-sm"><Check size={10} strokeWidth={3} /></div>}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -922,6 +930,7 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                 </div>
             )}
 
+            <SizeChartModal isOpen={isSizeChartOpen} onClose={() => setIsSizeChartOpen(false)} product={product} />
         </div>
     );
 }

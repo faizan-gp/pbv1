@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import DesignEditor, { DesignEditorRef } from './DesignEditorDesktop';
 import ProductPreview from './ProductPreview';
 import FontPicker from './FontPicker';
+import SizeChartModal from './SizeChartModal';
 import { useCart } from '../context/CartContext';
 import { useRouter } from 'next/navigation';
 import {
@@ -108,6 +109,7 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
     const [mockupImages, setMockupImages] = useState<any[]>([]);
     const [isGeneratingMockups, setIsGeneratingMockups] = useState(false);
     const [isMockupModalOpen, setIsMockupModalOpen] = useState(false);
+    const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
 
     const [selectedColor, setSelectedColor] = useState(() => {
         if (localCartItem?.options.color) {
@@ -755,21 +757,24 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
 
                                 {currentStep === 3 && (
                                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                                        {/* Unit Toggle */}
-                                        <div className="flex justify-end mb-2">
-                                            <div className="bg-slate-100 p-1 rounded-lg inline-flex">
-                                                <button onClick={() => setMeasurementUnit('imperial')} className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", measurementUnit === 'imperial' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Imperial (in)</button>
-                                                <button onClick={() => setMeasurementUnit('metric')} className={cn("px-3 py-1 rounded-md text-xs font-bold transition-all", measurementUnit === 'metric' ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700")}>Metric (cm)</button>
+                                        {/* Unit Toggle & Size Chart */}
+                                        <div className="flex justify-between items-center mb-2">
+                                            <button
+                                                onClick={() => setIsSizeChartOpen(true)}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                                            >
+                                                <Ruler size={14} /> Size Chart
+                                            </button>
+
+                                            <div className="text-[10px] uppercase font-bold text-slate-400">
+                                                Select Size
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-3 gap-3">
                                             {product.sizeGuide?.[measurementUnit]?.map((s: any) => (
-                                                <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-left transition-all", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300")}>
-                                                    <div className="text-lg font-bold">{s.size}</div>
-                                                    <div className={cn("text-xs opacity-80", selectedSize === s.size ? "text-slate-300" : "text-slate-400")}>
-                                                        {s.width} {measurementUnit === 'imperial' ? '"' : 'cm'} x {s.length} {measurementUnit === 'imperial' ? '"' : 'cm'}
-                                                    </div>
+                                                <button key={s.size} onClick={() => setSelectedSize(s.size)} className={cn("p-4 rounded-xl border text-center transition-all flex flex-col items-center justify-center h-20", selectedSize === s.size ? "bg-slate-900 text-white border-slate-900 shadow-md transform scale-105" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50")}>
+                                                    <div className="text-xl font-bold">{s.size}</div>
                                                 </button>
                                             ))}
                                         </div>
@@ -1019,6 +1024,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                     </div>
                 </div>
             )}
+
+            <SizeChartModal isOpen={isSizeChartOpen} onClose={() => setIsSizeChartOpen(false)} product={product} />
         </div >
     );
 }
