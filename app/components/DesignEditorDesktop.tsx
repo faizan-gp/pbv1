@@ -61,6 +61,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
         if (!fabricCanvas) return;
         fabricCanvas.selection = !readOnly;
         fabricCanvas.forEachObject((obj) => {
+            if ((obj as any).data?.id === 'design-zone') return;
             obj.selectable = !readOnly;
             obj.evented = !readOnly;
         });
@@ -534,6 +535,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             });
 
             // Hide design zone border for capture
+            const wasVisible = designZoneRef.current.visible;
             designZoneRef.current.set('visible', false);
             fabricCanvas.requestRenderAll(); // Ensure render
 
@@ -549,7 +551,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             const jsonState = (fabricCanvas as any).toJSON(['id', 'layerId', 'lockMovementX', 'lockMovementY', 'selectable', 'evented', 'excludeFromExport']);
 
             // Restore visibility
-            designZoneRef.current.set('visible', true);
+            designZoneRef.current.set('visible', wasVisible);
             fabricCanvas.requestRenderAll();
 
             return { dataUrl, jsonState };

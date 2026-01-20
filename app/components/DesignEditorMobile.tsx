@@ -40,6 +40,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         if (!fabricCanvas) return;
         fabricCanvas.selection = !readOnly;
         fabricCanvas.forEachObject((obj) => {
+            if ((obj as any).data?.id === 'design-zone') return;
             obj.selectable = !readOnly;
             obj.evented = !readOnly;
         });
@@ -336,6 +337,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         exportState: () => {
             if (!fabricCanvas || !designZoneRef.current) return null;
             // 1. Hide Overlay
+            const wasVisible = designZoneRef.current.visible;
             designZoneRef.current.set('visible', false);
 
             // 2. RESIZE CANVAS AND RESET VIEWPORT
@@ -358,7 +360,7 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
             // 4. Restore
             fabricCanvas.setDimensions({ width: originalWidth, height: originalHeight });
             if (originalVpt) fabricCanvas.setViewportTransform(originalVpt);
-            designZoneRef.current.set('visible', true);
+            designZoneRef.current.set('visible', wasVisible);
             fabricCanvas.requestRenderAll();
 
             return { jsonState, dataUrl };
