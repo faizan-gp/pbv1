@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { syncCartToFirestore } from "@/lib/firestore/carts";
+import { trackAddToCart, trackRemoveFromCart, trackEvent } from "@/lib/analytics";
 
 export interface CartItem {
     id: string; // Unique ID for the cart entry (e.g. productID + color + options)
@@ -92,11 +93,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             // Ensure unique ID even if added in same millisecond
             const uniqueSuffix = Math.random().toString(36).substring(2, 9);
             const id = `${newItem.productId}-${Date.now()}-${uniqueSuffix}`;
+
+            // Track Add To Cart
+            trackAddToCart({
+                id: newItem.productId,
+                name: newItem.name,
+                price: newItem.price,
+                category: 'Apparel' // Defaulting category as it's not in cart item yet
+            }, newItem.options?.color || null);
+
             return [...prev, { ...newItem, id, quantity: newItem.quantity }];
         });
     };
 
     const removeFromCart = (id: string) => {
+        const itemToRemove = items.find(i => i.id === id);
+        if (itemToRemove) {
+            trackRemoveFromCart(itemToRemove);
+        }
         setItems((prev) => prev.filter((item) => item.id !== id));
     };
 
@@ -105,6 +119,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             prev.map((item) => {
                 if (item.id === id) {
                     const newQuantity = Math.max(1, item.quantity + delta);
+
+                    // Track quantity change
+                    trackEvent('update_cart_quantity', {
+                        item_id: item.productId,
+                        item_name: item.name,
+                        new_quantity: newQuantity,
+                        delta: delta
+                    });
+
                     return { ...item, quantity: newQuantity };
                 }
                 return item;

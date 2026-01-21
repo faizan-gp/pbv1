@@ -9,6 +9,7 @@ import ProductDescriptionServer from '@/app/components/ProductDescriptionServer'
 import RelatedProducts from '@/app/components/RelatedProducts';
 import { getCategoryBySlug, getSubcategoryBySlug } from '@/lib/categories';
 import CategoryPage from '@/app/components/CategoryPage';
+import ProductViewTracker from '@/app/components/analytics/ProductViewTracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +93,7 @@ export default async function ProductPageCatchAll({ params }: { params: Promise<
 
     return (
         <div className="min-h-screen bg-[#FDFDFD] text-slate-900 selection:bg-black selection:text-white overflow-x-hidden">
+            <ProductViewTracker product={product} />
             <ProductSchema product={product} />
             <BreadcrumbSchema items={[
                 { name: "Home", url: "/" },

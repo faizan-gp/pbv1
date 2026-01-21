@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { trackEvent, fbTrackCustom } from '@/lib/analytics';
 
 interface ShirtConfiguratorProps {
     product: any;
@@ -86,6 +87,18 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             fetchRemoteCart();
         }
     }, [cartUserId, editCartId, product.colors, showToast]);
+
+    // Track Editor Open
+    React.useEffect(() => {
+        if (!viewOnly) {
+            trackEvent('design_editor_open', {
+                product_id: product.id,
+                product_name: product.name,
+                source: editCartId ? 'cart_edit' : 'fresh',
+                platform: 'mobile'
+            });
+        }
+    }, []);
 
     const activeItem = fetchedCartItem || localCartItem;
 
@@ -233,6 +246,9 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             }
 
             console.log("Generating Mobile Mockups", { blueprintId, providerId, variantId, views: Object.keys(designsMap) });
+
+            trackEvent('ai_generate_art', { product_id: product.id, platform: 'mobile' });
+            fbTrackCustom('AIGenerate', { product_id: product.id, platform: 'mobile' });
 
             const response = await fetch('/api/mockup/generate', {
                 method: 'POST',
@@ -432,6 +448,14 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
             }
 
             router.push("/cart");
+
+            trackEvent('design_save', {
+                product_id: product.id,
+                variant: selectedColor.name,
+                total_value: product.price,
+                is_update: isUpdate,
+                platform: 'mobile'
+            });
         } catch (error) {
             console.error("Mobile Add/Update Failed", error);
             setIsAdding(false);

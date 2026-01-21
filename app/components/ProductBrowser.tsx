@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import {
     Search, SlidersHorizontal, ArrowUpDown, ChevronDown,
@@ -9,6 +9,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Product } from '@/lib/firestore/products';
+import { trackEvent, fbTrack, tracksearch } from '@/lib/analytics';
 
 // --- CONFIG ---
 const CATEGORIES = [
@@ -81,6 +82,37 @@ export default function ProductsBrowser({ initialProducts, initialCategory = 'al
 
         return result;
     }, [initialProducts, activeCategory, searchQuery, sortBy]);
+
+    // --- Analytics ---
+    useEffect(() => {
+        // Debounce tracking to avoid spamming while typing/filtering
+        const timer = setTimeout(() => {
+            trackEvent('view_item_list', {
+                item_list_name: activeCategory === 'all' ? 'All Products' : activeCategory,
+                items: filteredProducts.slice(0, 10).map(p => ({
+                    item_id: p.id,
+                    item_name: p.name,
+                    price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+                }))
+            });
+
+            fbTrack('ViewContent', {
+                content_type: 'product_group',
+                content_ids: filteredProducts.slice(0, 10).map(p => p.id),
+                content_category: activeCategory
+            });
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [filteredProducts, activeCategory]);
+
+    useEffect(() => {
+        if (!searchQuery) return;
+        const timer = setTimeout(() => {
+            tracksearch(searchQuery);
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 pb-24 relative selection:bg-indigo-500 selection:text-white">

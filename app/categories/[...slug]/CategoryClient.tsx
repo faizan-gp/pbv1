@@ -13,6 +13,8 @@ import { CategoryData } from '@/lib/categories';
 import { Product } from '@/lib/firestore/products';
 import { cn } from '@/lib/utils';
 import CategorySEOContent from '@/app/components/CategorySEOContent';
+import { trackEvent, fbTrack, tracksearch, trackPageView } from '@/lib/analytics';
+import { useEffect } from 'react';
 
 // --- Types ---
 interface ExtendedProduct extends Product {
@@ -73,6 +75,46 @@ export default function CategoryClient({ category, products, subcategories, curr
 
         return result;
     }, [products, sortBy, searchQuery, priceRange]); // removed selectedSubcategory dependency
+
+    // --- Analytics ---
+    useEffect(() => {
+        // Track Page View on mount (since it's a client component handling the view)
+        // But Next.js might handle it via layout script for Meta. 
+        // For GA4, we might want explicit page_view if it's dynamic?
+        // Actually trackPageView helper calls analytics.logEvent('page_view').
+        // Let's rely on the global PageView tracker in app/page.tsx or similar if we added one globally? 
+        // We didn't add one globally. We added it to Home.
+        // So we should trackPageView here too.
+        trackPageView(window.location.pathname, document.title);
+
+        // Track View List
+        const timer = setTimeout(() => {
+            trackEvent('view_item_list', {
+                item_list_name: category?.name || 'Category',
+                items: filteredProducts.slice(0, 10).map(p => ({
+                    item_id: p.id,
+                    item_name: p.name,
+                    price: typeof p.price === 'string' ? parseFloat(p.price) : p.price
+                }))
+            });
+
+            fbTrack('ViewContent', {
+                content_type: 'product_group',
+                content_ids: filteredProducts.slice(0, 10).map(p => p.id),
+                content_category: category?.name
+            });
+        }, 1000); // delay to let products load/settle
+
+        return () => clearTimeout(timer);
+    }, [category, filteredProducts]);
+
+    useEffect(() => {
+        if (!searchQuery) return;
+        const timer = setTimeout(() => {
+            tracksearch(searchQuery);
+        }, 1500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const clearAll = () => {
         setSearchQuery('');

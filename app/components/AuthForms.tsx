@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { trackEvent, fbTrack } from '@/lib/analytics';
 
 export function LoginForm() {
     const router = useRouter();
@@ -28,6 +29,7 @@ export function LoginForm() {
             if (result?.error) {
                 setError('Invalid email or password');
             } else {
+                trackEvent('login', { method: 'email' });
                 router.push('/profile');
                 router.refresh();
             }
@@ -119,6 +121,9 @@ export function SignupForm() {
                 password,
                 redirect: false,
             });
+
+            trackEvent('sign_up', { method: 'email' });
+            fbTrack('CompleteRegistration', { content_name: 'signup' });
 
             router.push('/profile');
             router.refresh();

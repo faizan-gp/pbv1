@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState, useEffect } from "react";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import Image from "next/image";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 const US_STATES = [
     { name: 'Alabama', code: 'AL' }, { name: 'Alaska', code: 'AK' }, { name: 'Arizona', code: 'AZ' }, { name: 'Arkansas', code: 'AR' }, { name: 'California', code: 'CA' },
@@ -48,6 +49,12 @@ export default function CheckoutPage() {
     }, []);
 
     const [isSuccess, setIsSuccess] = useState(false);
+
+    useEffect(() => {
+        if (mounted && items.length > 0) {
+            trackBeginCheckout(items, total);
+        }
+    }, [mounted, items.length, total]);
 
     // Redirect if cart is empty, but NOT if we just successfully completed an order
     useEffect(() => {

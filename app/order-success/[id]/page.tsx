@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CheckCircle, ArrowRight, Package, MapPin, Calendar, Printer } from "lucide-react";
 import PrintOrderButton from "@/app/components/PrintOrderButton";
 import OrderHistoryItem from "@/app/components/OrderHistoryItem";
+import PurchaseTracker from "@/app/components/analytics/PurchaseTracker";
 import { getOrderById } from "@/lib/firestore/orders";
 import { notFound } from "next/navigation";
 
@@ -39,6 +40,9 @@ export default async function OrderSuccessPage({ params }: { params: Promise<{ i
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto space-y-8">
+
+                {/* Purchase Tracker */}
+                <PurchaseTracker order={order} products={products} />
 
                 {/* Success Header */}
                 <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-slate-200">

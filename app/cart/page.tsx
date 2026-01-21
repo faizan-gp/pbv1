@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Trash2, ArrowRight, Minus, Plus, PackageOpen, ChevronLeft, Settings2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 export default function CartPage() {
     const { items, removeFromCart, updateQuantity, cartTotal } = useCart();
@@ -12,6 +14,21 @@ export default function CartPage() {
     // const shipping = 5.99; // Removed hardcoded
     const total = cartTotal + shipping;
     const hasItems = items.length > 0;
+
+    useEffect(() => {
+        if (hasItems) {
+            trackEvent('view_cart', {
+                currency: "USD",
+                value: total,
+                items: items.map(item => ({
+                    item_id: item.productId,
+                    item_name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                }))
+            });
+        }
+    }, [hasItems, total]); // Track when entering cart with items or items update
 
     return (
         <div className="min-h-screen bg-[#F0F2F5] py-8 sm:py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center">

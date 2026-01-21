@@ -9,6 +9,8 @@ import {
 import ProductCard from "./components/ProductCard";
 import HeroSection from "./components/landing/HeroSection";
 import FaqSection from "./components/landing/FaqSection";
+import NewsletterSection from "./components/landing/NewsletterSection";
+import PageView from "./components/analytics/PageView";
 
 import { getAllProducts } from "@/lib/firestore/products";
 import { getCategories, CATEGORIES } from "@/lib/categories";
@@ -86,6 +88,9 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col gap-0 bg-white min-h-screen selection:bg-indigo-500 selection:text-white font-sans overflow-x-hidden">
+      <PageView title="Home" />
+
+      {/* GLOBAL BACKGROUND */}
 
       {/* GLOBAL BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -465,39 +470,7 @@ export default async function Home() {
       <FaqSection items={FAQS} />
 
       {/* --- NEWSLETTER SECTION --- */}
-      <section className="py-24 bg-white">
-        <div className="container-width">
-          <div className="bg-slate-900 rounded-[2.5rem] p-12 md:p-16 relative overflow-hidden">
-            {/* Decorative Circles */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-40 translate-x-1/3 -translate-y-1/3"></div>
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-500 rounded-full blur-[80px] opacity-30 -translate-x-1/3 translate-y-1/3"></div>
-
-            <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-12">
-              <div className="max-w-xl text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 text-indigo-300 font-bold mb-4">
-                  <Mail className="w-5 h-5" /> The Design Club
-                </div>
-                <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Get 15% off your first order</h2>
-                <p className="text-slate-400 text-lg">Join 50,000+ creators getting weekly design tips, free assets, and exclusive discounts.</p>
-              </div>
-
-              <div className="w-full max-w-md">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="flex-1 px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 backdrop-blur-sm"
-                  />
-                  <button className="px-8 py-4 rounded-full bg-white text-slate-900 font-bold hover:bg-indigo-50 transition-colors">
-                    Subscribe
-                  </button>
-                </div>
-                <p className="text-slate-500 text-xs mt-4 text-center sm:text-left">No spam. Unsubscribe anytime.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <NewsletterSection />
 
       {/* --- CTA SECTION --- */}
       <section className="px-4 pb-12 z-10 pt-12 bg-slate-50">

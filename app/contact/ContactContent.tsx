@@ -9,6 +9,7 @@ import { motion } from 'framer-motion';
 import { useToast } from '../components/Toast';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
+import { trackEvent, fbTrack } from '@/lib/analytics';
 
 // FAQ Data
 const faqs = [
@@ -57,6 +58,10 @@ export default function ContactContent() {
             });
 
             showToast('Message sent! Check your email soon.', 'success');
+
+            trackEvent('contact', { method: 'email', topic: formData.topic });
+            fbTrack('Contact', {});
+
             setFormData({ name: '', email: '', topic: 'Order Status', orderId: '', message: '' });
         } catch (error) {
             console.error(error);

@@ -16,6 +16,7 @@ import {
 import { useToast } from './Toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { trackEvent, fbTrackCustom } from '@/lib/analytics';
 
 import { getVariantId } from '@/lib/printify-map';
 
@@ -108,6 +109,17 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             fetchRemoteCart();
         }
     }, [cartUserId, editCartId, product.colors, showToast]);
+
+    // Track Editor Open
+    React.useEffect(() => {
+        if (!viewOnly) {
+            trackEvent('design_editor_open', {
+                product_id: product.id,
+                product_name: product.name,
+                source: editCartId ? 'cart_edit' : 'fresh'
+            });
+        }
+    }, []);
 
     const activeItem = fetchedCartItem || localCartItem;
 
@@ -250,6 +262,11 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             // If I change signature to `manualTrigger: boolean`, and it's called with no args, it is undefined/false.
             return [];
         }
+        if (manualTrigger) {
+            trackEvent('ai_generate_art', { product_id: product.id });
+            fbTrackCustom('AIGenerate', { product_id: product.id });
+        }
+
         // Default to T-shirt (706) if not specified
         const blueprintId = product?.printifyBlueprintId || 949; // Default 949 (Unisex Tee)
         const providerId = product?.printifyProviderId || 47; // Default 25 (Monster Digital) or 47
@@ -459,6 +476,15 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
             }
 
             showToast("Added to cart!", "success");
+
+            // Track Save/Add
+            trackEvent('design_save', {
+                product_id: product.id,
+                variant: selectedModel || selectedColor.name,
+                total_value: product.price, // Approximate
+                is_update: isUpdate
+            });
+
             router.push("/cart");
         } catch (error) {
             console.error("Error adding to cart:", error);
