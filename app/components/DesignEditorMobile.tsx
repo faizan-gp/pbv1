@@ -398,7 +398,9 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
 
             if (isSvg && selectedColor?.hex) {
                 try {
-                    const response = await fetch(imageUrl);
+                    // Fetch SVG via proxy to avoid CORS issues
+                    const proxyUrl = `/api/svg-proxy?url=${encodeURIComponent(imageUrl)}`;
+                    const response = await fetch(proxyUrl);
                     const svgText = await response.text();
                     const parser = new DOMParser();
                     const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');

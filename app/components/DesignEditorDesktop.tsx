@@ -49,6 +49,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
     const [textColor, setTextColor] = useState<string>('#333333');
     const [fontFamily, setFontFamily] = useState<string>('Arial');
+    const [processedBackgroundUrl, setProcessedBackgroundUrl] = useState<string | null>(null);
 
     const activePreview = product.previews.find((p: any) => p.id === activeViewId) || product.previews[0];
 
@@ -108,6 +109,50 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             resizeObserver.disconnect();
         };
     }, [product.canvasSize]); // Removed selectedObject dependency as ResizeObserver handles it
+
+    // --- SVG Background Color Processing ---
+    // Determine the base background image URL
+    const baseBackgroundUrl = useRealPreview
+        ? (activeModel?.images?.[activeViewId] || activeModel?.image || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
+        : (activePreview.editorCutout || activeModel?.image || activeModel?.images?.[activeViewId] || (selectedColor?.images?.[activeViewId]) || product.image);
+
+    useEffect(() => {
+        const processBackground = async () => {
+            const cleanUrl = baseBackgroundUrl.split('?')[0].toLowerCase();
+            const isSvg = cleanUrl.endsWith('.svg');
+
+            if (isSvg && selectedColor?.hex) {
+                try {
+                    // Fetch SVG via proxy to avoid CORS issues
+                    const proxyUrl = `/api/svg-proxy?url=${encodeURIComponent(baseBackgroundUrl)}`;
+                    const response = await fetch(proxyUrl);
+                    const svgText = await response.text();
+
+                    const parser = new DOMParser();
+                    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+
+                    // Find and update the color_background element
+                    const colorBgElement = svgDoc.getElementById('color_background');
+                    if (colorBgElement) {
+                        colorBgElement.setAttribute('fill', selectedColor.hex);
+                    }
+
+                    // Serialize back to string and create data URL
+                    const serializer = new XMLSerializer();
+                    const modifiedSvg = serializer.serializeToString(svgDoc);
+                    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(modifiedSvg)))}`;
+                    setProcessedBackgroundUrl(dataUrl);
+                } catch (err) {
+                    console.warn('Failed to process SVG for color:', err);
+                    setProcessedBackgroundUrl(null);
+                }
+            } else {
+                setProcessedBackgroundUrl(null);
+            }
+        };
+
+        processBackground();
+    }, [baseBackgroundUrl, selectedColor?.hex]);
 
     // --- Canvas Init ---
     useEffect(() => {
@@ -210,22 +255,9 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
             };
 
             try {
-                if (isSvg) {
-                    const { objects, options } = await fabric.loadSVGFromURL(imageUrl);
-                    if (!isMounted) return;
-                    const validObjects = objects.filter((o): o is fabric.FabricObject => o !== null);
-                    const svgGroup = fabric.util.groupSVGElements(validObjects, options) as fabric.Group;
-
-                    if (selectedColor && selectedColor.hex) {
-                        svgGroup.getObjects().forEach((obj: any) => {
-                            // Only change fill for the element with id="color_background"
-                            if (obj.id === 'color_background') {
-                                obj.set('fill', selectedColor.hex);
-                            }
-                        });
-                    }
-                    setupBackgroundObject(svgGroup);
-                } else {
+                // For SVGs, we don't add them to canvas - they're displayed via the static <img> tag
+                // Only load non-SVG images into the canvas background
+                if (!isSvg) {
                     const img = await fabric.Image.fromURL(imageUrl, { crossOrigin: 'anonymous' });
                     if (!isMounted) return;
                     setupBackgroundObject(img);
@@ -571,11 +603,7 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
                     style={{ width: product.canvasSize, height: product.canvasSize, transform: `scale(${scale})` }}>
                     {/* Background Image managed via img tag for reliability */}
                     <img
-                        src={
-                            useRealPreview
-                                ? (activeModel?.images?.[activeViewId] || activeModel?.image || (selectedColor?.images?.[activeViewId]) || activePreview.editorCutout || product.image)
-                                : (activePreview.editorCutout || activeModel?.image || activeModel?.images?.[activeViewId] || (selectedColor?.images?.[activeViewId]) || product.image)
-                        }
+                        src={processedBackgroundUrl || baseBackgroundUrl}
                         alt="Editor Background"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none z-0 select-none"
                     />
