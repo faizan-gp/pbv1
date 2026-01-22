@@ -388,12 +388,50 @@ const DesignEditorMobile = forwardRef<DesignEditorRef, DesignEditorProps>(({ onU
         imageUrl = (activePreview as any).image;
     }
 
+    // --- SVG Color Manipulation for Mobile ---
+    const [processedImageUrl, setProcessedImageUrl] = useState<string>(imageUrl);
+
+    useEffect(() => {
+        const processImage = async () => {
+            const cleanUrl = imageUrl.split('?')[0].toLowerCase();
+            const isSvg = cleanUrl.endsWith('.svg');
+
+            if (isSvg && selectedColor?.hex) {
+                try {
+                    const response = await fetch(imageUrl);
+                    const svgText = await response.text();
+                    const parser = new DOMParser();
+                    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+
+                    // Find and update the color_background element
+                    const colorBgElement = svgDoc.getElementById('color_background');
+                    if (colorBgElement) {
+                        colorBgElement.setAttribute('fill', selectedColor.hex);
+                    }
+
+                    // Serialize back to string and create data URL
+                    const serializer = new XMLSerializer();
+                    const modifiedSvg = serializer.serializeToString(svgDoc);
+                    const dataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(modifiedSvg)))}`;
+                    setProcessedImageUrl(dataUrl);
+                } catch (err) {
+                    console.warn('Failed to process SVG for color:', err);
+                    setProcessedImageUrl(imageUrl);
+                }
+            } else {
+                setProcessedImageUrl(imageUrl);
+            }
+        };
+
+        processImage();
+    }, [imageUrl, selectedColor?.hex]);
+
     return (
         <div ref={containerRef} className="w-full h-full relative overflow-hidden touch-none">
             {/* Background Image (Centered) */}
             <div className="absolute inset-0 flex items-center justify-center">
                 <img
-                    src={imageUrl}
+                    src={processedImageUrl}
                     alt="Product"
                     className="max-w-[100%] max-h-[100%] w-auto h-auto object-contain pointer-events-none select-none opacity-95"
                 />

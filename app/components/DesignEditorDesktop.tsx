@@ -218,7 +218,8 @@ const DesignEditorDesktop = forwardRef<DesignEditorRef, DesignEditorProps>(({ on
 
                     if (selectedColor && selectedColor.hex) {
                         svgGroup.getObjects().forEach((obj: any) => {
-                            if (obj.fill && obj.fill !== 'none' && obj.fill !== 'transparent') {
+                            // Only change fill for the element with id="color_background"
+                            if (obj.id === 'color_background') {
                                 obj.set('fill', selectedColor.hex);
                             }
                         });
