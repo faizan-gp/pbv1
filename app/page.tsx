@@ -377,14 +377,13 @@ export default async function Home() {
       </section>
 
       {/* --- MATERIAL QUALITY --- */}
-      <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
+      {/* <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
         <div className="container-width relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1 relative group">
               <div className="absolute inset-0 bg-indigo-500 rounded-3xl rotate-2 group-hover:rotate-1 transition-transform"></div>
               <div className="relative h-[400px] w-full bg-slate-800 rounded-3xl overflow-hidden border border-slate-700">
-                {/* Placeholder for fabric closeup */}
                 <img src="?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032" alt="Premium Heavyweight Cotton Shirt" className="w-full h-full object-cover opacity-80" />
                 <div className="absolute bottom-6 left-6 right-6 bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10">
                   <div className="flex items-center gap-3">
@@ -421,10 +420,10 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* --- SUSTAINABILITY PROMISE --- */}
-      <section className="py-24 bg-green-50/50 border-t border-slate-100">
+      {/* <section className="py-24 bg-green-50/50 border-t border-slate-100">
         <div className="container-width">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1">
@@ -450,7 +449,6 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Abstract Eco Visual */}
             <div className="flex-1 relative h-[400px] w-full bg-white rounded-[3rem] overflow-hidden shadow-xl border border-slate-100 flex items-center justify-center">
               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40 mix-blend-multiply"></div>
               <div className="absolute top-0 right-0 w-64 h-64 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
@@ -463,7 +461,7 @@ export default async function Home() {
             </div>
           </div>
         </div>
-      </section>
+      </section>  */}
 
 
       {/* --- FAQ ACCORDION --- */}
