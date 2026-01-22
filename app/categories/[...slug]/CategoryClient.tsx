@@ -372,7 +372,54 @@ export default function CategoryClient({ category, products, subcategories, curr
                                     ))}
                                 </AnimatePresence>
                             </motion.div>
+                        ) : products.length === 0 ? (
+                            /* COMING SOON - No products in this category yet */
+                            <div className="relative flex flex-col items-center justify-center py-20 px-8 bg-gradient-to-br from-indigo-50 via-white to-purple-50 border border-indigo-100 rounded-[2.5rem] text-center overflow-hidden">
+                                {/* Background decorations */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
+                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '1s' }} />
+
+                                {/* Icon */}
+                                <div className="relative z-10 w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl shadow-xl shadow-indigo-500/30 flex items-center justify-center mb-8 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                                    <Sparkles size={40} className="text-white" />
+                                </div>
+
+                                {/* Badge */}
+                                <div className="relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-200 text-amber-700 text-xs font-bold uppercase tracking-wider mb-6">
+                                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                                    Coming Soon
+                                </div>
+
+                                {/* Heading */}
+                                <h3 className="relative z-10 text-2xl md:text-3xl font-black text-slate-900 mb-4">
+                                    We're Working On It!
+                                </h3>
+
+                                {/* Description */}
+                                <p className="relative z-10 text-slate-600 mb-8 max-w-md mx-auto leading-relaxed">
+                                    We're still new and adding amazing products to <span className="font-bold text-indigo-600">{activeSubcategoryName || category.name}</span> every day.
+                                    Check back soon for exciting new items!
+                                </p>
+
+                                {/* CTA */}
+                                <Link
+                                    href="/categories"
+                                    className="relative z-10 inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-full font-bold hover:bg-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                                >
+                                    <Shirt size={18} />
+                                    Browse Other Categories
+                                </Link>
+
+                                {/* Newsletter tease */}
+                                <p className="relative z-10 mt-8 text-sm text-slate-500">
+                                    Want to know when new products drop?{' '}
+                                    <Link href="/#newsletter" className="text-indigo-600 font-bold hover:underline">
+                                        Join our newsletter
+                                    </Link>
+                                </p>
+                            </div>
                         ) : (
+                            /* NO MATCHES - Filters are hiding products */
                             <div className="flex flex-col items-center justify-center py-24 bg-slate-50 border border-dashed border-slate-200 rounded-[2.5rem] text-center">
                                 <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 text-slate-300">
                                     <Search size={32} />
