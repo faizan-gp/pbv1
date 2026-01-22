@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createProduct, Product } from "@/lib/firestore/products";
 
@@ -12,6 +12,19 @@ interface ProductActionsProps {
 export default function ProductActions({ product }: ProductActionsProps) {
     const router = useRouter();
     const [isDuplicating, setIsDuplicating] = useState(false);
+
+    const handleExport = () => {
+        const jsonString = JSON.stringify(product, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${product.id}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
 
     const handleDuplicate = async () => {
         const newId = window.prompt("Enter a new ID for the duplicate product:", `${product.id}-2`);
@@ -43,18 +56,28 @@ export default function ProductActions({ product }: ProductActionsProps) {
     };
 
     return (
-        <button
-            onClick={handleDuplicate}
-            disabled={isDuplicating}
-            className="text-gray-600 hover:text-indigo-600 flex items-center gap-1 transition-colors disabled:opacity-50"
-            title="Duplicate Product"
-        >
-            {isDuplicating ? (
-                <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-                <Copy className="h-3 w-3" />
-            )}
-            <span className="sr-only lg:not-sr-only">Duplicate</span>
-        </button>
+        <div className="flex items-center gap-2">
+            <button
+                onClick={handleExport}
+                className="text-gray-600 hover:text-indigo-600 flex items-center gap-1 transition-colors"
+                title="Export JSON"
+            >
+                <Download className="h-3 w-3" />
+                <span className="sr-only lg:not-sr-only">Export</span>
+            </button>
+            <button
+                onClick={handleDuplicate}
+                disabled={isDuplicating}
+                className="text-gray-600 hover:text-indigo-600 flex items-center gap-1 transition-colors disabled:opacity-50"
+                title="Duplicate Product"
+            >
+                {isDuplicating ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                    <Copy className="h-3 w-3" />
+                )}
+                <span className="sr-only lg:not-sr-only">Duplicate</span>
+            </button>
+        </div>
     );
 }
