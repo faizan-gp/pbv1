@@ -261,7 +261,8 @@ export default function ShirtConfiguratorMobile({ product, editCartId, cartUserI
                         printifyCameras: product.printifyCameras?.filter((c: any) => !c.variant_id || c.variant_id === variantId)
                     },
                     options: {
-                        variantId
+                        variantId,
+                        backgroundColor: selectedColor.hex
                     }
                 })
             });

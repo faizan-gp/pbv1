@@ -376,7 +376,8 @@ export default function ShirtConfiguratorDesktop({ product, editCartId, cartUser
                         printifyCameras: product.printifyCameras?.filter((c: any) => !c.variant_id || c.variant_id === variantId)
                     },
                     options: {
-                        variantId
+                        variantId,
+                        backgroundColor: selectedColor.hex
                     }
                 })
             });

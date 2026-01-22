@@ -77,7 +77,8 @@ class PrintifyProxyService {
             providerId = 99,
             variantId = 73207,
             decoratorId = 99,
-            cameraId = 112433
+            cameraId = 112433,
+            backgroundColor
         } = options;
 
         const placeholders: any[] = [];
@@ -162,6 +163,7 @@ class PrintifyProxyService {
             mockup_mode: 'RGB',
             new_embroidery_color_palette: true,
             print: {
+                ...(backgroundColor && { background: backgroundColor }),
                 placeholders: placeholders,
                 print_on_side: false,
                 mirror: false,
