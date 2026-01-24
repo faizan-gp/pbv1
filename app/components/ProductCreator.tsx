@@ -5,7 +5,7 @@ import * as fabric from 'fabric';
 import { useToast } from './Toast';
 import { Product as IProduct, IProductFeature, ProductModel } from '@/lib/firestore/products';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package, ImageMinus, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Check, Loader2, ArrowUp, ArrowDown, GripVertical, CheckCircle, ChevronRight, ChevronLeft, Save, FolderUp, Link2, DollarSign, Truck, Package, ImageMinus, Image as ImageIcon, Code } from 'lucide-react';
 import { uploadProductImage } from '@/lib/storage';
 import SizeGuideEditor from './SizeGuideEditor';
 import { cn } from '@/lib/utils';
@@ -222,6 +222,10 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
     const [jsonOutput, setJsonOutput] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Rich Details JSON Import Modal
+    const [isJsonImportModalOpen, setIsJsonImportModalOpen] = useState(false);
+    const [jsonImportText, setJsonImportText] = useState('');
 
 
 
@@ -1407,6 +1411,114 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
         reader.readAsText(file);
     };
 
+    // Handler: Import Rich Details JSON (file upload)
+    const handleRichDetailsJsonImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            processRichDetailsJson(event.target?.result as string);
+        };
+        reader.readAsText(file);
+        // Reset input so same file can be re-uploaded
+        e.target.value = '';
+    };
+
+    // Handler: Import Rich Details JSON from Text
+    const handleRichDetailsTextImport = () => {
+        if (!jsonImportText.trim()) {
+            showToast('Please enter JSON text', 'warning');
+            return;
+        }
+        processRichDetailsJson(jsonImportText);
+        setIsJsonImportModalOpen(false);
+        setJsonImportText('');
+    };
+
+    // Shared JSON processing logic
+    const processRichDetailsJson = (jsonString: string) => {
+        try {
+            const json = JSON.parse(jsonString);
+            let importedFields: string[] = [];
+
+            // Import Short Description
+            if (json.shortDescription && typeof json.shortDescription === 'string') {
+                setShortDescription(json.shortDescription);
+                importedFields.push('shortDescription');
+            }
+
+            // Import Full Description
+            if (json.fullDescription && typeof json.fullDescription === 'string') {
+                setFullDescription(json.fullDescription);
+                importedFields.push('fullDescription');
+            }
+
+            // Import Bullet Points
+            if (json.bulletPoints && Array.isArray(json.bulletPoints)) {
+                const validBullets = json.bulletPoints.filter((bp: any) => typeof bp === 'string');
+                if (validBullets.length > 0) {
+                    setBulletPoints(validBullets);
+                    importedFields.push(`bulletPoints (${validBullets.length})`);
+                }
+            }
+
+            // Import Features
+            if (json.features && Array.isArray(json.features)) {
+                const validFeatures = json.features
+                    .filter((f: any) => f && typeof f.title === 'string')
+                    .map((f: any) => ({
+                        title: f.title || '',
+                        description: f.description || '',
+                        image: f.image || ''
+                    }));
+                if (validFeatures.length > 0) {
+                    setFeatures(validFeatures);
+                    importedFields.push(`features (${validFeatures.length})`);
+                }
+            }
+
+            // Import Care Instructions
+            if (json.careInstructions && Array.isArray(json.careInstructions)) {
+                const validCare = json.careInstructions.filter((c: any) => typeof c === 'string');
+                if (validCare.length > 0) {
+                    setCareInstructions(validCare);
+                    importedFields.push(`careInstructions (${validCare.length})`);
+                }
+            }
+
+            // Import FAQs
+            if (json.faq && Array.isArray(json.faq)) {
+                const validFaq = json.faq
+                    .filter((f: any) => f && typeof f.question === 'string' && typeof f.answer === 'string')
+                    .map((f: any) => ({
+                        question: f.question,
+                        answer: f.answer
+                    }));
+                if (validFaq.length > 0) {
+                    setFaq(validFaq);
+                    importedFields.push(`faq (${validFaq.length})`);
+                }
+            }
+
+            // Import Printify Cameras (if present)
+            if (json.printifyCameras && Array.isArray(json.printifyCameras)) {
+                setPrintifyCameras(json.printifyCameras);
+                importedFields.push(`cameras (${json.printifyCameras.length})`);
+            }
+
+            if (importedFields.length > 0) {
+                showToast(`Imported: ${importedFields.join(', ')}`, 'success');
+            } else {
+                showToast('No valid Rich Details fields found in JSON', 'warning');
+            }
+
+        } catch (error) {
+            console.error("JSON parse error", error);
+            showToast('Failed to parse JSON', 'error');
+        }
+    };
+
     const activeView = views.find(v => v.id === activeViewId);
 
     // Render Steps
@@ -2123,10 +2235,74 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                 {
                     currentStep === 3 && (
                         <div className="max-w-3xl mx-auto py-12 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="text-center mb-8">
-                                <h3 className="text-2xl font-bold text-gray-900">Tell your product's story</h3>
-                                <p className="text-gray-500">Add rich details to engage customers.</p>
+                            <div className="flex items-center justify-between mb-8">
+                                <div className="text-center flex-1">
+                                    <h3 className="text-2xl font-bold text-gray-900">Tell your product's story</h3>
+                                    <p className="text-gray-500">Add rich details to engage customers.</p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <label className="flex items-center gap-2 px-3 py-2 bg-indigo-50 hover:bg-indigo-100 rounded-xl text-sm font-bold text-indigo-700 cursor-pointer transition-colors border border-indigo-200">
+                                        <FolderUp size={16} />
+                                        <span>Import File</span>
+                                        <input
+                                            type="file"
+                                            accept=".json,application/json"
+                                            className="hidden"
+                                            onChange={handleRichDetailsJsonImport}
+                                        />
+                                    </label>
+                                    <button
+                                        onClick={() => setIsJsonImportModalOpen(true)}
+                                        className="flex items-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-sm font-bold text-emerald-700 transition-colors border border-emerald-200"
+                                    >
+                                        <Code size={16} />
+                                        <span>Paste JSON</span>
+                                    </button>
+                                </div>
                             </div>
+
+                            {/* JSON Import Modal */}
+                            {isJsonImportModalOpen && (
+                                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setIsJsonImportModalOpen(false)}>
+                                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+                                            <h4 className="font-bold text-gray-900">Paste JSON</h4>
+                                            <button onClick={() => setIsJsonImportModalOpen(false)} className="p-1 hover:bg-gray-200 rounded transition-colors">
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+                                        <div className="p-4 space-y-4">
+                                            <textarea
+                                                value={jsonImportText}
+                                                onChange={(e) => setJsonImportText(e.target.value)}
+                                                className="w-full h-64 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                                                placeholder={`{
+  "shortDescription": "...",
+  "fullDescription": "...",
+  "bulletPoints": ["...", "..."],
+  "features": [{ "title": "...", "description": "..." }],
+  "careInstructions": ["..."],
+  "faq": [{ "question": "...", "answer": "..." }]
+}`}
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => { setIsJsonImportModalOpen(false); setJsonImportText(''); }}
+                                                    className="px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={handleRichDetailsTextImport}
+                                                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                                                >
+                                                    Import
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                                 <div>
@@ -2243,32 +2419,6 @@ export default function ProductCreator({ initialData, isEditing = false }: Produ
                                         {features.map((f, i) => (
                                             <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
                                                 <div className="flex gap-2 items-start">
-                                                    {/* Feature Image Upload */}
-                                                    <div className="shrink-0">
-                                                        <label className="block w-10 h-10 border border-dashed border-gray-300 rounded overflow-hidden cursor-pointer hover:border-indigo-400 relative bg-white">
-                                                            {f.image ? (
-                                                                <img src={f.image} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="absolute inset-0 flex items-center justify-center text-gray-300">
-                                                                    <Plus size={14} />
-                                                                </div>
-                                                            )}
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                className="hidden"
-                                                                onChange={async (e) => {
-                                                                    if (e.target.files?.[0]) {
-                                                                        const url = await uploadProductImage(e.target.files[0], 'features', productName);
-                                                                        const n = [...features];
-                                                                        n[i].image = url;
-                                                                        setFeatures(n);
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </label>
-                                                    </div>
-
                                                     <div className="flex-1 space-y-2">
                                                         <input type="text" placeholder="Title" value={f.title} onChange={(e) => { const n = [...features]; n[i].title = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-sm font-bold placeholder-gray-400 outline-none" />
                                                         <textarea placeholder="Description" value={f.description} onChange={(e) => { const n = [...features]; n[i].description = e.target.value; setFeatures(n) }} className="w-full bg-transparent text-xs text-gray-600 resize-none outline-none h-10" />

@@ -45,11 +45,6 @@ export default function ProductInfoStacked({ shortDescription, bulletPoints, des
                     <div className="grid gap-4">
                         {features.map((feature, idx) => (
                             <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                                {feature.image && (
-                                    <div className="mb-3 w-12 h-12 rounded-lg overflow-hidden border border-slate-200">
-                                        <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
-                                    </div>
-                                )}
                                 <h4 className="font-bold text-slate-900 mb-1.5 text-sm">
                                     {feature.title}
                                 </h4>
