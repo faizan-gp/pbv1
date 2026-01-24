@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, MessageSquare, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, Package, Settings, LogOut, MessageSquare, ShoppingCart, BarChart3 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     return (
@@ -54,6 +54,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     >
                         <MessageSquare size={20} />
                         Messages
+                    </Link>
+                    <Link
+                        href="/admin/analytics"
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                        <BarChart3 size={20} />
+                        Analytics
                     </Link>
                 </nav>
 

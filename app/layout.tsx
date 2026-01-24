@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientShell from "./components/ClientShell";
 import { CartProvider } from "./context/CartContext";
 import { ToastProvider } from "./components/Toast";
 import { AuthProvider } from "./components/Providers";
+import { AnalyticsProvider } from "./components/analytics/AnalyticsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -109,9 +111,13 @@ export default function RootLayout({
         <AuthProvider>
           <CartProvider>
             <ToastProvider>
-              <ClientShell>
-                {children}
-              </ClientShell>
+              <Suspense fallback={null}>
+                <AnalyticsProvider>
+                  <ClientShell>
+                    {children}
+                  </ClientShell>
+                </AnalyticsProvider>
+              </Suspense>
             </ToastProvider>
           </CartProvider>
         </AuthProvider>
