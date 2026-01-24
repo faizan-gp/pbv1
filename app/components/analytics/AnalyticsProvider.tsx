@@ -75,9 +75,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
         const visitorId = getVisitorId();
         visitorIdRef.current = visitorId;
+        console.log('[Analytics] Visitor ID:', visitorId);
 
         const existingSessionId = getStoredSessionId();
         const utm = getUTMParams();
+        console.log('[Analytics] Creating session...', { existingSessionId, utm });
 
         try {
             const res = await fetch('/api/analytics/session', {
@@ -91,8 +93,11 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
                 })
             });
 
+            console.log('[Analytics] Session API response status:', res.status);
+
             if (res.ok) {
                 const data = await res.json();
+                console.log('[Analytics] Session created:', data);
                 sessionIdRef.current = data.sessionId;
                 storeSessionId(data.sessionId);
                 isInitializedRef.current = true;
@@ -102,6 +107,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
                 // Start heartbeat
                 startHeartbeat();
+            } else {
+                const errorText = await res.text();
+                console.error('[Analytics] Session creation failed:', errorText);
             }
         } catch (error) {
             console.error('Analytics session error:', error);

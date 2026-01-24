@@ -15,7 +15,7 @@ import {
     BarChart,
     Bar
 } from 'recharts';
-import { Activity, Users, Eye, Clock, Globe, Monitor, Smartphone, Tablet, RefreshCw } from 'lucide-react';
+import { Activity, Users, Eye, Clock, Globe, Monitor, Smartphone, Tablet, RefreshCw, Trash2 } from 'lucide-react';
 
 interface DailyStats {
     date: string;
@@ -135,6 +135,28 @@ export default function AnalyticsDashboard() {
                         className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
                     >
                         <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (confirm('Are you sure you want to delete ALL analytics data? This cannot be undone.')) {
+                                try {
+                                    const res = await fetch('/api/analytics/clear', { method: 'DELETE' });
+                                    if (res.ok) {
+                                        const data = await res.json();
+                                        alert(`Deleted ${data.sessionsDeleted} sessions and ${data.pageViewsDeleted} page views`);
+                                        fetchData();
+                                    } else {
+                                        alert('Failed to clear analytics data');
+                                    }
+                                } catch (e) {
+                                    alert('Error clearing analytics data');
+                                }
+                            }
+                        }}
+                        className="p-2 bg-white border border-red-200 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
+                        title="Clear all analytics data"
+                    >
+                        <Trash2 size={18} />
                     </button>
                     <a
                         href="/admin/analytics/sessions"

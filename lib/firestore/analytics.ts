@@ -12,7 +12,8 @@ import {
     limit,
     Timestamp,
     increment,
-    addDoc
+    addDoc,
+    writeBatch
 } from "firebase/firestore";
 
 // ================= TYPES =================
@@ -77,20 +78,57 @@ export const SESSIONS_COLLECTION = "analytics_sessions";
 export const PAGEVIEWS_COLLECTION = "analytics_pageviews";
 export const EVENTS_COLLECTION = "analytics_events";
 
+// ================= DELETE ALL ANALYTICS =================
+
+export async function deleteAllAnalytics(): Promise<{ sessionsDeleted: number; pageViewsDeleted: number }> {
+    const sessionsRef = collection(db, SESSIONS_COLLECTION);
+    const pageViewsRef = collection(db, PAGEVIEWS_COLLECTION);
+
+    // Get all sessions
+    const sessionsSnapshot = await getDocs(sessionsRef);
+    const pageViewsSnapshot = await getDocs(pageViewsRef);
+
+    // Delete in batches of 500 (Firestore limit)
+    const batch = writeBatch(db);
+    let sessionsDeleted = 0;
+    let pageViewsDeleted = 0;
+
+    sessionsSnapshot.docs.forEach((docSnap) => {
+        batch.delete(doc(db, SESSIONS_COLLECTION, docSnap.id));
+        sessionsDeleted++;
+    });
+
+    pageViewsSnapshot.docs.forEach((docSnap) => {
+        batch.delete(doc(db, PAGEVIEWS_COLLECTION, docSnap.id));
+        pageViewsDeleted++;
+    });
+
+    await batch.commit();
+
+    return { sessionsDeleted, pageViewsDeleted };
+}
+
 // ================= SESSION FUNCTIONS =================
 
 export async function createSession(
     sessionData: Omit<AnalyticsSession, "id" | "duration" | "pageViewCount">
 ): Promise<string> {
-    const sessionsRef = collection(db, SESSIONS_COLLECTION);
-    const docRef = await addDoc(sessionsRef, {
-        ...sessionData,
-        startedAt: sessionData.startedAt,
-        lastActiveAt: sessionData.lastActiveAt,
-        duration: 0,
-        pageViewCount: 0
-    });
-    return docRef.id;
+    try {
+        console.log('[Firestore] Creating session document...');
+        const sessionsRef = collection(db, SESSIONS_COLLECTION);
+        const docRef = await addDoc(sessionsRef, {
+            ...sessionData,
+            startedAt: sessionData.startedAt,
+            lastActiveAt: sessionData.lastActiveAt,
+            duration: 0,
+            pageViewCount: 0
+        });
+        console.log('[Firestore] Session created:', docRef.id);
+        return docRef.id;
+    } catch (error: any) {
+        console.error('[Firestore] createSession error:', error.message, error.code);
+        throw error;
+    }
 }
 
 export async function getSession(sessionId: string): Promise<AnalyticsSession | null> {

@@ -89,14 +89,18 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { visitorId, userId, referrer, utmSource, utmMedium, utmCampaign, existingSessionId } = body;
 
+        console.log('[Session API] Received request:', { visitorId, existingSessionId });
+
         if (!visitorId) {
             return NextResponse.json({ error: 'visitorId is required' }, { status: 400 });
         }
 
         // If existing session provided, just return it (session resume)
         if (existingSessionId) {
+            console.log('[Session API] Checking existing session:', existingSessionId);
             const existingSession = await getSession(existingSessionId);
             if (existingSession && existingSession.visitorId === visitorId) {
+                console.log('[Session API] Resuming existing session');
                 // Update last active time
                 await updateSession(existingSessionId, { lastActiveAt: new Date() });
                 return NextResponse.json({ sessionId: existingSessionId, resumed: true });
@@ -106,33 +110,46 @@ export async function POST(request: NextRequest) {
         // Get user agent and IP
         const userAgent = request.headers.get('user-agent') || '';
         const ip = getClientIP(request);
+        console.log('[Session API] Client IP:', ip);
 
         // Get geolocation
         const geo = await getGeoLocation(ip);
+        console.log('[Session API] Geo:', geo);
 
         // Create new session
         const now = new Date();
-        const sessionId = await createSession({
+        console.log('[Session API] Creating session in Firestore...');
+
+        // Build session data, filtering out undefined values (Firestore rejects undefined)
+        const sessionData: any = {
             visitorId,
-            userId,
             startedAt: now,
             lastActiveAt: now,
             userAgent,
             device: parseDevice(userAgent),
             browser: parseBrowser(userAgent),
             os: parseOS(userAgent),
-            referrer,
-            utmSource,
-            utmMedium,
-            utmCampaign,
-            isBot: isBot(userAgent),
-            ...geo
-        });
+            isBot: isBot(userAgent)
+        };
 
+        // Add optional fields only if they have values
+        if (userId) sessionData.userId = userId;
+        if (referrer) sessionData.referrer = referrer;
+        if (utmSource) sessionData.utmSource = utmSource;
+        if (utmMedium) sessionData.utmMedium = utmMedium;
+        if (utmCampaign) sessionData.utmCampaign = utmCampaign;
+        if (geo.country) sessionData.country = geo.country;
+        if (geo.countryCode) sessionData.countryCode = geo.countryCode;
+        if (geo.city) sessionData.city = geo.city;
+        if (geo.region) sessionData.region = geo.region;
+
+        const sessionId = await createSession(sessionData);
+
+        console.log('[Session API] Session created with ID:', sessionId);
         return NextResponse.json({ sessionId, created: true });
 
     } catch (error) {
-        console.error('Session creation error:', error);
+        console.error('[Session API] Error creating session:', error);
         return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
     }
 }
