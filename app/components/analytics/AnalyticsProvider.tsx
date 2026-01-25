@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useRef, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface AnalyticsContextType {
     trackEvent: (eventName: string, eventData?: Record<string, any>) => void;
@@ -55,6 +56,7 @@ function getUTMParams(): { utmSource?: string; utmMedium?: string; utmCampaign?:
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const { data: session } = useSession();
 
     const sessionIdRef = useRef<string | null>(null);
     const visitorIdRef = useRef<string>('');
@@ -65,12 +67,35 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const maxScrollDepthRef = useRef<number>(0); // Track max scroll percentage
     const lastTrackedPathRef = useRef<string>(''); // Prevent duplicate page views
 
+    // Mark as internal user if role is admin
+    useEffect(() => {
+        if (session?.user && (session.user as any).role === 'admin') {
+            if (localStorage.getItem('pb_internal_user') !== 'true') {
+                localStorage.setItem('pb_internal_user', 'true');
+                console.log('[Analytics] Admin role detected, marking as internal user');
+            }
+        }
+    }, [session]);
+
     // Initialize session
     const initSession = useCallback(async () => {
         if (typeof window === 'undefined') return;
 
-        // Skip tracking for admin pages
+        // Check if internal user (visited admin before)
+        const isInternalUser = localStorage.getItem('pb_internal_user') === 'true';
+
+        // Check/Set internal status
         if (window.location.pathname.startsWith('/admin')) {
+            if (!isInternalUser) {
+                localStorage.setItem('pb_internal_user', 'true');
+                console.log('[Analytics] Marked as internal user');
+            }
+            return; // Don't track admin pages
+        }
+
+        // Skip tracking for internal users on public pages too
+        if (isInternalUser) {
+            console.log('[Analytics] Internal user detected, skipping session');
             return;
         }
 
@@ -124,7 +149,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const trackPageView = useCallback(async (path: string) => {
         if (!sessionIdRef.current || !visitorIdRef.current) return;
 
-        // Skip tracking for admin pages
+        // Check if internal user
+        if (localStorage.getItem('pb_internal_user') === 'true') {
+            return;
+        }
+
+        // Skip tracking for admin pages (redundant if internal user check works, but good safety)
         if (path.startsWith('/admin')) return;
 
         // Prevent duplicate tracking of the same path (handles StrictMode double renders)

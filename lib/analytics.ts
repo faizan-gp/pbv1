@@ -9,12 +9,20 @@ declare global {
     }
 }
 
+// --- HELPER FUNCTIONS ---
+
+const isInternalUser = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('pb_internal_user') === 'true';
+};
+
 // --- GA4 FUNCTIONS ---
 
 /**
  * Safely logs an event to Firebase Analytics
  */
 export const trackEvent = (eventName: string, params?: Record<string, any>) => {
+    if (isInternalUser()) return;
     if (analytics && typeof window !== 'undefined') {
         try {
             firebaseLogEvent(analytics, eventName, params);
@@ -28,6 +36,7 @@ export const trackEvent = (eventName: string, params?: Record<string, any>) => {
  * Sets user properties in GA4
  */
 export const setUserProperties = (userId: string, userProperties?: Record<string, any>) => {
+    if (isInternalUser()) return;
     if (analytics && typeof window !== 'undefined') {
         try {
             // Note: firebase/analytics 'setUserProperties' is different from 'logEvent', 
@@ -56,6 +65,7 @@ export const setUserProperties = (userId: string, userProperties?: Record<string
  * Safely logs an event to Meta Pixel (fbq) and Signals (cbq)
  */
 export const fbTrack = (eventName: string, params?: Record<string, any>, eventID?: string) => {
+    if (isInternalUser()) return;
     if (typeof window !== 'undefined') {
         const payload = params || {};
         if (eventID) payload.eventID = eventID;
@@ -76,6 +86,7 @@ export const fbTrack = (eventName: string, params?: Record<string, any>, eventID
  * Logs a custom event to Meta Pixel
  */
 export const fbTrackCustom = (eventName: string, params?: Record<string, any>) => {
+    if (isInternalUser()) return;
     if (typeof window !== 'undefined') {
         if (window.fbq) window.fbq('trackCustom', eventName, params);
         if (window.cbq) window.cbq('trackCustom', eventName, params);
