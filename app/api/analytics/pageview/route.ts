@@ -21,14 +21,18 @@ export async function POST(request: NextRequest) {
 
         const { sessionId, visitorId, userId, path, title, pageViewId, timeOnPage, scrollDepth } = body;
 
+        console.log('[PageView API] Request:', { sessionId, path, pageViewId, timeOnPage });
+
         // If pageViewId and timeOnPage provided, this is an update for time tracking
         if (pageViewId && typeof timeOnPage === 'number') {
             await updatePageViewTimeOnPage(pageViewId, timeOnPage, scrollDepth);
+            console.log('[PageView API] Updated time on page for:', pageViewId);
             return NextResponse.json({ success: true, updated: true });
         }
 
         // Otherwise, create a new page view
         if (!sessionId || !visitorId || !path) {
+            console.log('[PageView API] Missing required fields');
             return NextResponse.json(
                 { error: 'sessionId, visitorId, and path are required' },
                 { status: 400 }

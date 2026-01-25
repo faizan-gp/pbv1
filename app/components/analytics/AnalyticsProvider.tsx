@@ -134,11 +134,37 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
                 storeSessionId(data.sessionId);
                 setIsInitialized(true);
 
-                // Start heartbeat - page view tracking is handled by the route change effect
+                // Track the first page view immediately
+                const currentPath = window.location.pathname;
+                console.log('[Analytics] Tracking initial page:', currentPath);
+
+                // Send the first page view
+                try {
+                    const pvRes = await fetch('/api/analytics/pageview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: data.sessionId,
+                            visitorId: visitorIdRef.current,
+                            path: currentPath,
+                            title: document.title
+                        })
+                    });
+                    if (pvRes.ok) {
+                        const pvData = await pvRes.json();
+                        currentPageViewIdRef.current = pvData.pageViewId;
+                        lastTrackedPathRef.current = currentPath;
+                        console.log('[Analytics] Initial page view created:', pvData.pageViewId);
+                    }
+                } catch (e) {
+                    console.error('[Analytics] Failed to track initial page:', e);
+                }
+
+                // Start heartbeat
                 startHeartbeat();
             } else {
                 const errorText = await res.text();
-                // ...
+                console.error('[Analytics] Session creation failed:', errorText);
             }
         } catch (error) {
             console.error('Analytics session error:', error);
