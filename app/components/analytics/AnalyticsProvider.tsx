@@ -63,7 +63,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const currentPageViewIdRef = useRef<string | null>(null);
     const pageStartTimeRef = useRef<number>(Date.now());
     const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const isInitializedRef = useRef(false);
+    const [isInitialized, setIsInitialized] = React.useState(false);
     const maxScrollDepthRef = useRef<number>(0); // Track max scroll percentage
     const lastTrackedPathRef = useRef<string>(''); // Prevent duplicate page views
 
@@ -132,18 +132,18 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
                 console.log('[Analytics] Session created:', data);
                 sessionIdRef.current = data.sessionId;
                 storeSessionId(data.sessionId);
-                isInitializedRef.current = true;
+                setIsInitialized(true);
 
                 // Start heartbeat - page view tracking is handled by the route change effect
                 startHeartbeat();
             } else {
                 const errorText = await res.text();
-                console.error('[Analytics] Session creation failed:', errorText);
+                // ...
             }
         } catch (error) {
             console.error('Analytics session error:', error);
         }
-    }, [pathname]);
+    }, []); // Run only once on mount
 
     // Track page view
     const trackPageView = useCallback(async (path: string) => {
@@ -332,10 +332,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
     // Track route changes
     useEffect(() => {
-        if (isInitializedRef.current && pathname) {
+        if (isInitialized && pathname) {
             trackPageView(pathname);
         }
-    }, [pathname, searchParams, trackPageView]);
+    }, [pathname, searchParams, trackPageView, isInitialized]);
 
     return (
         <AnalyticsContext.Provider value={{ trackEvent }}>
