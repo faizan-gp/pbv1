@@ -151,14 +151,23 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
         // Check if internal user
         if (localStorage.getItem('pb_internal_user') === 'true') {
+            console.log('[Analytics] Skipping internal user for:', path);
             return;
         }
 
-        // Skip tracking for admin pages (redundant if internal user check works, but good safety)
-        if (path.startsWith('/admin')) return;
+        console.log('[Analytics] Tracking page view for:', path);
 
-        // Prevent duplicate tracking of the same path (handles StrictMode double renders)
-        if (path === lastTrackedPathRef.current) return;
+        // Skip tracking for admin pages
+        if (path.startsWith('/admin')) {
+            console.log('[Analytics] Skipping admin page');
+            return;
+        }
+
+        // Prevent duplicate tracking of the same path
+        if (path === lastTrackedPathRef.current) {
+            console.log('[Analytics] Duplicate path detected, skipping:', path);
+            return;
+        }
         lastTrackedPathRef.current = path;
 
         // First, send time on page and scroll depth for previous page view
