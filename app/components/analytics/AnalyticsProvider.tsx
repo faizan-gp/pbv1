@@ -62,10 +62,17 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const pageStartTimeRef = useRef<number>(Date.now());
     const heartbeatIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const isInitializedRef = useRef(false);
+    const maxScrollDepthRef = useRef<number>(0); // Track max scroll percentage
+    const lastTrackedPathRef = useRef<string>(''); // Prevent duplicate page views
 
     // Initialize session
     const initSession = useCallback(async () => {
         if (typeof window === 'undefined') return;
+
+        // Skip tracking for admin pages
+        if (window.location.pathname.startsWith('/admin')) {
+            return;
+        }
 
         // Check for Do Not Track
         if (navigator.doNotTrack === '1') {
@@ -102,10 +109,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
                 storeSessionId(data.sessionId);
                 isInitializedRef.current = true;
 
-                // Track initial page view
-                trackPageView(pathname);
-
-                // Start heartbeat
+                // Start heartbeat - page view tracking is handled by the route change effect
                 startHeartbeat();
             } else {
                 const errorText = await res.text();
@@ -120,16 +124,25 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const trackPageView = useCallback(async (path: string) => {
         if (!sessionIdRef.current || !visitorIdRef.current) return;
 
-        // First, send time on page for previous page view
+        // Skip tracking for admin pages
+        if (path.startsWith('/admin')) return;
+
+        // Prevent duplicate tracking of the same path (handles StrictMode double renders)
+        if (path === lastTrackedPathRef.current) return;
+        lastTrackedPathRef.current = path;
+
+        // First, send time on page and scroll depth for previous page view
         if (currentPageViewIdRef.current) {
             const timeOnPage = Math.floor((Date.now() - pageStartTimeRef.current) / 1000);
+            const scrollDepth = Math.round(maxScrollDepthRef.current);
             try {
                 await fetch('/api/analytics/pageview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         pageViewId: currentPageViewIdRef.current,
-                        timeOnPage
+                        timeOnPage,
+                        scrollDepth
                     })
                 });
             } catch (e) {
@@ -137,8 +150,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        // Reset page start time
+        // Reset page start time and scroll depth
         pageStartTimeRef.current = Date.now();
+        maxScrollDepthRef.current = 0;
 
         try {
             const res = await fetch('/api/analytics/pageview', {
@@ -235,15 +249,29 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         initSession();
 
+        // Track scroll depth
+        const handleScroll = () => {
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            if (docHeight > 0) {
+                const scrollPercent = (scrollTop / docHeight) * 100;
+                if (scrollPercent > maxScrollDepthRef.current) {
+                    maxScrollDepthRef.current = scrollPercent;
+                }
+            }
+        };
+
         // Handle visibility change (tab switch)
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden') {
-                // Send time on page for current page
+                // Send time on page and scroll depth for current page
                 if (currentPageViewIdRef.current) {
                     const timeOnPage = Math.floor((Date.now() - pageStartTimeRef.current) / 1000);
+                    const scrollDepth = Math.round(maxScrollDepthRef.current);
                     const data = JSON.stringify({
                         pageViewId: currentPageViewIdRef.current,
-                        timeOnPage
+                        timeOnPage,
+                        scrollDepth
                     });
                     navigator.sendBeacon?.('/api/analytics/pageview', data);
                 }
@@ -258,10 +286,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
             endSession();
         };
 
+        window.addEventListener('scroll', handleScroll, { passive: true });
         document.addEventListener('visibilitychange', handleVisibilityChange);
         window.addEventListener('beforeunload', handleUnload);
 
         return () => {
+            window.removeEventListener('scroll', handleScroll);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('beforeunload', handleUnload);
             if (heartbeatIntervalRef.current) {

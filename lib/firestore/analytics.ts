@@ -61,6 +61,7 @@ export interface AnalyticsPageView {
     title?: string;
     timestamp: Date;
     timeOnPage?: number;
+    scrollDepth?: number; // Maximum scroll percentage (0-100)
 }
 
 export interface AnalyticsEvent {
@@ -169,11 +170,16 @@ export async function updateSessionActivity(sessionId: string): Promise<void> {
 }
 
 export async function incrementPageViewCount(sessionId: string): Promise<void> {
-    const sessionRef = doc(db, SESSIONS_COLLECTION, sessionId);
-    await updateDoc(sessionRef, {
-        pageViewCount: increment(1),
-        lastActiveAt: new Date()
-    });
+    try {
+        const sessionRef = doc(db, SESSIONS_COLLECTION, sessionId);
+        await updateDoc(sessionRef, {
+            pageViewCount: increment(1),
+            lastActiveAt: new Date()
+        });
+    } catch (error: any) {
+        // Fail gracefully if session doesn't exist
+        console.warn('[Analytics] Could not increment page view count:', error.message);
+    }
 }
 
 export async function endSession(sessionId: string): Promise<void> {
@@ -195,45 +201,78 @@ export async function endSession(sessionId: string): Promise<void> {
 export async function createPageView(
     pageViewData: Omit<AnalyticsPageView, "id">
 ): Promise<string> {
-    const pageViewsRef = collection(db, PAGEVIEWS_COLLECTION);
-    const docRef = await addDoc(pageViewsRef, {
-        ...pageViewData,
-        timestamp: pageViewData.timestamp
-    });
+    try {
+        console.log('[Analytics] Creating page view:', JSON.stringify(pageViewData));
+        const pageViewsRef = collection(db, PAGEVIEWS_COLLECTION);
+        const docRef = await addDoc(pageViewsRef, {
+            ...pageViewData,
+            timestamp: pageViewData.timestamp
+        });
+        console.log('[Analytics] Page view created:', docRef.id);
 
-    // Increment session page view count
-    await incrementPageViewCount(pageViewData.sessionId);
+        // Increment session page view count
+        await incrementPageViewCount(pageViewData.sessionId);
 
-    return docRef.id;
+        return docRef.id;
+    } catch (error: any) {
+        console.error('[Analytics] createPageView error:', error.message, error.code);
+        throw error;
+    }
 }
 
 export async function updatePageViewTimeOnPage(
     pageViewId: string,
-    timeOnPage: number
+    timeOnPage: number,
+    scrollDepth?: number
 ): Promise<void> {
     const pageViewRef = doc(db, PAGEVIEWS_COLLECTION, pageViewId);
-    await updateDoc(pageViewRef, { timeOnPage });
+    const updateData: any = { timeOnPage };
+    if (typeof scrollDepth === 'number') {
+        updateData.scrollDepth = scrollDepth;
+    }
+    await updateDoc(pageViewRef, updateData);
 }
 
 export async function getPageViewsBySessionId(
     sessionId: string
 ): Promise<AnalyticsPageView[]> {
-    const pageViewsRef = collection(db, PAGEVIEWS_COLLECTION);
-    const q = query(
-        pageViewsRef,
-        where("sessionId", "==", sessionId),
-        orderBy("timestamp", "asc")
-    );
+    try {
+        const pageViewsRef = collection(db, PAGEVIEWS_COLLECTION);
+        // First try with ordering (requires composite index)
+        let q = query(
+            pageViewsRef,
+            where("sessionId", "==", sessionId),
+            orderBy("timestamp", "asc")
+        );
 
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            timestamp: (data.timestamp as Timestamp).toDate()
-        } as AnalyticsPageView;
-    });
+        let snapshot;
+        try {
+            snapshot = await getDocs(q);
+        } catch (indexError: any) {
+            // If composite index doesn't exist, fallback to simple query
+            console.warn('[Analytics] Composite index missing, using simple query. Error:', indexError.message);
+            q = query(
+                pageViewsRef,
+                where("sessionId", "==", sessionId)
+            );
+            snapshot = await getDocs(q);
+        }
+
+        const pageViews = snapshot.docs.map(docSnap => {
+            const data = docSnap.data();
+            return {
+                id: docSnap.id,
+                ...data,
+                timestamp: (data.timestamp as Timestamp)?.toDate?.() || new Date(data.timestamp)
+            } as AnalyticsPageView;
+        });
+
+        // Sort by timestamp in memory if we used fallback query
+        return pageViews.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    } catch (error: any) {
+        console.error('[Analytics] getPageViewsBySessionId error:', error.message, error.code);
+        throw error;
+    }
 }
 
 // ================= EVENT FUNCTIONS =================

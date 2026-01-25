@@ -28,6 +28,7 @@ interface PageView {
     title?: string;
     timestamp: string;
     timeOnPage?: number;
+    scrollDepth?: number;
 }
 
 interface SessionDetail {
@@ -263,6 +264,20 @@ export default function SessionsPage() {
                                                         <>
                                                             <span>•</span>
                                                             <span>{formatDuration(pv.timeOnPage)}</span>
+                                                        </>
+                                                    )}
+                                                    {typeof pv.scrollDepth === 'number' && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span className="flex items-center gap-1">
+                                                                <span className="inline-block w-10 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                                    <span
+                                                                        className="block h-full bg-indigo-500 rounded-full"
+                                                                        style={{ width: `${Math.min(pv.scrollDepth, 100)}%` }}
+                                                                    />
+                                                                </span>
+                                                                <span>{Math.round(pv.scrollDepth)}%</span>
+                                                            </span>
                                                         </>
                                                     )}
                                                 </div>

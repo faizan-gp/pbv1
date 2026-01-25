@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const { sessionId, visitorId, userId, path, title, pageViewId, timeOnPage } = body;
+        const { sessionId, visitorId, userId, path, title, pageViewId, timeOnPage, scrollDepth } = body;
 
         // If pageViewId and timeOnPage provided, this is an update for time tracking
         if (pageViewId && typeof timeOnPage === 'number') {
-            await updatePageViewTimeOnPage(pageViewId, timeOnPage);
+            await updatePageViewTimeOnPage(pageViewId, timeOnPage, scrollDepth);
             return NextResponse.json({ success: true, updated: true });
         }
 
@@ -35,14 +35,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const id = await createPageView({
+        // Build page view data, filtering out undefined values (Firestore rejects undefined)
+        const pageViewData: any = {
             sessionId,
             visitorId,
-            userId,
             path,
-            title,
             timestamp: new Date()
-        });
+        };
+        if (userId) pageViewData.userId = userId;
+        if (title) pageViewData.title = title;
+
+        const id = await createPageView(pageViewData);
 
         return NextResponse.json({ pageViewId: id, created: true });
 

@@ -47,7 +47,8 @@ export async function GET(
                 path: pv.path,
                 title: pv.title,
                 timestamp: pv.timestamp,
-                timeOnPage: pv.timeOnPage
+                timeOnPage: pv.timeOnPage,
+                scrollDepth: pv.scrollDepth
             }))
         });
 
