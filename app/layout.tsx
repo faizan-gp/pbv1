@@ -9,8 +9,6 @@ import { ToastProvider } from "./components/Toast";
 import { AuthProvider } from "./components/Providers";
 import { AnalyticsProvider } from "./components/analytics/AnalyticsProvider";
 
-import PinterestTag from "./components/analytics/PinterestTag";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -115,7 +113,6 @@ export default function RootLayout({
             <ToastProvider>
               <Suspense fallback={null}>
                 <AnalyticsProvider>
-                  <PinterestTag />
                   <ClientShell>
                     {children}
                   </ClientShell>

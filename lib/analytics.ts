@@ -6,7 +6,6 @@ declare global {
     interface Window {
         fbq: any;
         cbq: any;
-        pintrk: any;
     }
 }
 
@@ -15,54 +14,6 @@ declare global {
 const isInternalUser = (): boolean => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('pb_internal_user') === 'true';
-};
-
-// Generate unique event ID for deduplication
-export const generateEventId = (): string => {
-    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
-};
-
-// Get user email from session (for CAPI)
-const getUserEmail = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    // Try to get from localStorage or session - this would be set during login
-    return localStorage.getItem('pb_user_email') || null;
-};
-
-// Send event to Pinterest server-side API
-export const sendPinterestServerEvent = async (
-    eventName: string,
-    eventId: string,
-    params?: Record<string, any>
-) => {
-    if (isInternalUser()) return;
-    if (typeof window === 'undefined') return;
-
-    try {
-        await fetch('/api/pinterest/events', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                event_name: eventName,
-                event_id: eventId,
-                email: getUserEmail(),
-                event_source_url: window.location.href,
-                ...params
-            })
-        });
-    } catch (error) {
-        console.warn('[Pinterest CAPI] Failed to send server event:', error);
-    }
-};
-
-// Browser-side Pinterest tracking with event_id
-export const pinterestTrack = (eventName: string, eventId?: string, params?: Record<string, any>) => {
-    if (isInternalUser()) return;
-    if (typeof window !== 'undefined' && window.pintrk) {
-        const trackParams = { ...params };
-        if (eventId) trackParams.event_id = eventId;
-        window.pintrk('track', eventName, trackParams);
-    }
 };
 
 // --- GA4 FUNCTIONS ---
@@ -156,7 +107,6 @@ export const trackPageView = (url: string, title?: string) => {
 export const trackAddToCart = (product: any, variant: string | null) => {
     const value = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
     const currency = 'USD';
-    const eventId = generateEventId();
 
     // GA4
     trackEvent('add_to_cart', {
@@ -183,25 +133,6 @@ export const trackAddToCart = (product: any, variant: string | null) => {
             id: product.id,
             quantity: 1
         }]
-    });
-
-    // Pinterest Browser
-    pinterestTrack('addtocart', eventId, {
-        value: value,
-        currency: currency,
-        line_items: [{
-            product_id: product.id,
-            product_name: product.name,
-            product_price: value,
-            product_quantity: 1
-        }]
-    });
-
-    // Pinterest Server (CAPI)
-    sendPinterestServerEvent('add_to_cart', eventId, {
-        value: value,
-        currency: currency,
-        content_ids: [product.id]
     });
 };
 
@@ -247,16 +178,8 @@ export const trackBeginCheckout = (cartItems: any[], totalValue: number) => {
 };
 
 export const tracksearch = (searchTerm: string) => {
-    const eventId = generateEventId();
-
     trackEvent('search', { search_term: searchTerm });
     fbTrack('Search', { search_string: searchTerm });
-
-    // Pinterest Browser
-    pinterestTrack('search', eventId, { search_query: searchTerm });
-
-    // Pinterest Server (CAPI)
-    sendPinterestServerEvent('search', eventId, { search_string: searchTerm });
 }
 
 export const trackViewItem = (product: any) => {
@@ -280,68 +203,4 @@ export const trackViewItem = (product: any) => {
         value: value,
         currency: 'USD'
     });
-
-    // Pinterest Browser
-    pinterestTrack('pagevisit', undefined, {
-        value: value,
-        currency: 'USD',
-        product_id: product.id,
-        line_items: [{
-            product_id: product.id,
-            product_name: product.name,
-            product_price: value,
-            product_quantity: 1
-        }]
-    });
 }
-
-export const trackPurchase = (orderId: string, total: number, items: any[]) => {
-    const currency = 'USD';
-    const eventId = generateEventId();
-
-    // GA4
-    trackEvent('purchase', {
-        transaction_id: orderId,
-        value: total,
-        currency: currency,
-        tax: 0,
-        shipping: 5.99,
-        items: items.map((item: any) => ({
-            item_id: item.productId,
-            item_name: item.name,
-            price: item.price,
-            quantity: item.quantity
-        }))
-    });
-
-    // Meta
-    fbTrack('Purchase', {
-        value: total,
-        currency: currency,
-        content_ids: items.map((item: any) => item.productId),
-        content_type: 'product',
-        num_items: items.reduce((acc, item) => acc + item.quantity, 0)
-    });
-
-    // Pinterest Browser
-    pinterestTrack('checkout', eventId, {
-        value: total,
-        currency: currency,
-        order_id: orderId,
-        line_items: items.map((item: any) => ({
-            product_id: item.productId,
-            product_name: item.name,
-            product_price: item.price,
-            product_quantity: item.quantity
-        }))
-    });
-
-    // Pinterest Server (CAPI)
-    sendPinterestServerEvent('checkout', eventId, {
-        value: total,
-        currency: currency,
-        order_id: orderId,
-        content_ids: items.map((item: any) => item.productId),
-        num_items: items.reduce((acc, item) => acc + item.quantity, 0)
-    });
-};
