@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight, Truck, ShieldCheck,
   ShoppingBag, Zap, Wand2, Layers,
@@ -12,7 +13,7 @@ import FaqSection from "./components/landing/FaqSection";
 import NewsletterSection from "./components/landing/NewsletterSection";
 import PageView from "./components/analytics/PageView";
 
-import { getAllProducts } from "@/lib/firestore/products";
+import { getTrendingProducts } from "@/lib/firestore/products";
 import { getCategories, CATEGORIES } from "@/lib/categories";
 
 // --- STATIC DATA ---
@@ -56,21 +57,12 @@ export const metadata: Metadata = {
   },
 };
 
-async function getTrendingProducts() {
-  try {
-    const allProducts = await getAllProducts();
-    // Filter for trending and take top 6 (grid fits 3, so 3 or 6 is good)
-    return allProducts.filter(p => p.trending === true).slice(0, 6);
-  } catch (error) {
-    console.error("Failed to fetch trending products", error);
-    return [];
-  }
-}
-
-export const dynamic = 'force-dynamic'; // Ensure fresh data on each request
+// ISR: Revalidate every hour for fresh data without blocking
+export const revalidate = 3600;
 
 export default async function Home() {
-  const featuredProducts = await getTrendingProducts();
+  // Use optimized query that only fetches trending products
+  const featuredProducts = await getTrendingProducts(6);
   const allCategories = await getCategories();
 
   const jsonLd = {
@@ -91,10 +83,8 @@ export default async function Home() {
       <PageView title="Home" />
 
       {/* GLOBAL BACKGROUND */}
-
-      {/* GLOBAL BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
+        <div className="absolute inset-0 opacity-[0.03] mix-blend-multiply bg-[url('/noise.svg')]"></div>
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px]"></div>
       </div>
 
@@ -175,16 +165,21 @@ export default async function Home() {
               <div className="relative bg-slate-900 rounded-3xl p-2 shadow-2xl border border-slate-800 rotate-[-1deg] transition-transform hover:rotate-0 duration-500">
 
                 {/* --- DESKTOP IMAGE (Hidden on Mobile) --- */}
-                <img
+                <Image
                   src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fdesign_editor.webp?alt=media&token=20c0c212-3854-41e8-9534-4c321d797177"
                   alt="Desktop Editor Interface"
+                  width={800}
+                  height={600}
                   className="hidden md:block rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
+                  priority
                 />
 
                 {/* --- MOBILE IMAGE (Hidden on Desktop) --- */}
-                <img
+                <Image
                   src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fdesign_editor_mobile.webp?alt=media&token=3fc8005d-973f-4c68-9155-858c83081f9b"
                   alt="Mobile Editor Interface"
+                  width={400}
+                  height={600}
                   className="block md:hidden rounded-2xl w-full h-auto opacity-95 border border-slate-700/50"
                 />
 
@@ -300,8 +295,12 @@ export default async function Home() {
                 <ProductCard key={product.id} product={product} />
               ))
             ) : (
-              <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-xl border border-slate-100">
-                No trending products found. Check back soon!
+              /* Fallback: Show browse link instead of error message */
+              <div className="col-span-full py-12 text-center bg-white rounded-xl border border-slate-100">
+                <p className="text-slate-600 mb-4">Explore our full catalog of customizable products.</p>
+                <Link href="/categories" className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition-colors">
+                  Browse All Products <ArrowRight className="w-4 h-4" />
+                </Link>
               </div>
             )}
           </div>
@@ -375,94 +374,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      {/* --- MATERIAL QUALITY --- */}
-      {/* <section className="py-24 bg-slate-900 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay"></div>
-        <div className="container-width relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="order-2 lg:order-1 relative group">
-              <div className="absolute inset-0 bg-indigo-500 rounded-3xl rotate-2 group-hover:rotate-1 transition-transform"></div>
-              <div className="relative h-[400px] w-full bg-slate-800 rounded-3xl overflow-hidden border border-slate-700">
-                <img src="?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032" alt="Premium Heavyweight Cotton Shirt" className="w-full h-full object-cover opacity-80" />
-                <div className="absolute bottom-6 left-6 right-6 bg-black/50 backdrop-blur-md p-4 rounded-xl border border-white/10">
-                  <div className="flex items-center gap-3">
-                    <ShieldCheck className="text-green-400" />
-                    <span className="font-mono text-sm">Verified Heavyweight Cotton</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2">
-              <div className="inline-flex items-center gap-2 text-indigo-400 font-bold mb-4">
-                <Star className="fill-indigo-400 w-4 h-4" /> Premium Quality
-              </div>
-              <h2 className="text-4xl lg:text-5xl font-black mb-6">Not just a print.<br />An investment.</h2>
-              <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                We hate cheap, scratchy shirts as much as you do. That's why we only use combed ring-spun cotton and retail-ready blends.
-              </p>
-              <ul className="space-y-4">
-                <li className="flex items-start gap-4">
-                  <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center mt-1"><CheckCircle2 className="w-4 h-4 text-indigo-400" /></div>
-                  <div>
-                    <strong className="block text-white">Direct-to-Garment (DTG) Tech</strong>
-                    <span className="text-slate-400 text-sm">Ink is injected into the fabric, not sitting on top. No cracking.</span>
-                  </div>
-                </li>
-                <li className="flex items-start gap-4">
-                  <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center mt-1"><CheckCircle2 className="w-4 h-4 text-indigo-400" /></div>
-                  <div>
-                    <strong className="block text-white">Eco-Friendly Inks</strong>
-                    <span className="text-slate-400 text-sm">Water-based, non-toxic inks that are safe for everyone.</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section> */}
-
-      {/* --- SUSTAINABILITY PROMISE --- */}
-      {/* <section className="py-24 bg-green-50/50 border-t border-slate-100">
-        <div className="container-width">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1">
-              <div className="inline-flex items-center gap-2 text-green-700 font-bold mb-6 bg-green-100 px-4 py-2 rounded-full text-sm">
-                <Leaf className="w-4 h-4" /> Eco-Conscious Production
-              </div>
-              <h2 className="text-4xl font-black text-slate-900 mb-6">Fashion that doesn't<br />hurt the planet.</h2>
-              <p className="text-lg text-slate-600 mb-8 leading-relaxed">
-                Traditional fashion creates waste. We only print what you order. Zero inventory, zero waste, and 100% biodegradable packaging.
-              </p>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-green-100">
-                  <Recycle className="w-8 h-8 text-green-600 mb-3" />
-                  <div className="text-2xl font-black text-slate-900">0%</div>
-                  <div className="text-sm text-slate-500 font-medium">Inventory Waste</div>
-                </div>
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-green-100">
-                  <Truck className="w-8 h-8 text-green-600 mb-3" />
-                  <div className="text-2xl font-black text-slate-900">Local</div>
-                  <div className="text-sm text-slate-500 font-medium">Fulfillment Centers</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex-1 relative h-[400px] w-full bg-white rounded-[3rem] overflow-hidden shadow-xl border border-slate-100 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40 mix-blend-multiply"></div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-green-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-
-              <div className="relative z-10 text-center">
-                <span className="text-9xl">🌿</span>
-                <p className="mt-4 font-bold text-slate-900">100% Plastic-Free Packaging</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>  */}
-
 
       {/* --- FAQ ACCORDION --- */}
       <FaqSection items={FAQS} />

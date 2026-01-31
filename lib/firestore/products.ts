@@ -165,3 +165,19 @@ export async function getProductsByCategory(category: string, limitCount: number
     const filtered = products.filter(p => p.id !== excludeId);
     return filtered.slice(0, limitCount);
 }
+
+/**
+ * Optimized query for trending products - fetches only trending items directly from Firestore
+ */
+export async function getTrendingProducts(limitCount: number = 6): Promise<Product[]> {
+    const productsRef = collection(db, PRODUCTS_COLLECTION);
+    const q = query(productsRef, where("trending", "==", true));
+
+    const snapshot = await getDocs(q);
+    const products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    } as Product));
+
+    return products.slice(0, limitCount);
+}

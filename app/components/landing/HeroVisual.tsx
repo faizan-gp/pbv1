@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
 import { Palette, Upload, MousePointerClick, Sparkles } from "lucide-react";
 
 // --- MOCK DATA ---
@@ -74,10 +76,13 @@ export default function HeroVisual() {
                 <div className="aspect-[4/5] bg-slate-50 rounded-lg mb-6 relative overflow-hidden group">
                     <div className="absolute inset-0 transition-colors duration-500" style={{ backgroundColor: activeColor.class === 'bg-white' ? '#f8fafc' : '' }}></div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <img
+                        <Image
                             src="https://firebasestorage.googleapis.com/v0/b/printbrawl.firebasestorage.app/o/website%2Fshirt_sand_dune.webp?alt=media&token=5d4a8c14-5d9a-40ac-b3f2-0efc7ce9b032"
                             alt="Custom Hoodie"
+                            width={400}
+                            height={500}
                             className="w-full h-full object-cover mix-blend-multiply transition-all duration-500"
+                            priority
                         />
                     </div>
                     {/* Design Zone Overlay */}
@@ -103,9 +108,12 @@ export default function HeroVisual() {
                             />
                         ))}
                     </div>
-                    <button className="w-full py-3 mt-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                    <Link
+                        href="/categories"
+                        className="w-full py-3 mt-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                    >
                         <Palette className="w-4 h-4" /> Customize This Product
-                    </button>
+                    </Link>
                 </div>
             </div>
         </div>
