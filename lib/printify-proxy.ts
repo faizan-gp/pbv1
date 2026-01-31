@@ -163,7 +163,8 @@ class PrintifyProxyService {
             mockup_mode: 'RGB',
             new_embroidery_color_palette: true,
             print: {
-                ...(backgroundColor && { background: backgroundColor }),
+                // TODO: Re-enable when background color is working correctly
+                // ...(backgroundColor && { background: backgroundColor }),
                 placeholders: placeholders,
                 print_on_side: false,
                 mirror: false,
